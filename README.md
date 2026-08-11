@@ -28,6 +28,10 @@ LLMs are **confidently wrong**. The failure mode that actually hurts in producti
 
 The pattern is well established: naive extraction pipelines look great in a demo and then quietly degrade on real inputs, and adding a multi-model verification + human-review gate is a proven way to claw accuracy back. The point `reflect-mcp` makes concrete: *the verification discipline is the product*, not the extraction call.
 
+### In research terms — an evaluation harness with a verifiable reward
+
+Stripped of the invoice example, `reflect-mcp` is a small **evaluation harness with a verifiable reward**, wired into the inference path instead of bolted on after the fact. The Critic is a **decorrelated grader** — a *different* model from the Generator, because same-model self-critique rubber-stamps its own errors. The deterministic heuristics are the **programmatic pass criterion**: grounding, arithmetic reconciliation, and date validity are checkable without a model, and they can only *lower* the score, so a structurally impossible value can't be talked through on a grader's confidence alone. The gate is the **escalation path for the cases the reward signal can't settle** — which is what turns a low-confidence result into useful output instead of a failure. And `make eval` grades the harness itself: a labeled golden set, field-level accuracy, and a non-zero exit below a threshold, so the whole loop is measurable offline in CI with no secrets.
+
 ## 3. Demo
 
 Messy input → typed JSON with per-field confidence → one low-confidence field flagged for review:
