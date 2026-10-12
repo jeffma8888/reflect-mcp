@@ -45,8 +45,12 @@ def run_extract(argv: list[str] | None = None) -> int:
 
     from reflect_mcp.pipeline import build_default_pipeline  # noqa: PLC0415
 
-    pipeline = build_default_pipeline()
-    result = pipeline.extract(text)
+    try:
+        pipeline = build_default_pipeline()
+        result = pipeline.extract(text)
+    except Exception as exc:  # noqa: BLE001
+        print(json.dumps({"status": "error", "error_message": str(exc)}))
+        return 3
 
     print(json.dumps(result.model_dump(), indent=2))
 

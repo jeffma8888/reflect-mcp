@@ -18,8 +18,8 @@ tool surface, small deps, MIT, publication-safe.
 
 | # | Feature | Value | Risk | Status |
 |---|---------|-------|------|--------|
-| 1 | CLI extract verb: pipe-friendly `reflect-mcp extract` (stdin/file → JSON stdout, exit codes) | High | Low | **SELECTED — iter 01** |
-| 2 | Structured error result (`status="error"`) instead of raw exceptions on pipeline failure | High | Low | QUEUED |
+| 1 | CLI extract verb: pipe-friendly `reflect-mcp extract` (stdin/file → JSON stdout, exit codes) | High | Low | DONE (iter 01) |
+| 2 | Structured error result (`status="error"`) instead of raw exceptions on pipeline failure | High | Low | **SELECTED — iter 02** |
 | 3 | Generator/Critic retry with configurable back-off on JSON parse failure | Med | Low | QUEUED |
 | 4 | `make typecheck` target with mypy/pyright in strict mode over `src/` | Med | Low | QUEUED |
 | 5 | Eval as a CLI verb: `reflect-mcp eval [--live] [--min-accuracy N]` | Med | Low | QUEUED |
@@ -29,4 +29,4 @@ tool surface, small deps, MIT, publication-safe.
 
 ## Done ledger
 
-(none yet)
+- iter 01 — CLI extract verb: pipe-friendly `reflect-mcp extract` (stdin/file → JSON stdout, exit 0/1/2)

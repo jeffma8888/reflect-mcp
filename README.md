@@ -103,7 +103,7 @@ echo "ACME CORP, Invoice #INV-1001, Total: \$108.50" | reflect-mcp extract
 reflect-mcp extract --file invoice.txt
 ```
 
-Exit codes: **0** = `ok`, **1** = `needs_review`, **2** = usage error (no input, missing file).
+Exit codes: **0** = `ok`, **1** = `needs_review`, **2** = usage error (no input, missing file), **3** = pipeline error (JSON error envelope on stdout).
 
 The bare `reflect-mcp` command (no subcommand) still starts the MCP server.
 
