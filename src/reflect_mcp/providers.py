@@ -14,6 +14,7 @@ never need `anthropic` / `openai` / `boto3` installed.
 
 from __future__ import annotations
 
+import json
 import os
 from typing import Protocol, runtime_checkable
 
@@ -52,8 +53,6 @@ class AnthropicClient:
     def __init__(self, model: str, max_tokens: int = 1024) -> None:
         self.model = model
         self.max_tokens = max_tokens
-
-    def complete(self, *, system: str, user: str) -> str:
         try:
             import anthropic  # noqa: PLC0415
         except ImportError as exc:  # pragma: no cover - only hit without SDK
@@ -61,8 +60,10 @@ class AnthropicClient:
                 "Anthropic provider selected but the `anthropic` package is not "
                 "installed. Run: pip install 'reflect-mcp[anthropic]'"
             ) from exc
-        client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY
-        resp = client.messages.create(
+        self._client = anthropic.Anthropic()
+
+    def complete(self, *, system: str, user: str) -> str:
+        resp = self._client.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
             system=system,
@@ -75,8 +76,6 @@ class OpenAIClient:
     def __init__(self, model: str, max_tokens: int = 1024) -> None:
         self.model = model
         self.max_tokens = max_tokens
-
-    def complete(self, *, system: str, user: str) -> str:
         try:
             from openai import OpenAI  # noqa: PLC0415
         except ImportError as exc:  # pragma: no cover - only hit without SDK
@@ -84,8 +83,10 @@ class OpenAIClient:
                 "OpenAI provider selected but the `openai` package is not "
                 "installed. Run: pip install 'reflect-mcp[openai]'"
             ) from exc
-        client = OpenAI()  # reads OPENAI_API_KEY
-        resp = client.chat.completions.create(
+        self._client = OpenAI()
+
+    def complete(self, *, system: str, user: str) -> str:
+        resp = self._client.chat.completions.create(
             model=self.model,
             max_tokens=self.max_tokens,
             response_format={"type": "json_object"},
@@ -103,25 +104,23 @@ class BedrockClient:
     def __init__(self, model: str, max_tokens: int = 1024) -> None:
         self.model = model
         self.max_tokens = max_tokens
-
-    def complete(self, *, system: str, user: str) -> str:
         try:
-            import json  # noqa: PLC0415
-
             import boto3  # noqa: PLC0415
         except ImportError as exc:  # pragma: no cover - only hit without SDK
             raise RuntimeError(
                 "Bedrock provider selected but `boto3` is not installed. "
                 "Run: pip install 'reflect-mcp[bedrock]'"
             ) from exc
-        client = boto3.client("bedrock-runtime", region_name=os.getenv("AWS_REGION", "us-east-1"))
+        self._client = boto3.client("bedrock-runtime", region_name=os.getenv("AWS_REGION", "us-east-1"))
+
+    def complete(self, *, system: str, user: str) -> str:
         body = {
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": self.max_tokens,
             "system": system,
             "messages": [{"role": "user", "content": [{"type": "text", "text": user}]}],
         }
-        resp = client.invoke_model(modelId=self.model, body=json.dumps(body))
+        resp = self._client.invoke_model(modelId=self.model, body=json.dumps(body))
         payload = json.loads(resp["body"].read())
         return "".join(b.get("text", "") for b in payload.get("content", []))
 

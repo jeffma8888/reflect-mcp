@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-03
+    lenses: unknown
+    - Candidate A1 — Remove heuristics_enabled toggle and its dead else-branch
+    - Candidate A2 — Deduplicate dev dependency declaration in pyproject.toml
+    - Candidate A3 — Eliminate eval's sys.path hack by adding eval to pythonpath
+    - Candidate B1 — Reuse SDK clients across calls instead of constructing per-complete()
+    - Candidate B2 — Run heuristics concurrently with the Critic LLM call
+    - Candidate B3 — Cache the MCP server pipeline instance across tool invocations
+    winner: B1
+    ship: pending (not yet decided)
   iter-02
     lenses: unknown
     - Candidate A1 — CLI threshold flags (`--field-threshold`, `--overall-threshold`)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 — Eliminate eval's `sys.path` hack by making eval a proper subpackage
     - Candidate B3 — Collapse near-duplicate test setup in `test_iter01_behavior.py`
     winner: A3
-    ship: pending (not yet decided)
+    ship: PUSHED b59bd87
   iter-01
     lenses: unknown
     - Candidate A1 -- Generator/Critic retry with back-off on parse failure
@@ -21,4 +31,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-2 scouted iterations
+3 scouted iterations
