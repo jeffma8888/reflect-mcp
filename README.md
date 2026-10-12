@@ -91,7 +91,23 @@ Then restart Claude Desktop and ask it to *"extract the invoice fields from this
 
 When `status == "needs_review"`, do **not** use `data` blindly — confirm the fields in `flagged_fields` first.
 
-## 5. Architecture
+## 5. CLI
+
+For scripting, CI pipelines, or batch processing without an MCP client:
+
+```bash
+# stdin mode
+echo "ACME CORP, Invoice #INV-1001, Total: \$108.50" | reflect-mcp extract
+
+# file mode
+reflect-mcp extract --file invoice.txt
+```
+
+Exit codes: **0** = `ok`, **1** = `needs_review`, **2** = usage error (no input, missing file).
+
+The bare `reflect-mcp` command (no subcommand) still starts the MCP server.
+
+## 6. Architecture
 
 Three roles, one shared trace id, clean layering (`resolver`-free by design — the pipeline has no infra dependency):
 
@@ -102,7 +118,7 @@ Three roles, one shared trace id, clean layering (`resolver`-free by design — 
 
 The `extract` tool (`server.py`) is the only module that imports the `mcp` SDK, and `providers.py` is the only module that imports a provider SDK — so the core pipeline and the entire test suite have **zero** hard dependency on either.
 
-## 6. Evaluation
+## 7. Evaluation
 
 A tiny golden-file eval treats LLM quality as **measurable, not vibes**. `eval/golden/dataset.jsonl` holds labeled messy-text → expected-fields examples; `eval/run_eval.py` runs the full pipeline over them and reports field accuracy, exact-match accuracy, needs-review rate, and *exactly where it fails*.
 
@@ -130,7 +146,7 @@ PASS: field accuracy 97.1% >= required 90.0%
 
 `make eval` exits non-zero below `--min-accuracy` (default 0.90), so it works as an **offline eval-CI gate** with no secrets.
 
-## 7. Testing
+## 8. Testing
 
 Deterministic tests around a stochastic core. The single LLM boundary (`LLMClient`) is mocked with a `ScriptedLLMClient` that returns canned JSON and raises if it's ever asked for more than expected — so `pytest` runs **fully offline, with no API keys, and can't leak a real call**.
 
@@ -142,7 +158,7 @@ make cov           # with coverage
 
 The flagship test is `tests/test_critic_catches_error.py`: the Generator is fed a deliberately wrong value (`vendor_name = "Invoice"` — a word that *does* appear in the source, so the deterministic grounding check can't catch it), and the test asserts the **second-model Critic** catches it and the gate routes to `needs_review`. It also flips only the Critic's verdict and shows the decision flip to `ok` — proving the verification step is doing real work, not the plumbing.
 
-## 8. Design decisions
+## 9. Design decisions
 
 - **Second-model Critic (multi-model reflection), not self-critique.** The Critic defaults to a *different, cheaper* model than the Generator (`sonnet` generates, `haiku` critiques). Cross-model disagreement is a real signal; same-model self-review is mostly agreement theater.
 - **Provider switching via env var.** `REFLECT_PROVIDER` selects `anthropic` | `openai` | `bedrock`, so a reviewer runs it against whatever key they have. The **Bedrock (Claude)** path is there for AWS users; the public-API paths (Anthropic/OpenAI) let anyone try it without AWS. Provider SDKs are optional extras (`pip install 'reflect-mcp[anthropic]'`) and imported lazily.
@@ -151,7 +167,7 @@ The flagship test is `tests/test_critic_catches_error.py`: the Generator is fed 
 - **Prompt versioning + injection awareness.** Prompts live in versioned files (`src/reflect_mcp/prompts/`). Both instruct the model to treat document content as **data, not commands** — the source text is untrusted input, a basic prompt-injection guard.
 - **Observability.** Every stage emits a structured JSON log line carrying a shared `trace_id`, so one extraction is greppable end to end.
 
-## 9. What I'd productionize next
+## 10. What I'd productionize next
 
 - **Batching + caching** of Generator/Critic calls; per-request cost/latency budgets.
 - A real **human-review queue** (persist `needs_review` payloads, route to a reviewer UI, feed corrections back as new golden examples).
@@ -177,7 +193,9 @@ reflect-mcp/
 │   ├── logging_config.py  # structured JSON-line logging
 │   ├── parsing.py         # robust JSON extraction + prompt loader
 │   ├── prompts/           # versioned generator.txt / critic.txt
-│   └── server.py          # FastMCP server exposing the `extract` tool
+│   ├── server.py          # FastMCP server exposing the `extract` tool
+│   ├── cli.py             # CLI entry point: `reflect-mcp extract`
+│   └── __main__.py        # dispatch: extract → cli, bare → server
 ├── eval/
 │   ├── golden/dataset.jsonl   # labeled golden examples
 │   ├── fixtures/replay.json   # recorded model outputs for offline eval
