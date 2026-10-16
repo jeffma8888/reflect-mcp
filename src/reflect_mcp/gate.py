@@ -14,7 +14,7 @@ never a silent guess.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from pydantic import BaseModel, Field
 
 from reflect_mcp.heuristics import HeuristicReport
 from reflect_mcp.schema import (
@@ -26,16 +26,11 @@ from reflect_mcp.schema import (
 )
 
 
-@dataclass(frozen=True)
-class GateConfig:
-    field_threshold: float = 0.70
-    overall_threshold: float = 0.75
+class GateConfig(BaseModel):
+    model_config = {"frozen": True}
 
-    def __post_init__(self) -> None:
-        for name in ("field_threshold", "overall_threshold"):
-            v = getattr(self, name)
-            if not 0.0 <= v <= 1.0:
-                raise ValueError(f"{name} must be in [0,1], got {v}")
+    field_threshold: float = Field(default=0.70, ge=0.0, le=1.0)
+    overall_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
 
 
 def _combine(critic_conf: float, heuristic_factor: float) -> float:

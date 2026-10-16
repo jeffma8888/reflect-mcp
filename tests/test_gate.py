@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from reflect_mcp.gate import GateConfig, decide
 from reflect_mcp.heuristics import HeuristicReport, run_heuristics
@@ -69,7 +70,7 @@ def test_heuristic_factor_caps_confidence():
 
 
 def test_gate_config_validates_thresholds():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValidationError):
         GateConfig(field_threshold=1.5)
 
 

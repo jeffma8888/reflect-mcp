@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-15
+    lenses: unknown
+    - Candidate A1 — Convert GateConfig from dataclass to Pydantic BaseModel
+    - Candidate A2 — Inline `_model_for` into `build_client`
+    - Candidate A3 — Delete dormant `ScriptedLLMClient.remaining` property
+    - Candidate B1 — Cache pipeline instance across MCP tool invocations
+    - Candidate B2 — Run heuristics concurrently with the Critic LLM call
+    - Candidate B3 — Reuse pipeline across golden-set examples in live eval
+    winner: A1
+    ship: pending (not yet decided)
   iter-03
     lenses: unknown
     - Candidate A1 — Remove heuristics_enabled toggle and its dead else-branch
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 — Run heuristics concurrently with the Critic LLM call
     - Candidate B3 — Cache the MCP server pipeline instance across tool invocations
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED b5ef47b
   iter-02
     lenses: unknown
     - Candidate A1 — CLI threshold flags (`--field-threshold`, `--overall-threshold`)
@@ -31,4 +41,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-3 scouted iterations
+4 scouted iterations
