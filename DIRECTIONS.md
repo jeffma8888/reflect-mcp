@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-16
+    lenses: unknown
+    - Candidate A1 — Cache pipeline instance across MCP tool invocations
+    - Candidate A2 — Reuse pipeline across golden-set examples in live eval
+    - Candidate A3 — Precompute number candidates once in run_heuristics
+    - Candidate B1 — Add missing `critic_summary` to README tool-return table + schema-docs drift test
+    - Candidate B2 — Sync PRODUCT.md Done ledger through iter 15 + add a ledger-freshness assertion
+    - Candidate B3 — Document the pipeline execution order (heuristics BEFORE Critic) and add an execution-order test
+    winner: B1
+    ship: pending (not yet decided)
   iter-15
     lenses: unknown
     - Candidate A1 — Convert GateConfig from dataclass to Pydantic BaseModel
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 — Run heuristics concurrently with the Critic LLM call
     - Candidate B3 — Reuse pipeline across golden-set examples in live eval
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED d3f9f34
   iter-03
     lenses: unknown
     - Candidate A1 — Remove heuristics_enabled toggle and its dead else-branch
@@ -41,4 +51,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-4 scouted iterations
+5 scouted iterations

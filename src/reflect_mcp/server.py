@@ -39,6 +39,7 @@ def extract(text: str, field_threshold: float = 0.70, overall_threshold: float =
       - field_confidence: per-field combined confidence in [0,1]
       - overall_confidence: the critic's overall confidence
       - flagged_fields: fields below threshold that a human should confirm
+      - critic_summary: the critic's one-line human-readable assessment
       - trace_id / notes: observability + the decision rationale
 
     When status == "needs_review", DO NOT use `data` blindly -- confirm the
