@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-19
+    lenses: unknown
+    - Candidate A1 — Top-level `--help` and `--version` for the CLI entry point
+    - Candidate A2 — `make typecheck` target with mypy strict mode + `py.typed` marker
+    - Candidate A3 — Generator/Critic retry with configurable back-off on JSON parse failure
+    - Candidate B1 — `reflect-mcp eval` CLI verb wiring the shipped eval harness
+    - Candidate B2 — Module-level convenience functions: `reflect_mcp.extract()` and `reflect_mcp.validate()`
+    - Candidate B3 — `--data-file` flag for the `validate` verb
+    winner: A3
+    ship: pending (not yet decided)
   iter-18
     lenses: unknown
     - Candidate A1 — `reflect-mcp validate` verb: verify-only mode (skip Generator)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 — `make typecheck` target with mypy strict mode
     - Candidate B3 — Top-level `--help` and `--version` for the CLI entry point
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 194b1d5
   iter-17
     lenses: unknown
     - Candidate A1 — Sync PRODUCT.md Done ledger through iter 16 + add ledger-freshness test
@@ -71,4 +81,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-7 scouted iterations
+8 scouted iterations

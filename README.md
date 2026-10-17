@@ -115,8 +115,8 @@ The bare `reflect-mcp` command (no subcommand) still starts the MCP server.
 
 Three roles, one shared trace id, clean layering (`resolver`-free by design — the pipeline has no infra dependency):
 
-- **Generator** (`generator.py`) — one LLM call → validated `InvoiceData` (Pydantic). Absent fields come back `null`; the model is instructed never to invent a value.
-- **Critic** (`critic.py`) — a **different model** (`REFLECT_CRITIC_MODEL`) is shown the source *and* the candidate extraction and must ground each field, returning per-field + overall confidence. A different model matters: self-critique with the same model tends to rubber-stamp its own errors.
+- **Generator** (`generator.py`) — LLM call (with configurable retry on parse failure) → validated `InvoiceData` (Pydantic). Absent fields come back `null`; the model is instructed never to invent a value.
+- **Critic** (`critic.py`) — a **different model** (`REFLECT_CRITIC_MODEL`) is shown the source *and* the candidate extraction and must ground each field, returning per-field + overall confidence (with configurable retry on parse failure). A different model matters: self-critique with the same model tends to rubber-stamp its own errors.
 - **Deterministic heuristics** (`heuristics.py`) — a free, non-LLM signal: grounding (is a committed value actually present in the source?), arithmetic reconciliation (`subtotal + tax == total`), and ISO-date validation. These *cap* the Critic — a structurally impossible value can't be waved through on the Critic's word alone.
 - **Gate** (`gate.py`) — combines the two signals multiplicatively (`combined = critic_confidence × heuristic_factor`), flags any non-null field below `field_threshold`, and escalates the whole result if any field is flagged **or** overall confidence is below `overall_threshold`.
 

@@ -20,7 +20,7 @@ tool surface, small deps, MIT, publication-safe.
 |---|---------|-------|------|--------|
 | 1 | CLI extract verb: pipe-friendly `reflect-mcp extract` (stdin/file → JSON stdout, exit codes) | High | Low | DONE (iter 01) |
 | 2 | Structured error result (`status="error"`) instead of raw exceptions on pipeline failure | High | Low | DONE (iter 02) |
-| 3 | Generator/Critic retry with configurable back-off on JSON parse failure | Med | Low | QUEUED |
+| 3 | Generator/Critic retry with configurable back-off on JSON parse failure | Med | Low | DONE (iter 19) |
 | 4 | `make typecheck` target with mypy/pyright in strict mode over `src/` | Med | Low | QUEUED |
 | 5 | Eval as a CLI verb: `reflect-mcp eval [--live] [--min-accuracy N]` | Med | Low | QUEUED |
 | 6 | Configurable confidence thresholds via env vars / CLI flags | Med | Low | PARTIAL (iter 17: CLI flags) |
@@ -36,3 +36,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 15 — GateConfig from dataclass to Pydantic BaseModel with boundary validation
 - iter 16 — critic_summary in README tool-return table + schema-docs drift-detection test
 - iter 17 — CLI `--field-threshold` / `--overall-threshold` flags for confidence-gate control
+- iter 19 — Generator/Critic retry with configurable back-off on JSON parse failure

@@ -28,7 +28,7 @@ def test_generator_tolerates_code_fences():
 
 
 def test_generator_raises_on_garbage():
-    gen = Generator(ScriptedLLMClient(["not json"]))
+    gen = Generator(ScriptedLLMClient(["not json"]), max_retries=0)
     with pytest.raises(GeneratorError):
         gen.generate("t")
 
@@ -45,7 +45,7 @@ def test_critic_parses_critique():
 
 
 def test_critic_raises_on_garbage():
-    crit = Critic(ScriptedLLMClient(["definitely not json"]))
+    crit = Critic(ScriptedLLMClient(["definitely not json"]), max_retries=0)
     with pytest.raises(CriticError):
         crit.critique("t", InvoiceData())
 

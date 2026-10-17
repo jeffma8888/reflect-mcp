@@ -75,7 +75,11 @@ class ReflectivePipeline:
         return result
 
 
-def build_default_pipeline(gate_config: GateConfig | None = None) -> ReflectivePipeline:
+def build_default_pipeline(
+    gate_config: GateConfig | None = None,
+    *,
+    max_retries: int = 1,
+) -> ReflectivePipeline:
     """Wire up a pipeline against real providers (env-configured).
 
     Imported lazily so tests never touch provider SDKs.
@@ -84,4 +88,8 @@ def build_default_pipeline(gate_config: GateConfig | None = None) -> ReflectiveP
 
     gen_client: LLMClient = build_client("generator")
     crit_client: LLMClient = build_client("critic")
-    return ReflectivePipeline(Generator(gen_client), Critic(crit_client), gate_config)
+    return ReflectivePipeline(
+        Generator(gen_client, max_retries=max_retries),
+        Critic(crit_client, max_retries=max_retries),
+        gate_config,
+    )
