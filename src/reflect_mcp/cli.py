@@ -18,6 +18,20 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Path to a text file to extract from (default: read stdin).",
     )
+    parser.add_argument(
+        "--field-threshold",
+        dest="field_threshold",
+        type=float,
+        default=None,
+        help="Per-field confidence threshold in [0.0, 1.0] (default: 0.70).",
+    )
+    parser.add_argument(
+        "--overall-threshold",
+        dest="overall_threshold",
+        type=float,
+        default=None,
+        help="Overall confidence threshold in [0.0, 1.0] (default: 0.75).",
+    )
     return parser
 
 
@@ -43,10 +57,21 @@ def run_extract(argv: list[str] | None = None) -> int:
         print("Error: input is empty.", file=sys.stderr)
         return 2
 
+    from reflect_mcp.gate import GateConfig  # noqa: PLC0415
     from reflect_mcp.pipeline import build_default_pipeline  # noqa: PLC0415
 
+    gate_kwargs: dict[str, float] = {}
+    if args.field_threshold is not None:
+        gate_kwargs["field_threshold"] = args.field_threshold
+    if args.overall_threshold is not None:
+        gate_kwargs["overall_threshold"] = args.overall_threshold
+
     try:
-        pipeline = build_default_pipeline()
+        if gate_kwargs:
+            gate_config = GateConfig(**gate_kwargs)
+            pipeline = build_default_pipeline(gate_config=gate_config)
+        else:
+            pipeline = build_default_pipeline()
         result = pipeline.extract(text)
     except Exception as exc:  # noqa: BLE001
         print(json.dumps({"status": "error", "error_message": str(exc)}))

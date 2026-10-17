@@ -17,6 +17,32 @@ def test_parser_defaults_file_to_none() -> None:
     assert ns.file is None
 
 
+def test_parser_accepts_field_threshold() -> None:
+    parser = _build_parser()
+    ns = parser.parse_args(["--field-threshold", "0.85"])
+    assert ns.field_threshold == 0.85
+
+
+def test_parser_accepts_overall_threshold() -> None:
+    parser = _build_parser()
+    ns = parser.parse_args(["--overall-threshold", "0.80"])
+    assert ns.overall_threshold == 0.80
+
+
+def test_parser_accepts_both_thresholds() -> None:
+    parser = _build_parser()
+    ns = parser.parse_args(["--field-threshold", "0.85", "--overall-threshold", "0.80"])
+    assert ns.field_threshold == 0.85
+    assert ns.overall_threshold == 0.80
+
+
+def test_parser_defaults_thresholds_to_none() -> None:
+    parser = _build_parser()
+    ns = parser.parse_args([])
+    assert ns.field_threshold is None
+    assert ns.overall_threshold is None
+
+
 def test_main_dispatches_extract() -> None:
     """Bare smoke test: `__main__.main` routes 'extract --file ...' to cli."""
     import sys

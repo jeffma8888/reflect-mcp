@@ -101,6 +101,9 @@ echo "ACME CORP, Invoice #INV-1001, Total: \$108.50" | reflect-mcp extract
 
 # file mode
 reflect-mcp extract --file invoice.txt
+
+# custom confidence thresholds (default: field=0.70, overall=0.75)
+reflect-mcp extract --field-threshold 0.85 --overall-threshold 0.80 --file invoice.txt
 ```
 
 Exit codes: **0** = `ok`, **1** = `needs_review`, **2** = usage error (no input, missing file), **3** = pipeline error (JSON error envelope on stdout).

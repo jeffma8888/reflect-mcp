@@ -23,7 +23,7 @@ tool surface, small deps, MIT, publication-safe.
 | 3 | Generator/Critic retry with configurable back-off on JSON parse failure | Med | Low | QUEUED |
 | 4 | `make typecheck` target with mypy/pyright in strict mode over `src/` | Med | Low | QUEUED |
 | 5 | Eval as a CLI verb: `reflect-mcp eval [--live] [--min-accuracy N]` | Med | Low | QUEUED |
-| 6 | Configurable confidence thresholds via env vars / CLI flags | Med | Low | QUEUED |
+| 6 | Configurable confidence thresholds via env vars / CLI flags | Med | Low | PARTIAL (iter 17: CLI flags) |
 | 7 | Schema extensibility: user-defined Pydantic models beyond InvoiceData | High | Med | QUEUED |
 | 8 | Batch extraction: process multiple inputs in one invocation | Med | Med | QUEUED |
 | 9 | Reuse SDK clients across calls: move client construction to `__init__` | Med | Low | DONE (iter 03) |
@@ -33,3 +33,6 @@ tool surface, small deps, MIT, publication-safe.
 - iter 01 — CLI extract verb: pipe-friendly `reflect-mcp extract` (stdin/file → JSON stdout, exit 0/1/2)
 - iter 02 — Structured error envelope on CLI pipeline failure (exit 3, JSON on stdout)
 - iter 03 — Reuse SDK clients across calls: move client construction to provider `__init__`
+- iter 15 — GateConfig from dataclass to Pydantic BaseModel with boundary validation
+- iter 16 — critic_summary in README tool-return table + schema-docs drift-detection test
+- iter 17 — CLI `--field-threshold` / `--overall-threshold` flags for confidence-gate control

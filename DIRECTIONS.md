@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-17
+    lenses: unknown
+    - Candidate A1 — Sync PRODUCT.md Done ledger through iter 16 + add ledger-freshness test
+    - Candidate A2 — Document pipeline execution order (heuristics BEFORE Critic) + order test
+    - Candidate A3 — Update stale model identifiers in providers.py defaults and README example
+    - Candidate B1 — CLI threshold flags (`--field-threshold`, `--overall-threshold`)
+    - Candidate B2 — `reflect-mcp validate` verb: verify-only mode (skip Generator)
+    - Candidate B3 — Generator/Critic retry with configurable back-off on JSON parse failure
+    winner: B1
+    ship: pending (not yet decided)
   iter-16
     lenses: unknown
     - Candidate A1 — Cache pipeline instance across MCP tool invocations
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 — Sync PRODUCT.md Done ledger through iter 15 + add a ledger-freshness assertion
     - Candidate B3 — Document the pipeline execution order (heuristics BEFORE Critic) and add an execution-order test
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED d4917dc
   iter-15
     lenses: unknown
     - Candidate A1 — Convert GateConfig from dataclass to Pydantic BaseModel
@@ -51,4 +61,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-5 scouted iterations
+6 scouted iterations
