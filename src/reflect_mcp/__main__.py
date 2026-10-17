@@ -1,6 +1,6 @@
 """Top-level entry point for the `reflect-mcp` console script.
 
-Dispatches to subcommands (currently just `extract`) or falls through to the
+Dispatches to subcommands (`extract`, `validate`) or falls through to the
 MCP server, preserving backward compatibility: bare `reflect-mcp` still starts
 the server exactly as before.
 """
@@ -15,6 +15,11 @@ def main() -> None:
         from reflect_mcp.cli import run_extract  # noqa: PLC0415
 
         sys.exit(run_extract(sys.argv[2:]))
+
+    if len(sys.argv) >= 2 and sys.argv[1] == "validate":
+        from reflect_mcp.cli import run_validate  # noqa: PLC0415
+
+        sys.exit(run_validate(sys.argv[2:]))
 
     from reflect_mcp.server import main as server_main  # noqa: PLC0415
 

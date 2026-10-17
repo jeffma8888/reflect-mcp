@@ -1,4 +1,4 @@
-"""CLI entry point: `reflect-mcp extract` for pipe-friendly one-shot extraction."""
+"""CLI entry points: `reflect-mcp extract` and `reflect-mcp validate`."""
 
 from __future__ import annotations
 
@@ -7,16 +7,13 @@ import json
 import sys
 
 
-def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="reflect-mcp extract",
-        description="Extract structured data from text via the reflective pipeline.",
-    )
+def _add_common_args(parser: argparse.ArgumentParser) -> None:
+    """Add --file and threshold flags shared by extract and validate."""
     parser.add_argument(
         "--file",
         dest="file",
         default=None,
-        help="Path to a text file to extract from (default: read stdin).",
+        help="Path to a text file (default: read stdin).",
     )
     parser.add_argument(
         "--field-threshold",
@@ -32,47 +29,129 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Overall confidence threshold in [0.0, 1.0] (default: 0.75).",
     )
+
+
+def _build_extract_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="reflect-mcp extract",
+        description="Extract structured data from text via the reflective pipeline.",
+    )
+    _add_common_args(parser)
     return parser
 
 
-def run_extract(argv: list[str] | None = None) -> int:
-    """Parse args, run the pipeline, print JSON to stdout, return exit code."""
-    parser = _build_parser()
-    args = parser.parse_args(argv)
+def _build_validate_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="reflect-mcp validate",
+        description="Verify pre-extracted data against source text (Critic + heuristics + gate, no Generator).",
+    )
+    _add_common_args(parser)
+    parser.add_argument(
+        "--data",
+        dest="data",
+        required=True,
+        help="JSON string of pre-extracted fields to verify.",
+    )
+    return parser
 
+
+def _read_text(args: argparse.Namespace) -> str | None:
+    """Read source text from --file or stdin. Returns None on error (already printed)."""
     if args.file is not None:
         try:
             with open(args.file, encoding="utf-8") as fh:
-                text = fh.read()
+                return fh.read()
         except FileNotFoundError:
             print(f"Error: file not found: {args.file}", file=sys.stderr)
-            return 2
+            return None
     else:
         if sys.stdin.isatty():
             print("Error: no input provided. Pipe text to stdin or use --file.", file=sys.stderr)
-            return 2
-        text = sys.stdin.read()
+            return None
+        return sys.stdin.read()
 
-    if not text.strip():
-        print("Error: input is empty.", file=sys.stderr)
-        return 2
 
+def _build_gate_config(args: argparse.Namespace) -> "GateConfig | None":
     from reflect_mcp.gate import GateConfig  # noqa: PLC0415
-    from reflect_mcp.pipeline import build_default_pipeline  # noqa: PLC0415
 
     gate_kwargs: dict[str, float] = {}
     if args.field_threshold is not None:
         gate_kwargs["field_threshold"] = args.field_threshold
     if args.overall_threshold is not None:
         gate_kwargs["overall_threshold"] = args.overall_threshold
+    return GateConfig(**gate_kwargs) if gate_kwargs else None
+
+
+def run_extract(argv: list[str] | None = None) -> int:
+    """Parse args, run the pipeline, print JSON to stdout, return exit code."""
+    parser = _build_extract_parser()
+    args = parser.parse_args(argv)
+
+    text = _read_text(args)
+    if text is None:
+        return 2
+
+    if not text.strip():
+        print("Error: input is empty.", file=sys.stderr)
+        return 2
+
+    from reflect_mcp.pipeline import build_default_pipeline  # noqa: PLC0415
 
     try:
-        if gate_kwargs:
-            gate_config = GateConfig(**gate_kwargs)
+        gate_config = _build_gate_config(args)
+        if gate_config:
             pipeline = build_default_pipeline(gate_config=gate_config)
         else:
             pipeline = build_default_pipeline()
         result = pipeline.extract(text)
+    except Exception as exc:  # noqa: BLE001
+        print(json.dumps({"status": "error", "error_message": str(exc)}))
+        return 3
+
+    print(json.dumps(result.model_dump(), indent=2))
+
+    if result.status == "ok":
+        return 0
+    return 1
+
+
+def run_validate(argv: list[str] | None = None) -> int:
+    """Parse args, validate pre-extracted data, print JSON to stdout, return exit code."""
+    parser = _build_validate_parser()
+    args = parser.parse_args(argv)
+
+    text = _read_text(args)
+    if text is None:
+        return 2
+
+    if not text.strip():
+        print("Error: input is empty.", file=sys.stderr)
+        return 2
+
+    try:
+        data_dict = json.loads(args.data)
+    except json.JSONDecodeError as exc:
+        print(f"Error: --data is not valid JSON: {exc}", file=sys.stderr)
+        return 2
+
+    from pydantic import ValidationError  # noqa: PLC0415
+
+    from reflect_mcp.pipeline import build_default_pipeline  # noqa: PLC0415
+    from reflect_mcp.schema import InvoiceData  # noqa: PLC0415
+
+    try:
+        data = InvoiceData.model_validate(data_dict)
+    except ValidationError as exc:
+        print(f"Error: --data failed InvoiceData validation: {exc}", file=sys.stderr)
+        return 2
+
+    try:
+        gate_config = _build_gate_config(args)
+        if gate_config:
+            pipeline = build_default_pipeline(gate_config=gate_config)
+        else:
+            pipeline = build_default_pipeline()
+        result = pipeline.validate(text, data)
     except Exception as exc:  # noqa: BLE001
         print(json.dumps({"status": "error", "error_message": str(exc)}))
         return 3

@@ -1,4 +1,4 @@
-"""MCP server exposing the reflective extraction pipeline as an `extract` tool.
+"""MCP server exposing the reflective extraction pipeline as `extract` and `validate` tools.
 
 Run it directly (`python -m reflect_mcp.server` or the `reflect-mcp` console
 script) and wire it into Claude Desktop / Cursor / any MCP client. See the
@@ -51,6 +51,32 @@ def extract(text: str, field_threshold: float = 0.70, overall_threshold: float =
     config = GateConfig(field_threshold=field_threshold, overall_threshold=overall_threshold)
     pipeline = build_default_pipeline(gate_config=config)
     result = pipeline.extract(text)
+    return result.model_dump()
+
+
+@mcp.tool()
+def validate(
+    text: str, data: dict[str, Any], field_threshold: float = 0.70, overall_threshold: float = 0.75
+) -> dict[str, Any]:
+    """Verify pre-extracted data against source text without running the Generator.
+
+    Runs the Critic + deterministic heuristics + confidence gate on data you
+    already have (from another LLM, a rules engine, or manual entry).
+
+    Parameters:
+      - text: the source document to verify against
+      - data: dict of pre-extracted fields (InvoiceData shape)
+      - field_threshold / overall_threshold: confidence gate controls
+
+    Returns the same ExtractionResult envelope as `extract`.
+    """
+    from reflect_mcp.pipeline import build_default_pipeline
+    from reflect_mcp.schema import InvoiceData
+
+    invoice = InvoiceData.model_validate(data)
+    config = GateConfig(field_threshold=field_threshold, overall_threshold=overall_threshold)
+    pipeline = build_default_pipeline(gate_config=config)
+    result = pipeline.validate(text, invoice)
     return result.model_dump()
 
 

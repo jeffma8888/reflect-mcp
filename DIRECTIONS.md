@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-18
+    lenses: unknown
+    - Candidate A1 — `reflect-mcp validate` verb: verify-only mode (skip Generator)
+    - Candidate A2 — `reflect-mcp eval` CLI verb
+    - Candidate A3 — Batch extraction: `--batch` flag for multi-document processing
+    - Candidate B1 — MCP `extract` tool: structured error envelope + empty-input guard
+    - Candidate B2 — `make typecheck` target with mypy strict mode
+    - Candidate B3 — Top-level `--help` and `--version` for the CLI entry point
+    winner: A1
+    ship: pending (not yet decided)
   iter-17
     lenses: unknown
     - Candidate A1 — Sync PRODUCT.md Done ledger through iter 16 + add ledger-freshness test
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 — `reflect-mcp validate` verb: verify-only mode (skip Generator)
     - Candidate B3 — Generator/Critic retry with configurable back-off on JSON parse failure
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 0a1ed7f
   iter-16
     lenses: unknown
     - Candidate A1 — Cache pipeline instance across MCP tool invocations
@@ -61,4 +71,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-6 scouted iterations
+7 scouted iterations

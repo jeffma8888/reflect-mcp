@@ -81,13 +81,14 @@ Install and point Claude Desktop at the server. Add this to your `claude_desktop
 }
 ```
 
-Then restart Claude Desktop and ask it to *"extract the invoice fields from this text …"* — it will call the `extract` tool.
+Then restart Claude Desktop and ask it to *"extract the invoice fields from this text …"* — it will call the `extract` tool. You can also ask it to *"validate this data against the source"* to run verification without re-extracting.
 
-**Tool exposed**
+**Tools exposed**
 
 | Tool | Args | Returns |
 | --- | --- | --- |
 | `extract` | `text: str`, `field_threshold=0.70`, `overall_threshold=0.75` | `{ status, data, field_confidence, overall_confidence, flagged_fields, critic_summary, trace_id, notes }` |
+| `validate` | `text: str`, `data: dict`, `field_threshold=0.70`, `overall_threshold=0.75` | Same `ExtractionResult` envelope as `extract` |
 
 When `status == "needs_review"`, do **not** use `data` blindly — confirm the fields in `flagged_fields` first.
 
@@ -96,17 +97,17 @@ When `status == "needs_review"`, do **not** use `data` blindly — confirm the f
 For scripting, CI pipelines, or batch processing without an MCP client:
 
 ```bash
-# stdin mode
+# extract: generate + verify
 echo "ACME CORP, Invoice #INV-1001, Total: \$108.50" | reflect-mcp extract
-
-# file mode
 reflect-mcp extract --file invoice.txt
-
-# custom confidence thresholds (default: field=0.70, overall=0.75)
 reflect-mcp extract --field-threshold 0.85 --overall-threshold 0.80 --file invoice.txt
+
+# validate: verify pre-extracted data (no Generator, Critic + heuristics + gate only)
+reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP","total":108.5}'
+reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --field-threshold 0.5
 ```
 
-Exit codes: **0** = `ok`, **1** = `needs_review`, **2** = usage error (no input, missing file), **3** = pipeline error (JSON error envelope on stdout).
+Exit codes (both verbs): **0** = `ok`, **1** = `needs_review`, **2** = usage/input error, **3** = pipeline error (JSON error envelope on stdout).
 
 The bare `reflect-mcp` command (no subcommand) still starts the MCP server.
 
@@ -196,9 +197,9 @@ reflect-mcp/
 │   ├── logging_config.py  # structured JSON-line logging
 │   ├── parsing.py         # robust JSON extraction + prompt loader
 │   ├── prompts/           # versioned generator.txt / critic.txt
-│   ├── server.py          # FastMCP server exposing the `extract` tool
-│   ├── cli.py             # CLI entry point: `reflect-mcp extract`
-│   └── __main__.py        # dispatch: extract → cli, bare → server
+│   ├── server.py          # FastMCP server exposing `extract` and `validate` tools
+│   ├── cli.py             # CLI entry points: `reflect-mcp extract` / `validate`
+│   └── __main__.py        # dispatch: extract/validate → cli, bare → server
 ├── eval/
 │   ├── golden/dataset.jsonl   # labeled golden examples
 │   ├── fixtures/replay.json   # recorded model outputs for offline eval

@@ -13,7 +13,7 @@ from reflect_mcp.generator import Generator
 from reflect_mcp.heuristics import run_heuristics
 from reflect_mcp.logging_config import log_stage, new_trace_id
 from reflect_mcp.providers import LLMClient
-from reflect_mcp.schema import ExtractionResult
+from reflect_mcp.schema import ExtractionResult, InvoiceData
 
 
 class ReflectivePipeline:
@@ -40,10 +40,20 @@ class ReflectivePipeline:
             fields={k: v for k, v in data.model_dump().items() if v is not None},
         )
 
+        return self._verify(text, data, trace_id)
+
+    def validate(self, text: str, data: InvoiceData) -> ExtractionResult:
+        """Run Critic + heuristics + gate on pre-extracted data, skipping the Generator."""
+        trace_id = new_trace_id()
+        log_stage("validate.start", trace_id, input_chars=len(text))
+        return self._verify(text, data, trace_id)
+
+    def _verify(self, text: str, data: InvoiceData, trace_id: str) -> ExtractionResult:
+        """Shared verification path: heuristics → critique → gate."""
         if self.heuristics_enabled:
             heuristics = run_heuristics(text, data)
         else:
-            heuristics = run_heuristics(text, data.__class__())  # all-null -> no penalties
+            heuristics = run_heuristics(text, data.__class__())
         log_stage("heuristics.done", trace_id, factors=heuristics.factors)
 
         critique = self.critic.critique(text, data)
