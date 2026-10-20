@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import typing
 
 
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
@@ -37,6 +38,13 @@ def _build_extract_parser() -> argparse.ArgumentParser:
         description="Extract structured data from text via the reflective pipeline.",
     )
     _add_common_args(parser)
+    parser.add_argument(
+        "--batch",
+        action="store_true",
+        default=False,
+        help="JSONL batch mode: each stdin/file line is {\"text\": \"...\"}; "
+        "emits one JSON result per line.",
+    )
     return parser
 
 
@@ -82,10 +90,64 @@ def _build_gate_config(args: argparse.Namespace) -> "GateConfig | None":
     return GateConfig(**gate_kwargs) if gate_kwargs else None
 
 
+def _read_input_stream(args: argparse.Namespace) -> "typing.TextIO | None":
+    """Open the input source as a text stream. Returns None on error (already printed)."""
+    if args.file is not None:
+        try:
+            return open(args.file, encoding="utf-8")  # noqa: SIM115
+        except FileNotFoundError:
+            print(f"Error: file not found: {args.file}", file=sys.stderr)
+            return None
+    else:
+        if sys.stdin.isatty():
+            print("Error: no input provided. Pipe text to stdin or use --file.", file=sys.stderr)
+            return None
+        return sys.stdin
+
+
+def _run_batch(
+    pipeline: "ReflectivePipeline",
+    stream: "typing.TextIO",
+) -> int:
+    """Process JSONL lines from *stream*, print one JSON result per line, return exit code."""
+    worst = 0
+    for raw_line in stream:
+        line = raw_line.rstrip("\n\r")
+        if not line:
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError as exc:
+            print(json.dumps({"status": "error", "error_message": f"invalid JSON: {exc}"}))
+            worst = 3
+            continue
+
+        if not isinstance(record, dict) or "text" not in record:
+            print(json.dumps({"status": "error", "error_message": "missing \"text\" key"}))
+            worst = 3
+            continue
+
+        try:
+            result = pipeline.extract(record["text"])
+        except Exception as exc:  # noqa: BLE001
+            print(json.dumps({"status": "error", "error_message": str(exc)}))
+            worst = 3
+            continue
+
+        print(json.dumps(result.model_dump()))
+
+        if result.status == "needs_review" and worst < 3:
+            worst = max(worst, 1)
+    return worst
+
+
 def run_extract(argv: list[str] | None = None) -> int:
     """Parse args, run the pipeline, print JSON to stdout, return exit code."""
     parser = _build_extract_parser()
     args = parser.parse_args(argv)
+
+    if args.batch:
+        return _run_extract_batch(args)
 
     text = _read_text(args)
     if text is None:
@@ -113,6 +175,31 @@ def run_extract(argv: list[str] | None = None) -> int:
     if result.status == "ok":
         return 0
     return 1
+
+
+def _run_extract_batch(args: argparse.Namespace) -> int:
+    """Batch mode: build pipeline once, process JSONL stream, return worst exit code."""
+    from reflect_mcp.pipeline import build_default_pipeline  # noqa: PLC0415
+
+    stream = _read_input_stream(args)
+    if stream is None:
+        return 2
+
+    try:
+        gate_config = _build_gate_config(args)
+        if gate_config:
+            pipeline = build_default_pipeline(gate_config=gate_config)
+        else:
+            pipeline = build_default_pipeline()
+    except Exception as exc:  # noqa: BLE001
+        print(json.dumps({"status": "error", "error_message": str(exc)}))
+        return 3
+
+    try:
+        return _run_batch(pipeline, stream)
+    finally:
+        if stream is not sys.stdin:
+            stream.close()
 
 
 def run_validate(argv: list[str] | None = None) -> int:

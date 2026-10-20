@@ -25,7 +25,7 @@ tool surface, small deps, MIT, publication-safe.
 | 5 | Eval as a CLI verb: `reflect-mcp eval [--live] [--min-accuracy N]` | Med | Low | QUEUED |
 | 6 | Configurable confidence thresholds via env vars / CLI flags | Med | Low | PARTIAL (iter 17: CLI flags) |
 | 7 | Schema extensibility: user-defined Pydantic models beyond InvoiceData | High | Med | QUEUED |
-| 8 | Batch extraction: process multiple inputs in one invocation | Med | Med | QUEUED |
+| 8 | Batch extraction: process multiple inputs in one invocation | Med | Med | DONE (iter 29) |
 | 9 | Reuse SDK clients across calls: move client construction to `__init__` | Med | Low | DONE (iter 03) |
 
 ## Done ledger
@@ -37,3 +37,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 16 — critic_summary in README tool-return table + schema-docs drift-detection test
 - iter 17 — CLI `--field-threshold` / `--overall-threshold` flags for confidence-gate control
 - iter 19 — Generator/Critic retry with configurable back-off on JSON parse failure
+- iter 29 — Batch extraction: `--batch` JSONL mode for multi-document processing

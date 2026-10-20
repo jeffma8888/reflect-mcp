@@ -102,12 +102,19 @@ echo "ACME CORP, Invoice #INV-1001, Total: \$108.50" | reflect-mcp extract
 reflect-mcp extract --file invoice.txt
 reflect-mcp extract --field-threshold 0.85 --overall-threshold 0.80 --file invoice.txt
 
+# batch extract: process a corpus as JSONL (one {"text": "..."} per line)
+cat invoices.jsonl | reflect-mcp extract --batch
+reflect-mcp extract --batch --file invoices.jsonl
+reflect-mcp extract --batch --field-threshold 0.85 --overall-threshold 0.80
+
 # validate: verify pre-extracted data (no Generator, Critic + heuristics + gate only)
 reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP","total":108.5}'
 reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --field-threshold 0.5
 ```
 
 Exit codes (both verbs): **0** = `ok`, **1** = `needs_review`, **2** = usage/input error, **3** = pipeline error (JSON error envelope on stdout).
+
+**Batch mode** (`--batch`): reads JSONL from stdin or `--file`, emits one JSON result per line to stdout, reuses the pipeline across all lines. Exit code is the worst severity across all lines (error 3 > needs_review 1 > ok 0). Malformed lines and per-line extraction failures emit `{"status":"error","error_message":"..."}` without aborting the batch.
 
 The bare `reflect-mcp` command (no subcommand) still starts the MCP server.
 
@@ -173,7 +180,7 @@ The flagship test is `tests/test_critic_catches_error.py`: the Generator is fed 
 
 ## 10. What I'd productionize next
 
-- **Batching + caching** of Generator/Critic calls; per-request cost/latency budgets.
+- **Caching** of Generator/Critic calls; per-request cost/latency budgets.
 - A real **human-review queue** (persist `needs_review` payloads, route to a reviewer UI, feed corrections back as new golden examples).
 - **Offline eval in CI** on every PR (the `make eval` gate is already CI-shaped) plus periodic **live** eval to catch model drift.
 - **Confidence calibration** — replace hand-set thresholds with thresholds tuned on the labeled set to hit a target precision.
