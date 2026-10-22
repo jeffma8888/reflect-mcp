@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-37
+    lenses: unknown
+    - Candidate A1 -- CLI boundary validation for threshold and concurrency flags
+    - Candidate A2 -- `make typecheck` target with mypy strict mode (Roadmap #4)
+    - Candidate A3 -- Input-size guard to catch oversized documents before hitting the provider
+    - Candidate B1 -- Module-level `extract()` and `validate()` convenience functions
+    - Candidate B2 -- Top-level `--help` subcommand listing and `--version` flag
+    - Candidate B3 -- `--data-file` flag for the validate verb
+    winner: B2
+    ship: pending (not yet decided)
   iter-36
     lenses: unknown
     - Candidate A1 -- Heuristic-only verification mode (`--no-critic` flag)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Thread-safe logger initialization (fix double-logging under concurrency)
     - Candidate B3 -- Export ProvenanceSpan from public API + py.typed marker + API completeness test
     winner: B3
-    ship: pending
+    ship: PUSHED 85db17f
   iter-35
     lenses: unknown
     - Candidate A1 -- Fix "Three roles" count in README §6 and add architecture-count drift test
@@ -121,4 +131,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-12 scouted iterations
+13 scouted iterations

@@ -97,6 +97,11 @@ When `status == "needs_review"`, do **not** use `data` blindly — confirm the f
 For scripting, CI pipelines, or batch processing without an MCP client:
 
 ```bash
+# discover subcommands and flags
+reflect-mcp --help
+reflect-mcp --version
+reflect-mcp extract --help
+
 # extract: generate + verify
 echo "ACME CORP, Invoice #INV-1001, Total: \$108.50" | reflect-mcp extract
 reflect-mcp extract --file invoice.txt
@@ -209,7 +214,7 @@ reflect-mcp/
 │   ├── prompts/           # versioned generator.txt / critic.txt
 │   ├── server.py          # FastMCP server exposing `extract` and `validate` tools
 │   ├── cli.py             # CLI entry points: `reflect-mcp extract` / `validate`
-│   └── __main__.py        # dispatch: extract/validate → cli, bare → server
+│   └── __main__.py        # argparse dispatch: --help/--version/subcommands → cli, bare → server
 ├── eval/
 │   ├── golden/dataset.jsonl   # labeled golden examples
 │   ├── fixtures/replay.json   # recorded model outputs for offline eval

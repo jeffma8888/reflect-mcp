@@ -219,7 +219,11 @@ def run_extract(argv: list[str] | None = None) -> int:
     """Parse args, run the pipeline, print JSON to stdout, return exit code."""
     parser = _build_extract_parser()
     args = parser.parse_args(argv)
+    return run_extract_from_args(args)
 
+
+def run_extract_from_args(args: argparse.Namespace) -> int:
+    """Run extract from a pre-parsed *args* namespace, return exit code."""
     if args.batch_concurrency is not None and not args.batch:
         print(
             "Error: --batch-concurrency requires --batch.",
@@ -303,7 +307,11 @@ def run_validate(argv: list[str] | None = None) -> int:
     """Parse args, validate pre-extracted data, print JSON to stdout, return exit code."""
     parser = _build_validate_parser()
     args = parser.parse_args(argv)
+    return run_validate_from_args(args)
 
+
+def run_validate_from_args(args: argparse.Namespace) -> int:
+    """Run validate from a pre-parsed *args* namespace, return exit code."""
     text = _read_text(args)
     if text is None:
         return 2

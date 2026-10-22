@@ -48,7 +48,8 @@ def test_main_dispatches_extract() -> None:
     import sys
     from unittest.mock import patch
 
-    with patch("reflect_mcp.cli.run_extract", return_value=0) as mock_run:
+    with patch("reflect_mcp.cli.run_extract_from_args") as mock_run:
+        mock_run.return_value = 0
         with patch.object(sys, "argv", ["reflect-mcp", "extract", "--file", "f.txt"]):
             from reflect_mcp.__main__ import main
 
@@ -56,4 +57,7 @@ def test_main_dispatches_extract() -> None:
                 main()
             except SystemExit as exc:
                 assert exc.code == 0
-            mock_run.assert_called_once_with(["--file", "f.txt"])
+            mock_run.assert_called_once()
+            ns = mock_run.call_args[0][0]
+            assert ns.file == "f.txt"
+            assert ns.command == "extract"
