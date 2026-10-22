@@ -28,6 +28,7 @@ tool surface, small deps, MIT, publication-safe.
 | 8 | Batch extraction: process multiple inputs in one invocation | Med | Med | DONE (iter 29) |
 | 10 | Concurrent batch processing: `--batch-concurrency N` thread pool | Med | Low | DONE (iter 34) |
 | 11 | Field-level provenance spans in ExtractionResult | High | Low | DONE (iter 35) |
+| 12 | Export ProvenanceSpan + PEP 561 py.typed marker | Med | Low | DONE (iter 36) |
 | 9 | Reuse SDK clients across calls: move client construction to `__init__` | Med | Low | DONE (iter 03) |
 
 ## Done ledger
@@ -42,3 +43,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 29 — Batch extraction: `--batch` JSONL mode for multi-document processing
 - iter 34 — Concurrent batch processing: `--batch-concurrency N` thread pool for overlapping LLM calls
 - iter 35 — Field-level provenance spans: character-offset evidence linking extracted values to source text
+- iter 36 — Export ProvenanceSpan from public API + PEP 561 py.typed marker for typed package consumers

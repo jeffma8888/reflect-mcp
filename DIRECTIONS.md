@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-36
+    lenses: unknown
+    - Candidate A1 -- Heuristic-only verification mode (`--no-critic` flag)
+    - Candidate A2 -- Confidence calibration verb (`reflect-mcp calibrate`)
+    - Candidate A3 -- Schema introspection verb (`reflect-mcp schema`)
+    - Candidate B1 -- CLI boundary validation for threshold and concurrency flags
+    - Candidate B2 -- Thread-safe logger initialization (fix double-logging under concurrency)
+    - Candidate B3 -- Export ProvenanceSpan from public API + py.typed marker + API completeness test
+    winner: B3
+    ship: pending
   iter-35
     lenses: unknown
     - Candidate A1 -- Fix "Three roles" count in README §6 and add architecture-count drift test
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Confidence calibration verb: tune thresholds from labeled data
     - Candidate B3 -- Field-level provenance spans in ExtractionResult
     winner: B3
-    ship: pending (not yet decided)
+    ship: PUSHED e613b05
   iter-34
     lenses: unknown
     - Candidate A1 — Cache MCP server pipeline instance across tool invocations
@@ -111,4 +121,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-11 scouted iterations
+12 scouted iterations

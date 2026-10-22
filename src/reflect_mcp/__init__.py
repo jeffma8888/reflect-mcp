@@ -10,6 +10,7 @@ from reflect_mcp.schema import (
     CritiqueResult,
     FieldVerdict,
     FlaggedField,
+    ProvenanceSpan,
     ExtractionResult,
     EXTRACTION_FIELDS,
 )
@@ -25,6 +26,7 @@ __all__ = [
     "CritiqueResult",
     "FieldVerdict",
     "FlaggedField",
+    "ProvenanceSpan",
     "ExtractionResult",
     "EXTRACTION_FIELDS",
     "ReflectivePipeline",
