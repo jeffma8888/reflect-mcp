@@ -26,6 +26,7 @@ tool surface, small deps, MIT, publication-safe.
 | 6 | Configurable confidence thresholds via env vars / CLI flags | Med | Low | PARTIAL (iter 17: CLI flags) |
 | 7 | Schema extensibility: user-defined Pydantic models beyond InvoiceData | High | Med | QUEUED |
 | 8 | Batch extraction: process multiple inputs in one invocation | Med | Med | DONE (iter 29) |
+| 10 | Concurrent batch processing: `--batch-concurrency N` thread pool | Med | Low | DONE (iter 34) |
 | 9 | Reuse SDK clients across calls: move client construction to `__init__` | Med | Low | DONE (iter 03) |
 
 ## Done ledger
@@ -38,3 +39,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 17 — CLI `--field-threshold` / `--overall-threshold` flags for confidence-gate control
 - iter 19 — Generator/Critic retry with configurable back-off on JSON parse failure
 - iter 29 — Batch extraction: `--batch` JSONL mode for multi-document processing
+- iter 34 — Concurrent batch processing: `--batch-concurrency N` thread pool for overlapping LLM calls

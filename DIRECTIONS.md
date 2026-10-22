@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-34
+    lenses: unknown
+    - Candidate A1 — Cache MCP server pipeline instance across tool invocations
+    - Candidate A2 — Run heuristics concurrently with the Critic LLM call
+    - Candidate A3 — Concurrent batch processing: overlap LLM calls across JSONL lines
+    - Candidate B1 — Fix "Three roles" count mismatch in README §6
+    - Candidate B2 — Correct TL;DR ASCII diagram to show the sequential 4-stage pipeline
+    - Candidate B3 — Document retry semantics in §9 Design Decisions + drift test
+    winner: A3
+    ship: pending (not yet decided)
   iter-29
     lenses: unknown
     - Candidate A1 -- Design-decisions section: document retry semantics and gate arithmetic
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Batch extraction via JSONL I/O
     - Candidate B3 -- `reflect-mcp diff` verb: compare two extraction results
     winner: B2
-    ship: pending (not yet decided)
+    ship: PUSHED a606c0a
   iter-19
     lenses: unknown
     - Candidate A1 — Top-level `--help` and `--version` for the CLI entry point
@@ -91,4 +101,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-9 scouted iterations
+10 scouted iterations

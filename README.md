@@ -107,6 +107,9 @@ cat invoices.jsonl | reflect-mcp extract --batch
 reflect-mcp extract --batch --file invoices.jsonl
 reflect-mcp extract --batch --field-threshold 0.85 --overall-threshold 0.80
 
+# concurrent batch: overlap LLM calls across documents (4 workers)
+cat invoices.jsonl | reflect-mcp extract --batch --batch-concurrency 4
+
 # validate: verify pre-extracted data (no Generator, Critic + heuristics + gate only)
 reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP","total":108.5}'
 reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --field-threshold 0.5
@@ -114,7 +117,7 @@ reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --f
 
 Exit codes (both verbs): **0** = `ok`, **1** = `needs_review`, **2** = usage/input error, **3** = pipeline error (JSON error envelope on stdout).
 
-**Batch mode** (`--batch`): reads JSONL from stdin or `--file`, emits one JSON result per line to stdout, reuses the pipeline across all lines. Exit code is the worst severity across all lines (error 3 > needs_review 1 > ok 0). Malformed lines and per-line extraction failures emit `{"status":"error","error_message":"..."}` without aborting the batch.
+**Batch mode** (`--batch`): reads JSONL from stdin or `--file`, emits one JSON result per line to stdout, reuses the pipeline across all lines. Exit code is the worst severity across all lines (error 3 > needs_review 1 > ok 0). Malformed lines and per-line extraction failures emit `{"status":"error","error_message":"..."}` without aborting the batch. Add `--batch-concurrency N` (N > 1) to process documents concurrently via a thread pool; each worker builds its own pipeline instance so SDK clients are never shared across threads. Output order is always preserved.
 
 The bare `reflect-mcp` command (no subcommand) still starts the MCP server.
 
