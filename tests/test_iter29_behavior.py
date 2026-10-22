@@ -126,7 +126,7 @@ class TestEB1BatchReadsJSONL:
         results = _parse_output_lines(stdout)
         expected_keys = {
             "status", "data", "field_confidence", "overall_confidence",
-            "flagged_fields", "critic_summary", "trace_id", "notes",
+            "flagged_fields", "field_provenance", "critic_summary", "trace_id", "notes",
         }
         assert expected_keys == set(results[0].keys())
 

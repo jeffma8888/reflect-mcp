@@ -19,7 +19,7 @@ import re
 from dataclasses import dataclass, field as dc_field
 from datetime import date
 
-from reflect_mcp.schema import EXTRACTION_FIELDS, InvoiceData
+from reflect_mcp.schema import EXTRACTION_FIELDS, InvoiceData, ProvenanceSpan
 
 # Fields we can meaningfully ground by substring search in the source.
 _TEXT_GROUNDED_FIELDS = {"vendor_name", "invoice_number", "currency"}
@@ -34,6 +34,7 @@ class HeuristicReport:
 
     factors: dict[str, float] = dc_field(default_factory=dict)
     reasons: dict[str, list[str]] = dc_field(default_factory=dict)
+    provenance: dict[str, list[ProvenanceSpan]] = dc_field(default_factory=dict)
 
     def penalize(self, field: str, factor: float, reason: str) -> None:
         # keep the harshest factor seen for a field
@@ -51,16 +52,27 @@ def _normalize(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip().lower()
 
 
-def _number_in_text(value: float, text: str) -> bool:
-    # Match 1234.5, 1,234.50, 1234, etc. Compare on the numeric value.
-    candidates = re.findall(r"\d[\d,]*\.?\d*", text)
-    for c in candidates:
+def _find_text_span(value: str, original_text: str) -> ProvenanceSpan | None:
+    """Case-insensitive search for *value* in the original (un-normalized) text."""
+    pos = original_text.lower().find(value.lower())
+    if pos == -1:
+        return None
+    return ProvenanceSpan(start=pos, end=pos + len(value))
+
+
+def _find_number_span(value: float, text: str) -> ProvenanceSpan | None:
+    """Find the first numeric token in *text* whose value matches."""
+    for m in re.finditer(r"\d[\d,]*\.?\d*", text):
         try:
-            if abs(float(c.replace(",", "")) - value) < 0.005:
-                return True
+            if abs(float(m.group().replace(",", "")) - value) < 0.005:
+                return ProvenanceSpan(start=m.start(), end=m.end())
         except ValueError:
             continue
-    return False
+    return None
+
+
+def _number_in_text(value: float, text: str) -> bool:
+    return _find_number_span(value, text) is not None
 
 
 def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
@@ -71,15 +83,23 @@ def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
     for field in EXTRACTION_FIELDS:
         value = getattr(data, field)
         if value is None:
-            # A null is an honest abstention -- no structural penalty here.
             continue
 
         if field in _TEXT_GROUNDED_FIELDS:
-            if _normalize(str(value)) not in norm_text:
-                report.penalize(field, 0.25, f"value {value!r} not found in source text")
+            span = _find_text_span(str(value), text)
+            if span is not None:
+                report.provenance[field] = [span]
+            else:
+                report.provenance[field] = []
+                if _normalize(str(value)) not in norm_text:
+                    report.penalize(field, 0.25, f"value {value!r} not found in source text")
 
         if field in _NUMERIC_FIELDS:
-            if not _number_in_text(float(value), text):
+            span = _find_number_span(float(value), text)
+            if span is not None:
+                report.provenance[field] = [span]
+            else:
+                report.provenance[field] = []
                 report.penalize(field, 0.35, f"amount {value} not found in source text")
 
         if field == "invoice_date":

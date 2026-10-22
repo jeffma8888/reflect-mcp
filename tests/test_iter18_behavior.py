@@ -126,7 +126,7 @@ class TestEB1ValidateProducesExtractionResult:
         parsed = json.loads(stdout)
         expected_keys = {
             "status", "data", "field_confidence", "overall_confidence",
-            "flagged_fields", "critic_summary", "trace_id", "notes",
+            "flagged_fields", "field_provenance", "critic_summary", "trace_id", "notes",
         }
         assert expected_keys == set(parsed.keys())
 
@@ -388,7 +388,7 @@ class TestEB6MCPValidateTool:
         assert result.status in ("ok", "needs_review")
         expected_keys = {
             "status", "data", "field_confidence", "overall_confidence",
-            "flagged_fields", "critic_summary", "trace_id", "notes",
+            "flagged_fields", "field_provenance", "critic_summary", "trace_id", "notes",
         }
         assert expected_keys == set(result.model_dump().keys())
 

@@ -100,6 +100,7 @@ def decide(
         field_confidence=field_confidence,
         overall_confidence=critique.overall_confidence,
         flagged_fields=flagged,
+        field_provenance=heuristics.provenance,
         trace_id=trace_id,
         critic_summary=critique.summary,
         notes=notes,

@@ -115,14 +115,14 @@ class TestDriftDetection:
 
     def test_schema_has_expected_field_count(self):
         schema_fields = set(ExtractionResult.model_fields.keys())
-        assert len(schema_fields) == 8, (
-            f"Expected 8 ExtractionResult fields, got {len(schema_fields)}: {schema_fields}"
+        assert len(schema_fields) == 9, (
+            f"Expected 9 ExtractionResult fields, got {len(schema_fields)}: {schema_fields}"
         )
 
     def test_docstring_has_expected_field_count(self):
         doc_fields = _docstring_field_names()
-        assert len(doc_fields) == 8, (
-            f"Expected 8 documented fields, got {len(doc_fields)}: {doc_fields}"
+        assert len(doc_fields) == 9, (
+            f"Expected 9 documented fields, got {len(doc_fields)}: {doc_fields}"
         )
 
 

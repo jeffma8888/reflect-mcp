@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-35
+    lenses: unknown
+    - Candidate A1 -- Fix "Three roles" count in README §6 and add architecture-count drift test
+    - Candidate A2 -- Document retry semantics in README §9 Design Decisions + drift test
+    - Candidate A3 -- Update §10 "What I'd productionize next" to remove shipped items + staleness guard
+    - Candidate B1 -- Schema extensibility: accept a user-supplied Pydantic model
+    - Candidate B2 -- Confidence calibration verb: tune thresholds from labeled data
+    - Candidate B3 -- Field-level provenance spans in ExtractionResult
+    winner: B3
+    ship: pending (not yet decided)
   iter-34
     lenses: unknown
     - Candidate A1 — Cache MCP server pipeline instance across tool invocations
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 — Correct TL;DR ASCII diagram to show the sequential 4-stage pipeline
     - Candidate B3 — Document retry semantics in §9 Design Decisions + drift test
     winner: A3
-    ship: pending (not yet decided)
+    ship: PUSHED 8e9e658
   iter-29
     lenses: unknown
     - Candidate A1 -- Design-decisions section: document retry semantics and gate arithmetic
@@ -101,4 +111,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-10 scouted iterations
+11 scouted iterations

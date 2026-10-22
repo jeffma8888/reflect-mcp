@@ -87,7 +87,7 @@ Then restart Claude Desktop and ask it to *"extract the invoice fields from this
 
 | Tool | Args | Returns |
 | --- | --- | --- |
-| `extract` | `text: str`, `field_threshold=0.70`, `overall_threshold=0.75` | `{ status, data, field_confidence, overall_confidence, flagged_fields, critic_summary, trace_id, notes }` |
+| `extract` | `text: str`, `field_threshold=0.70`, `overall_threshold=0.75` | `{ status, data, field_confidence, overall_confidence, flagged_fields, field_provenance, critic_summary, trace_id, notes }` |
 | `validate` | `text: str`, `data: dict`, `field_threshold=0.70`, `overall_threshold=0.75` | Same `ExtractionResult` envelope as `extract` |
 
 When `status == "needs_review"`, do **not** use `data` blindly — confirm the fields in `flagged_fields` first.

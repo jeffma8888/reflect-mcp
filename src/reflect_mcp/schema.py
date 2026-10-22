@@ -67,6 +67,13 @@ class FlaggedField(BaseModel):
     reason: str
 
 
+class ProvenanceSpan(BaseModel):
+    """Character-offset span locating an extracted value in the source text."""
+
+    start: int
+    end: int
+
+
 class ExtractionResult(BaseModel):
     """What the `extract` tool returns.
 
@@ -80,6 +87,7 @@ class ExtractionResult(BaseModel):
     field_confidence: dict[str, float] = Field(default_factory=dict)
     overall_confidence: float
     flagged_fields: list[FlaggedField] = Field(default_factory=list)
+    field_provenance: dict[str, list[ProvenanceSpan]] = Field(default_factory=dict)
     trace_id: str
     critic_summary: str = ""
     notes: str = ""

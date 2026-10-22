@@ -54,3 +54,33 @@ def test_null_fields_are_not_penalized():
     report = run_heuristics(SOURCE, data)
     for f in ("subtotal", "tax", "total", "currency", "invoice_date"):
         assert report.factor_for(f) == 1.0
+
+
+# --- Provenance span tests (engineer-owned) ---
+
+
+def test_text_grounded_field_gets_correct_span():
+    report = run_heuristics(SOURCE, _good())
+    spans = report.provenance.get("vendor_name", [])
+    assert len(spans) == 1
+    assert SOURCE[spans[0].start : spans[0].end] == "ACME CORP"
+
+
+def test_numeric_field_gets_correct_span():
+    report = run_heuristics(SOURCE, _good())
+    spans = report.provenance.get("total", [])
+    assert len(spans) == 1
+    assert SOURCE[spans[0].start : spans[0].end] == "108.50"
+
+
+def test_ungrounded_field_gets_empty_provenance():
+    data = _good()
+    data.vendor_name = "Hallucinated Inc"
+    report = run_heuristics(SOURCE, data)
+    assert report.provenance.get("vendor_name") == []
+
+
+def test_null_field_has_no_provenance():
+    data = InvoiceData(vendor_name="ACME CORP")
+    report = run_heuristics(SOURCE, data)
+    assert "subtotal" not in report.provenance

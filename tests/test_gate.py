@@ -80,3 +80,11 @@ def test_custom_thresholds_are_respected():
     permissive = GateConfig(field_threshold=0.5, overall_threshold=0.5)
     result = decide(_data(), crit, run_heuristics(SOURCE, _data()), "t6", permissive)
     assert result.status == "ok"
+
+
+def test_decide_propagates_provenance():
+    result = decide(_data(), _critique(), run_heuristics(SOURCE, _data()), "t7")
+    assert "vendor_name" in result.field_provenance
+    spans = result.field_provenance["vendor_name"]
+    assert len(spans) == 1
+    assert SOURCE[spans[0].start : spans[0].end] == "ACME CORP"
