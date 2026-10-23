@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-38
+    lenses: unknown
+    - Candidate A1 -- Module-level `extract()` and `validate()` convenience functions
+    - Candidate A2 -- Machine-readable exit-code contract documentation and `--output-format` flag
+    - Candidate A3 -- `reflect-mcp eval` CLI verb (Roadmap #5)
+    - Candidate B1 -- Collapse dual-parser _add_common_args into single shared definition
+    - Candidate B2 -- Collapse _run_batch serial path into _process_one_line
+    - Candidate B3 -- Delete test-only run_extract/run_validate wrappers and their standalone parsers
+    winner: B2
+    ship: pending (not yet decided)
   iter-37
     lenses: unknown
     - Candidate A1 -- CLI boundary validation for threshold and concurrency flags
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Top-level `--help` subcommand listing and `--version` flag
     - Candidate B3 -- `--data-file` flag for the validate verb
     winner: B2
-    ship: pending (not yet decided)
+    ship: PUSHED 46d5235
   iter-36
     lenses: unknown
     - Candidate A1 -- Heuristic-only verification mode (`--no-critic` flag)
@@ -131,4 +141,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-13 scouted iterations
+14 scouted iterations

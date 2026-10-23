@@ -31,6 +31,7 @@ tool surface, small deps, MIT, publication-safe.
 | 12 | Export ProvenanceSpan + PEP 561 py.typed marker | Med | Low | DONE (iter 36) |
 | 9 | Reuse SDK clients across calls: move client construction to `__init__` | Med | Low | DONE (iter 03) |
 | 13 | Top-level `--help` subcommand listing and `--version` flag | Med | Low | DONE (iter 37) |
+| 14 | Collapse `_run_batch` serial path into `_process_one_line` | Low | Low | DONE (iter 38) |
 
 ## Done ledger
 
@@ -46,3 +47,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 35 — Field-level provenance spans: character-offset evidence linking extracted values to source text
 - iter 36 — Export ProvenanceSpan from public API + PEP 561 py.typed marker for typed package consumers
 - iter 37 — Top-level `--help` subcommand listing and `--version` flag via argparse dispatch
+- iter 38 — Collapse `_run_batch` serial path into `_process_one_line` (single-source per-line contract)

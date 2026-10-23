@@ -121,31 +121,13 @@ def _run_batch(
     """Process JSONL lines from *stream*, print one JSON result per line, return exit code."""
     worst = 0
     for raw_line in stream:
-        line = raw_line.rstrip("\n\r")
-        if not line:
+        if not raw_line.rstrip("\n\r"):
             continue
-        try:
-            record = json.loads(line)
-        except json.JSONDecodeError as exc:
-            print(json.dumps({"status": "error", "error_message": f"invalid JSON: {exc}"}))
+        output_json, code = _process_one_line(pipeline, raw_line)
+        print(output_json)
+        if code == 3:
             worst = 3
-            continue
-
-        if not isinstance(record, dict) or "text" not in record:
-            print(json.dumps({"status": "error", "error_message": "missing \"text\" key"}))
-            worst = 3
-            continue
-
-        try:
-            result = pipeline.extract(record["text"])
-        except Exception as exc:  # noqa: BLE001
-            print(json.dumps({"status": "error", "error_message": str(exc)}))
-            worst = 3
-            continue
-
-        print(json.dumps(result.model_dump()))
-
-        if result.status == "needs_review" and worst < 3:
+        elif code == 1 and worst < 3:
             worst = max(worst, 1)
     return worst
 
