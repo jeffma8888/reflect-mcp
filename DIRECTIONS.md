@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-40
+    lenses: unknown
+    - Candidate A1 -- Cache MCP server pipeline instance across tool invocations
+    - Candidate A2 -- Precompute lowered text once in run_heuristics
+    - Candidate A3 -- Streaming concurrent batch to cap peak memory at O(concurrency)
+    - Candidate B1 -- Python library usage section in README
+    - Candidate B2 -- §9 Design Decisions for batch-mode architecture
+    - Candidate B3 -- Refresh §10 "What I'd productionize next" + staleness guard
+    winner: B1
+    ship: pending (not yet decided)
   iter-38
     lenses: unknown
     - Candidate A1 -- Module-level `extract()` and `validate()` convenience functions
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Collapse _run_batch serial path into _process_one_line
     - Candidate B3 -- Delete test-only run_extract/run_validate wrappers and their standalone parsers
     winner: B2
-    ship: pending (not yet decided)
+    ship: PUSHED 82cefee
   iter-37
     lenses: unknown
     - Candidate A1 -- CLI boundary validation for threshold and concurrency flags
@@ -141,4 +151,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-14 scouted iterations
+15 scouted iterations

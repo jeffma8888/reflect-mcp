@@ -126,7 +126,67 @@ Exit codes (both verbs): **0** = `ok`, **1** = `needs_review`, **2** = usage/inp
 
 The bare `reflect-mcp` command (no subcommand) still starts the MCP server.
 
-## 6. Architecture
+## 6. Use as a Python library
+
+Install `reflect-mcp` as a dependency and import directly — the package ships a `py.typed` marker for full type-checker support.
+
+### Full extraction pipeline
+
+```python
+from reflect_mcp import build_default_pipeline, GateConfig, ExtractionResult
+
+pipeline = build_default_pipeline(
+    gate_config=GateConfig(field_threshold=0.80, overall_threshold=0.85),
+)
+result: ExtractionResult = pipeline.extract("ACME Corp, Invoice #A-99, total $250.00")
+
+if result.status == "needs_review":
+    for flag in result.flagged_fields:        # list[FlaggedField]
+        print(f"{flag.field}: {flag.reason}")
+else:
+    print(result.data.vendor_name)            # InvoiceData fields
+```
+
+`build_default_pipeline` reads `REFLECT_PROVIDER` / `REFLECT_GENERATOR_MODEL` / `REFLECT_CRITIC_MODEL` from the environment and returns a `ReflectivePipeline`. You can also construct one manually with your own `Generator` and `Critic` instances (useful for testing with `ScriptedLLMClient`).
+
+### Gate-only verification
+
+If you already have extracted data and just need the confidence gate:
+
+```python
+from reflect_mcp import (
+    decide,
+    GateConfig,
+    InvoiceData,
+    CritiqueResult,
+    FieldVerdict,
+)
+from reflect_mcp.heuristics import run_heuristics
+
+data = InvoiceData(vendor_name="ACME Corp", total=250.0, currency="USD")
+critique = CritiqueResult(
+    field_verdicts=[FieldVerdict(field="total", confidence=0.95, grounded=True)],
+    overall_confidence=0.92,
+)
+heuristics = run_heuristics("ACME Corp, total $250.00", data)
+result = decide(data, critique, heuristics, trace_id="demo")
+```
+
+### Exported symbols
+
+The public API (`reflect_mcp.__all__`) exposes:
+
+| Category | Symbols |
+| --- | --- |
+| Schema models | `InvoiceData`, `CritiqueResult`, `FieldVerdict`, `FlaggedField`, `ProvenanceSpan`, `ExtractionResult`, `EXTRACTION_FIELDS` |
+| Pipeline | `ReflectivePipeline`, `build_default_pipeline` |
+| Generator | `Generator`, `GeneratorError` |
+| Critic | `Critic`, `CriticError` |
+| Gate | `GateConfig`, `decide` |
+
+All models are Pydantic `BaseModel` subclasses. Errors (`GeneratorError`, `CriticError`) are raised on parse failures after retries are exhausted.
+
+## 7. Architecture
 
 Three roles, one shared trace id, clean layering (`resolver`-free by design — the pipeline has no infra dependency):
 
@@ -137,7 +197,7 @@ Three roles, one shared trace id, clean layering (`resolver`-free by design — 
 
 The `extract` tool (`server.py`) is the only module that imports the `mcp` SDK, and `providers.py` is the only module that imports a provider SDK — so the core pipeline and the entire test suite have **zero** hard dependency on either.
 
-## 7. Evaluation
+## 8. Evaluation
 
 A tiny golden-file eval treats LLM quality as **measurable, not vibes**. `eval/golden/dataset.jsonl` holds labeled messy-text → expected-fields examples; `eval/run_eval.py` runs the full pipeline over them and reports field accuracy, exact-match accuracy, needs-review rate, and *exactly where it fails*.
 
@@ -165,7 +225,7 @@ PASS: field accuracy 97.1% >= required 90.0%
 
 `make eval` exits non-zero below `--min-accuracy` (default 0.90), so it works as an **offline eval-CI gate** with no secrets.
 
-## 8. Testing
+## 9. Testing
 
 Deterministic tests around a stochastic core. The single LLM boundary (`LLMClient`) is mocked with a `ScriptedLLMClient` that returns canned JSON and raises if it's ever asked for more than expected — so `pytest` runs **fully offline, with no API keys, and can't leak a real call**.
 
@@ -177,7 +237,7 @@ make cov           # with coverage
 
 The flagship test is `tests/test_critic_catches_error.py`: the Generator is fed a deliberately wrong value (`vendor_name = "Invoice"` — a word that *does* appear in the source, so the deterministic grounding check can't catch it), and the test asserts the **second-model Critic** catches it and the gate routes to `needs_review`. It also flips only the Critic's verdict and shows the decision flip to `ok` — proving the verification step is doing real work, not the plumbing.
 
-## 9. Design decisions
+## 10. Design decisions
 
 - **Second-model Critic (multi-model reflection), not self-critique.** The Critic defaults to a *different, cheaper* model than the Generator (`sonnet` generates, `haiku` critiques). Cross-model disagreement is a real signal; same-model self-review is mostly agreement theater.
 - **Provider switching via env var.** `REFLECT_PROVIDER` selects `anthropic` | `openai` | `bedrock`, so a reviewer runs it against whatever key they have. The **Bedrock (Claude)** path is there for AWS users; the public-API paths (Anthropic/OpenAI) let anyone try it without AWS. Provider SDKs are optional extras (`pip install 'reflect-mcp[anthropic]'`) and imported lazily.
@@ -186,7 +246,7 @@ The flagship test is `tests/test_critic_catches_error.py`: the Generator is fed 
 - **Prompt versioning + injection awareness.** Prompts live in versioned files (`src/reflect_mcp/prompts/`). Both instruct the model to treat document content as **data, not commands** — the source text is untrusted input, a basic prompt-injection guard.
 - **Observability.** Every stage emits a structured JSON log line carrying a shared `trace_id`, so one extraction is greppable end to end.
 
-## 10. What I'd productionize next
+## 11. What I'd productionize next
 
 - **Caching** of Generator/Critic calls; per-request cost/latency budgets.
 - A real **human-review queue** (persist `needs_review` payloads, route to a reviewer UI, feed corrections back as new golden examples).

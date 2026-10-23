@@ -32,6 +32,7 @@ tool surface, small deps, MIT, publication-safe.
 | 9 | Reuse SDK clients across calls: move client construction to `__init__` | Med | Low | DONE (iter 03) |
 | 13 | Top-level `--help` subcommand listing and `--version` flag | Med | Low | DONE (iter 37) |
 | 14 | Collapse `_run_batch` serial path into `_process_one_line` | Low | Low | DONE (iter 38) |
+| 15 | README "Use as a Python library" section + API-completeness drift test | Med | Low | DONE (iter 40) |
 
 ## Done ledger
 
@@ -48,3 +49,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 36 — Export ProvenanceSpan from public API + PEP 561 py.typed marker for typed package consumers
 - iter 37 — Top-level `--help` subcommand listing and `--version` flag via argparse dispatch
 - iter 38 — Collapse `_run_batch` serial path into `_process_one_line` (single-source per-line contract)
+- iter 40 — README "Use as a Python library" section with full-pipeline and gate-only examples + API-completeness drift test
