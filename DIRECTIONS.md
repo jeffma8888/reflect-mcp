@@ -1,6 +1,15 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-41
+    lenses: unknown
+    - Candidates
+    - Candidate B1 -- Schema extensibility: user-supplied Pydantic model via `--schema`
+    - Candidate B2 -- Heuristic-only verification mode (`--heuristics-only` flag)
+    - Candidate B3 -- `reflect-mcp eval` CLI verb (Roadmap #5)
+    stubs: 1 of 4 candidate line(s) are write-early placeholders, not measured candidates
+    winner: B2
+    ship: pending (not yet decided)
   iter-40
     lenses: unknown
     - Candidate A1 -- Cache MCP server pipeline instance across tool invocations
@@ -10,7 +19,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- §9 Design Decisions for batch-mode architecture
     - Candidate B3 -- Refresh §10 "What I'd productionize next" + staleness guard
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 546ce98
   iter-38
     lenses: unknown
     - Candidate A1 -- Module-level `extract()` and `validate()` convenience functions
@@ -151,4 +160,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-15 scouted iterations
+16 scouted iterations

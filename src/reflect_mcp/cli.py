@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
-    """Add --file and threshold flags shared by extract and validate."""
+    """Add --file, threshold, and heuristics-only flags shared by extract and validate."""
     parser.add_argument(
         "--file",
         dest="file",
@@ -30,6 +30,13 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         type=float,
         default=None,
         help="Overall confidence threshold in [0.0, 1.0] (default: 0.75).",
+    )
+    parser.add_argument(
+        "--heuristics-only",
+        dest="heuristics_only",
+        action="store_true",
+        default=False,
+        help="Skip the Critic LLM call; use only deterministic heuristics for verification.",
     )
 
 
@@ -97,6 +104,17 @@ def _build_gate_config(args: argparse.Namespace) -> "GateConfig | None":
     if args.overall_threshold is not None:
         gate_kwargs["overall_threshold"] = args.overall_threshold
     return GateConfig(**gate_kwargs) if gate_kwargs else None
+
+
+def _build_pipeline_kwargs(args: argparse.Namespace) -> dict[str, typing.Any]:
+    """Build kwargs for ``build_default_pipeline`` from parsed CLI args."""
+    kwargs: dict[str, typing.Any] = {}
+    gate_config = _build_gate_config(args)
+    if gate_config is not None:
+        kwargs["gate_config"] = gate_config
+    if getattr(args, "heuristics_only", False):
+        kwargs["critic_enabled"] = False
+    return kwargs
 
 
 def _read_input_stream(args: argparse.Namespace) -> "typing.TextIO | None":
@@ -227,11 +245,8 @@ def run_extract_from_args(args: argparse.Namespace) -> int:
     from reflect_mcp.pipeline import build_default_pipeline  # noqa: PLC0415
 
     try:
-        gate_config = _build_gate_config(args)
-        if gate_config:
-            pipeline = build_default_pipeline(gate_config=gate_config)
-        else:
-            pipeline = build_default_pipeline()
+        pipeline_kwargs = _build_pipeline_kwargs(args)
+        pipeline = build_default_pipeline(**pipeline_kwargs)
         result = pipeline.extract(text)
     except Exception as exc:  # noqa: BLE001
         print(json.dumps({"status": "error", "error_message": str(exc)}))
@@ -253,14 +268,12 @@ def _run_extract_batch(args: argparse.Namespace) -> int:
         return 2
 
     concurrency = args.batch_concurrency if args.batch_concurrency is not None else 1
+    pipeline_kwargs = _build_pipeline_kwargs(args)
 
     if concurrency > 1:
-        gate_config = _build_gate_config(args)
 
         def _build() -> "ReflectivePipeline":
-            if gate_config:
-                return build_default_pipeline(gate_config=gate_config)
-            return build_default_pipeline()
+            return build_default_pipeline(**pipeline_kwargs)
 
         try:
             return _run_batch_concurrent(_build, stream, concurrency)
@@ -269,11 +282,7 @@ def _run_extract_batch(args: argparse.Namespace) -> int:
                 stream.close()
 
     try:
-        gate_config = _build_gate_config(args)
-        if gate_config:
-            pipeline = build_default_pipeline(gate_config=gate_config)
-        else:
-            pipeline = build_default_pipeline()
+        pipeline = build_default_pipeline(**pipeline_kwargs)
     except Exception as exc:  # noqa: BLE001
         print(json.dumps({"status": "error", "error_message": str(exc)}))
         return 3
@@ -320,11 +329,8 @@ def run_validate_from_args(args: argparse.Namespace) -> int:
         return 2
 
     try:
-        gate_config = _build_gate_config(args)
-        if gate_config:
-            pipeline = build_default_pipeline(gate_config=gate_config)
-        else:
-            pipeline = build_default_pipeline()
+        pipeline_kwargs = _build_pipeline_kwargs(args)
+        pipeline = build_default_pipeline(**pipeline_kwargs)
         result = pipeline.validate(text, data)
     except Exception as exc:  # noqa: BLE001
         print(json.dumps({"status": "error", "error_message": str(exc)}))

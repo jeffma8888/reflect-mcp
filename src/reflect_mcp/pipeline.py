@@ -13,14 +13,19 @@ from reflect_mcp.generator import Generator
 from reflect_mcp.heuristics import run_heuristics
 from reflect_mcp.logging_config import log_stage, new_trace_id
 from reflect_mcp.providers import LLMClient
-from reflect_mcp.schema import ExtractionResult, InvoiceData
+from reflect_mcp.schema import (
+    CritiqueResult,
+    ExtractionResult,
+    FieldVerdict,
+    InvoiceData,
+)
 
 
 class ReflectivePipeline:
     def __init__(
         self,
         generator: Generator,
-        critic: Critic,
+        critic: Critic | None,
         gate_config: GateConfig | None = None,
         heuristics_enabled: bool = True,
     ) -> None:
@@ -56,7 +61,10 @@ class ReflectivePipeline:
             heuristics = run_heuristics(text, data.__class__())
         log_stage("heuristics.done", trace_id, factors=heuristics.factors)
 
-        critique = self.critic.critique(text, data)
+        if self.critic is not None:
+            critique = self.critic.critique(text, data)
+        else:
+            critique = _neutral_critique(data)
         log_stage(
             "critique.done",
             trace_id,
@@ -79,6 +87,7 @@ def build_default_pipeline(
     gate_config: GateConfig | None = None,
     *,
     max_retries: int = 1,
+    critic_enabled: bool = True,
 ) -> ReflectivePipeline:
     """Wire up a pipeline against real providers (env-configured).
 
@@ -87,9 +96,30 @@ def build_default_pipeline(
     from reflect_mcp.providers import build_client
 
     gen_client: LLMClient = build_client("generator")
-    crit_client: LLMClient = build_client("critic")
+    critic: Critic | None = None
+    if critic_enabled:
+        crit_client: LLMClient = build_client("critic")
+        critic = Critic(crit_client, max_retries=max_retries)
     return ReflectivePipeline(
         Generator(gen_client, max_retries=max_retries),
-        Critic(crit_client, max_retries=max_retries),
+        critic,
         gate_config,
+    )
+
+
+def _neutral_critique(data: InvoiceData) -> CritiqueResult:
+    """Synthesize a neutral critique for heuristic-only mode.
+
+    Every non-null field gets confidence 1.0, so the gate's multiplicative
+    rule degenerates to pure heuristic factors.
+    """
+    verdicts = [
+        FieldVerdict(field=field, confidence=1.0)
+        for field in type(data).model_fields
+        if getattr(data, field) is not None
+    ]
+    return CritiqueResult(
+        field_verdicts=verdicts,
+        overall_confidence=1.0,
+        summary="",
     )

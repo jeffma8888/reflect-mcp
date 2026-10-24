@@ -47,7 +47,7 @@ def _build_top_parser() -> argparse.ArgumentParser:
 
 
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
-    """Add --file and threshold flags shared by extract and validate."""
+    """Add --file, threshold, and heuristics-only flags shared by extract and validate."""
     parser.add_argument(
         "--file",
         dest="file",
@@ -67,6 +67,13 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         type=float,
         default=None,
         help="Overall confidence threshold in [0.0, 1.0] (default: 0.75).",
+    )
+    parser.add_argument(
+        "--heuristics-only",
+        dest="heuristics_only",
+        action="store_true",
+        default=False,
+        help="Skip the Critic LLM call; use only deterministic heuristics for verification.",
     )
 
 

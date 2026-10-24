@@ -33,6 +33,7 @@ tool surface, small deps, MIT, publication-safe.
 | 13 | Top-level `--help` subcommand listing and `--version` flag | Med | Low | DONE (iter 37) |
 | 14 | Collapse `_run_batch` serial path into `_process_one_line` | Low | Low | DONE (iter 38) |
 | 15 | README "Use as a Python library" section + API-completeness drift test | Med | Low | DONE (iter 40) |
+| 16 | Heuristic-only verification mode (`--heuristics-only` flag) | Med | Low | DONE (iter 41) |
 
 ## Done ledger
 
@@ -50,3 +51,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 37 — Top-level `--help` subcommand listing and `--version` flag via argparse dispatch
 - iter 38 — Collapse `_run_batch` serial path into `_process_one_line` (single-source per-line contract)
 - iter 40 — README "Use as a Python library" section with full-pipeline and gate-only examples + API-completeness drift test
+- iter 41 — Heuristic-only verification mode: `--heuristics-only` flag skips Critic LLM call for zero-cost structural checks

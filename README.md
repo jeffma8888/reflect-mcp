@@ -115,12 +115,18 @@ reflect-mcp extract --batch --field-threshold 0.85 --overall-threshold 0.80
 # concurrent batch: overlap LLM calls across documents (4 workers)
 cat invoices.jsonl | reflect-mcp extract --batch --batch-concurrency 4
 
+# heuristics-only: skip the Critic LLM call, use only deterministic checks
+echo "ACME CORP, Invoice #INV-1001, Total: \$108.50" | reflect-mcp extract --heuristics-only
+
 # validate: verify pre-extracted data (no Generator, Critic + heuristics + gate only)
 reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP","total":108.5}'
 reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --field-threshold 0.5
+reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --heuristics-only
 ```
 
 Exit codes (both verbs): **0** = `ok`, **1** = `needs_review`, **2** = usage/input error, **3** = pipeline error (JSON error envelope on stdout).
+
+**Heuristics-only mode** (`--heuristics-only`): skips the Critic LLM call entirely. Verification relies solely on deterministic structural checks (text grounding, arithmetic reconciliation, date validation). Useful for CI pipelines, pre-screening, or zero-cost structural-only validation. Works with both `extract` and `validate`, including batch mode.
 
 **Batch mode** (`--batch`): reads JSONL from stdin or `--file`, emits one JSON result per line to stdout, reuses the pipeline across all lines. Exit code is the worst severity across all lines (error 3 > needs_review 1 > ok 0). Malformed lines and per-line extraction failures emit `{"status":"error","error_message":"..."}` without aborting the batch. Add `--batch-concurrency N` (N > 1) to process documents concurrently via a thread pool; each worker builds its own pipeline instance so SDK clients are never shared across threads. Output order is always preserved.
 
@@ -147,7 +153,7 @@ else:
     print(result.data.vendor_name)            # InvoiceData fields
 ```
 
-`build_default_pipeline` reads `REFLECT_PROVIDER` / `REFLECT_GENERATOR_MODEL` / `REFLECT_CRITIC_MODEL` from the environment and returns a `ReflectivePipeline`. You can also construct one manually with your own `Generator` and `Critic` instances (useful for testing with `ScriptedLLMClient`).
+`build_default_pipeline` reads `REFLECT_PROVIDER` / `REFLECT_GENERATOR_MODEL` / `REFLECT_CRITIC_MODEL` from the environment and returns a `ReflectivePipeline`. Pass `critic_enabled=False` to skip the Critic LLM call and use only deterministic heuristics for verification. You can also construct one manually with your own `Generator` and `Critic` instances (useful for testing with `ScriptedLLMClient`).
 
 ### Gate-only verification
 
