@@ -10,10 +10,11 @@ from __future__ import annotations
 from reflect_mcp.critic import Critic
 from reflect_mcp.gate import GateConfig, decide
 from reflect_mcp.generator import Generator
-from reflect_mcp.heuristics import run_heuristics
+from reflect_mcp.heuristics import HeuristicReport, run_heuristics
 from reflect_mcp.logging_config import log_stage, new_trace_id
 from reflect_mcp.providers import LLMClient
 from reflect_mcp.schema import (
+    EXTRACTION_FIELDS,
     CritiqueResult,
     ExtractionResult,
     FieldVerdict,
@@ -62,15 +63,25 @@ class ReflectivePipeline:
         log_stage("heuristics.done", trace_id, factors=heuristics.factors)
 
         if self.critic is not None:
-            critique = self.critic.critique(text, data)
+            if _heuristics_doom_all(heuristics, data, self.gate_config.field_threshold):
+                critique = _neutral_critique(data)
+                log_stage("critic.skipped", trace_id)
+            else:
+                critique = self.critic.critique(text, data)
+                log_stage(
+                    "critique.done",
+                    trace_id,
+                    overall_confidence=critique.overall_confidence,
+                    field_verdicts={v.field: v.confidence for v in critique.field_verdicts},
+                )
         else:
             critique = _neutral_critique(data)
-        log_stage(
-            "critique.done",
-            trace_id,
-            overall_confidence=critique.overall_confidence,
-            field_verdicts={v.field: v.confidence for v in critique.field_verdicts},
-        )
+            log_stage(
+                "critique.done",
+                trace_id,
+                overall_confidence=critique.overall_confidence,
+                field_verdicts={v.field: v.confidence for v in critique.field_verdicts},
+            )
 
         result = decide(data, critique, heuristics, trace_id, self.gate_config)
         log_stage(
@@ -104,6 +115,29 @@ def build_default_pipeline(
         Generator(gen_client, max_retries=max_retries),
         critic,
         gate_config,
+    )
+
+
+def _heuristics_doom_all(
+    heuristics: HeuristicReport,
+    data: InvoiceData,
+    field_threshold: float,
+) -> bool:
+    """Return True when the Critic cannot change the gate outcome.
+
+    The gate uses ``combined = critic_conf × heuristic_factor`` with
+    ``critic_conf ≤ 1.0``. So when *every* non-null field's factor is already
+    below ``field_threshold``, even a perfect Critic score cannot lift any field
+    above the threshold — the result is ``needs_review`` regardless.
+
+    Empty extractions (all-null) are NOT short-circuited: the Critic's
+    ``overall_confidence`` may independently trigger ``needs_review``.
+    """
+    non_null_fields = [f for f in EXTRACTION_FIELDS if getattr(data, f) is not None]
+    if not non_null_fields:
+        return False
+    return all(
+        heuristics.factor_for(f) < field_threshold for f in non_null_fields
     )
 
 

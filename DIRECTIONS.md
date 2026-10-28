@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-52
+    lenses: unknown
+    - Candidate A1 — Short-circuit Critic when heuristics already doom all fields
+    - Candidate A2 — Use `model_dump_json()` for Pydantic serialization on the output path
+    - Candidate A3 — Cache the lowered source text across heuristic sub-checks
+    - Candidate B1 -- "Three roles" → "Four stages" in README §7 Architecture + count-drift test
+    - Candidate B2 -- §10 Design Decisions: document heuristic-only mode rationale + neutral-critique arithmetic
+    - Candidate B3 -- §11 "What I'd productionize next" staleness sweep + shipped-item guard
+    winner: A1
+    ship: pending (not yet decided)
   iter-41
     lenses: unknown
     - Candidates
@@ -9,7 +19,7 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- `reflect-mcp eval` CLI verb (Roadmap #5)
     stubs: 1 of 4 candidate line(s) are write-early placeholders, not measured candidates
     winner: B2
-    ship: pending (not yet decided)
+    ship: PUSHED 0bb84e8
   iter-40
     lenses: unknown
     - Candidate A1 -- Cache MCP server pipeline instance across tool invocations
@@ -160,4 +170,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-16 scouted iterations
+17 scouted iterations

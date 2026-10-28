@@ -34,6 +34,7 @@ tool surface, small deps, MIT, publication-safe.
 | 14 | Collapse `_run_batch` serial path into `_process_one_line` | Low | Low | DONE (iter 38) |
 | 15 | README "Use as a Python library" section + API-completeness drift test | Med | Low | DONE (iter 40) |
 | 16 | Heuristic-only verification mode (`--heuristics-only` flag) | Med | Low | DONE (iter 41) |
+| 17 | Short-circuit Critic when heuristics already doom all fields | Med | Low | DONE (iter 52) |
 
 ## Done ledger
 
@@ -52,3 +53,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 38 — Collapse `_run_batch` serial path into `_process_one_line` (single-source per-line contract)
 - iter 40 — README "Use as a Python library" section with full-pipeline and gate-only examples + API-completeness drift test
 - iter 41 — Heuristic-only verification mode: `--heuristics-only` flag skips Critic LLM call for zero-cost structural checks
+- iter 52 — Short-circuit Critic when heuristics already doom all fields: skip provably redundant LLM call when gate outcome is predetermined
