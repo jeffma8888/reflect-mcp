@@ -87,10 +87,12 @@ Then restart Claude Desktop and ask it to *"extract the invoice fields from this
 
 | Tool | Args | Returns |
 | --- | --- | --- |
-| `extract` | `text: str`, `field_threshold=0.70`, `overall_threshold=0.75` | `{ status, data, field_confidence, overall_confidence, flagged_fields, field_provenance, critic_summary, trace_id, notes }` |
-| `validate` | `text: str`, `data: dict`, `field_threshold=0.70`, `overall_threshold=0.75` | Same `ExtractionResult` envelope as `extract` |
+| `extract` | `text: str`, `field_threshold=0.70`, `overall_threshold=0.75`, `heuristics_only=False` | `{ status, data, field_confidence, overall_confidence, flagged_fields, field_provenance, critic_summary, trace_id, notes }` |
+| `validate` | `text: str`, `data: dict`, `field_threshold=0.70`, `overall_threshold=0.75`, `heuristics_only=False` | Same `ExtractionResult` envelope as `extract` |
 
 When `status == "needs_review"`, do **not** use `data` blindly — confirm the fields in `flagged_fields` first.
+
+The tools never raise: failures (empty input, out-of-range thresholds, `data` that fails `InvoiceData` validation, provider or parse errors) return `{ status: "error", error_message }` instead of raising, mirroring the CLI's error envelope. `heuristics_only=True` skips the Critic LLM call, like the CLI's `--heuristics-only`.
 
 ## 5. CLI
 

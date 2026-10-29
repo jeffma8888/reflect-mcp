@@ -6,14 +6,16 @@ README for the `claude_desktop_config.json` snippet.
 
 Provider is chosen via env (REFLECT_PROVIDER + provider credentials). This module
 is intentionally the ONLY one that imports `mcp`, so the rest of the package --
-and the whole test suite -- has no hard dependency on the MCP SDK.
+and the whole test suite -- has no hard dependency on the MCP SDK. It only
+declares the tool surface; the bodies live in `reflect_mcp.tools` so they are
+tested offline.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from reflect_mcp.gate import GateConfig
+from reflect_mcp import tools
 from reflect_mcp.logging_config import get_logger
 
 try:
@@ -29,12 +31,17 @@ mcp = FastMCP("reflect-mcp")
 
 
 @mcp.tool()
-def extract(text: str, field_threshold: float = 0.70, overall_threshold: float = 0.75) -> dict[str, Any]:
+def extract(
+    text: str,
+    field_threshold: float = 0.70,
+    overall_threshold: float = 0.75,
+    heuristics_only: bool = False,
+) -> dict[str, Any]:
     """Extract structured invoice/receipt data from messy text, verified by a
     second-model critic and a human-in-the-loop confidence gate.
 
     Returns a JSON object with:
-      - status: "ok" | "needs_review"
+      - status: "ok" | "needs_review" | "error"
       - data: the typed extraction (nulls for absent fields)
       - field_confidence: per-field combined confidence in [0,1]
       - overall_confidence: the critic's overall confidence
@@ -46,18 +53,22 @@ def extract(text: str, field_threshold: float = 0.70, overall_threshold: float =
     When status == "needs_review", DO NOT use `data` blindly -- confirm the
     fields listed in `flagged_fields` first. The tool surfaces uncertainty
     instead of returning a confident guess.
-    """
-    from reflect_mcp.pipeline import build_default_pipeline
 
-    config = GateConfig(field_threshold=field_threshold, overall_threshold=overall_threshold)
-    pipeline = build_default_pipeline(gate_config=config)
-    result = pipeline.extract(text)
-    return result.model_dump()
+    When status == "error", the object is { status, error_message } and no
+    extraction happened (empty input, bad thresholds, provider/parse failure).
+    Set heuristics_only=True to skip the Critic LLM call and verify with
+    deterministic heuristics only.
+    """
+    return tools.extract_tool(text, field_threshold, overall_threshold, heuristics_only)
 
 
 @mcp.tool()
 def validate(
-    text: str, data: dict[str, Any], field_threshold: float = 0.70, overall_threshold: float = 0.75
+    text: str,
+    data: dict[str, Any],
+    field_threshold: float = 0.70,
+    overall_threshold: float = 0.75,
+    heuristics_only: bool = False,
 ) -> dict[str, Any]:
     """Verify pre-extracted data against source text without running the Generator.
 
@@ -68,17 +79,13 @@ def validate(
       - text: the source document to verify against
       - data: dict of pre-extracted fields (InvoiceData shape)
       - field_threshold / overall_threshold: confidence gate controls
+      - heuristics_only: skip the Critic LLM call; heuristics + gate only
 
-    Returns the same ExtractionResult envelope as `extract`.
+    Returns the same ExtractionResult envelope as `extract`, or
+    { status: "error", error_message } when the input or `data` is invalid or
+    the pipeline fails.
     """
-    from reflect_mcp.pipeline import build_default_pipeline
-    from reflect_mcp.schema import InvoiceData
-
-    invoice = InvoiceData.model_validate(data)
-    config = GateConfig(field_threshold=field_threshold, overall_threshold=overall_threshold)
-    pipeline = build_default_pipeline(gate_config=config)
-    result = pipeline.validate(text, invoice)
-    return result.model_dump()
+    return tools.validate_tool(text, data, field_threshold, overall_threshold, heuristics_only)
 
 
 def main() -> None:

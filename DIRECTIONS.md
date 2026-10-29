@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-55
+    lenses: integration-and-adoption
+    - Candidate A1 -- A numeric `invoice_number` from the Generator crashes the run instead of being coerced to a string
+    - Candidate A2 -- Non-finite amounts (`NaN`/`Infinity`) are accepted end to end and the CLI prints invalid JSON
+    - Candidate A3 -- Blank strings and non-code currencies sail through as `ok`: give text fields the format contract `invoice_date` already has
+    - Candidate B1 -- MCP tools reach CLI parity: `heuristics_only` arg + structured `status:"error"` envelope, testable offline
+    - Candidate B2 -- `validate --batch`: verify a JSONL corpus of `{text, data}` produced by someone else's extractor
+    - Candidate B3 -- Batch output carries a correlation key: echo the caller's `id` (and the 1-based input `line`) on every result, including error lines
+    winner: B1
+    ship: pending (not yet decided)
   iter-54
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Amount-role grounding: penalize a subtotal/tax/total whose matching number sits next to a different field's label
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- trace_id contract: unique per call and present on every log event (including retries)
     - Candidate B3 -- Generator output contract: an all-null extraction can't be `ok`, and dropped unknown keys are surfaced
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED f8c6301
   iter-53
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- Document when the Critic doesn't run (short-circuit + heuristics-only) in README §7/§10 and the MCP tool docstrings, plus a drift test
@@ -190,4 +200,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-19 scouted iterations
+20 scouted iterations

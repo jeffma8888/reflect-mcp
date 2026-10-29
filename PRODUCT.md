@@ -39,6 +39,7 @@ tool surface, small deps, MIT, publication-safe.
 | 19 | Gate honors Critic contract: `grounded:false` / missing verdict caps at 0.5; duplicates use min | High | Low | DONE (iter 54) |
 | 20 | All-null extraction is `needs_review`; dropped unknown Generator keys surfaced in notes | Med | Low | QUEUED |
 | 21 | trace_id unique per call and present on retry log events | Med | Low | QUEUED |
+| 22 | MCP tools reach CLI parity: `heuristics_only` arg + `status:"error"` envelope, offline-tested | High | Low | DONE (iter 55) |
 
 ## Done ledger
 
@@ -60,3 +61,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 52 — Short-circuit Critic when heuristics already doom all fields: skip provably redundant LLM call when gate outcome is predetermined
 - iter 53 — Date-grounding heuristic: made-up ISO `invoice_date` now penalized (0.3) + `invoice_date` provenance span; golden row inv-006
 - iter 54 — Gate honors the Critic contract: `grounded:false` or missing verdict caps a committed field at 0.5, duplicate verdicts resolve to min; golden row inv-007
+- iter 55 — MCP tools at CLI parity: `heuristics_only` + `status:"error"` envelope; bodies in mcp-free `tools.py`
