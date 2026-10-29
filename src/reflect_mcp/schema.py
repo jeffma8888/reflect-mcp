@@ -52,10 +52,18 @@ class CritiqueResult(BaseModel):
     summary: str = ""
 
     def verdict_for(self, field: str) -> Optional[FieldVerdict]:
-        for v in self.field_verdicts:
-            if v.field == field:
-                return v
-        return None
+        """Return the field's verdict; on duplicates, the least confident one.
+
+        A Critic that grades the same field twice is contradicting itself, and
+        "first one wins" would let a confident duplicate mask a doubtful one.
+        Taking the minimum keeps the gate's rule that evidence only lowers
+        confidence. On an equal-confidence tie the ungrounded verdict wins
+        (``False < True``), so the result does not depend on verdict order.
+        """
+        matches = [v for v in self.field_verdicts if v.field == field]
+        if not matches:
+            return None
+        return min(matches, key=lambda v: (v.confidence, v.grounded))
 
 
 class FlaggedField(BaseModel):

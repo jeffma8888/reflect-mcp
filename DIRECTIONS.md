@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-54
+    lenses: new-capability, hardening/DX
+    - Candidate A1 -- Amount-role grounding: penalize a subtotal/tax/total whose matching number sits next to a different field's label
+    - Candidate A2 -- Omission detection: flag a null field when the source plainly labels a value for it
+    - Candidate A3 -- Token-boundary grounding: a value must match a whole source token, not a fragment of one
+    - Candidate B1 -- Gate honors the Critic's own contract: `grounded:false` caps the field, and a missing, duplicate or unknown verdict can't pass silently
+    - Candidate B2 -- trace_id contract: unique per call and present on every log event (including retries)
+    - Candidate B3 -- Generator output contract: an all-null extraction can't be `ok`, and dropped unknown keys are surfaced
+    winner: B1
+    ship: pending (not yet decided)
   iter-53
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- Document when the Critic doesn't run (short-circuit + heuristics-only) in README §7/§10 and the MCP tool docstrings, plus a drift test
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Omission detection: flag a field the Generator left null when the source plainly contains it
     - Candidate B3 -- Per-field confidence thresholds: stricter gate for high-stakes fields
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED c7c28fb
   iter-52
     lenses: unknown
     - Candidate A1 — Short-circuit Critic when heuristics already doom all fields
@@ -180,4 +190,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-18 scouted iterations
+19 scouted iterations
