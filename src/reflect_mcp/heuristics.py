@@ -7,6 +7,8 @@ combines both. Concretely we check:
   - grounding:   is a committed value actually present in the source text?
   - arithmetic:  does subtotal + tax reconcile to total?
   - date format: does invoice_date parse as ISO 8601?
+  - date grounding: does that ISO date appear in the source in some supported
+                 written form (ISO, numeric slash/dot, or English month name)?
 
 Each check contributes a per-field factor in [0,1]; the gate multiplies the
 Critic confidence by this factor, so a structurally impossible value can never
@@ -26,6 +28,27 @@ _TEXT_GROUNDED_FIELDS = {"vendor_name", "invoice_number", "currency"}
 _NUMERIC_FIELDS = {"subtotal", "tax", "total"}
 
 _ARITHMETIC_TOLERANCE = 0.02  # currency rounding slack
+
+# English month names, full and 3-letter, mapped to month numbers. Hard-coded
+# (not `calendar.month_name`) because that table is locale-dependent.
+_MONTH_NAMES = (
+    "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december",
+)
+_MONTHS = {name: i for i, name in enumerate(_MONTH_NAMES, 1)}
+_MONTHS.update({name[:3]: i for i, name in enumerate(_MONTH_NAMES, 1)})
+_MONTH_RE = "|".join(sorted(_MONTHS, key=len, reverse=True))  # longest first
+
+# Supported written date forms. Digit-boundary lookarounds stop a date token
+# from matching inside a longer digit run (e.g. "12026-03-145").
+_ISO_DATE_RE = re.compile(r"(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)")
+_NUMERIC_DATE_RE = re.compile(r"(?<!\d)(\d{1,2})([/.])(\d{1,2})\2(\d{4})(?!\d)")
+_MONTH_FIRST_RE = re.compile(
+    rf"(?<![a-z])({_MONTH_RE})\s+(\d{{1,2}}),?\s+(\d{{4}})(?!\d)", re.IGNORECASE
+)
+_DAY_FIRST_RE = re.compile(
+    rf"(?<!\d)(\d{{1,2}})\s+({_MONTH_RE})\s+(\d{{4}})(?!\d)", re.IGNORECASE
+)
 
 
 @dataclass
@@ -75,6 +98,63 @@ def _number_in_text(value: float, text: str) -> bool:
     return _find_number_span(value, text) is not None
 
 
+def _date_readings(match: re.Match[str]) -> set[tuple[int, int, int]]:
+    """All (year, month, day) readings of one matched date token.
+
+    Numeric slash/dot dates are ambiguous between month-first and day-first, so
+    both readings are returned: ambiguity must never *cause* a penalty, because
+    this heuristic exists to catch invented dates, not to adjudicate locale.
+    """
+    if match.re is _ISO_DATE_RE:
+        y, m, d = match.group(1, 2, 3)
+        return {(int(y), int(m), int(d))}
+    if match.re is _NUMERIC_DATE_RE:
+        a, b, y = int(match.group(1)), int(match.group(3)), int(match.group(4))
+        return {(y, a, b), (y, b, a)}
+    if match.re is _MONTH_FIRST_RE:
+        mon, d, y = match.group(1, 2, 3)
+    elif match.re is _DAY_FIRST_RE:
+        d, mon, y = match.group(1, 2, 3)
+    else:  # a new pattern was added without a reader here
+        raise AssertionError(f"unhandled date pattern: {match.re.pattern}")
+    return {(int(y), _MONTHS[mon.lower()], int(d))}
+
+
+def _find_date_span(iso_value: date, text: str) -> ProvenanceSpan | None:
+    """Find the first token in *text* that writes *iso_value* in a supported form."""
+    target = (iso_value.year, iso_value.month, iso_value.day)
+    matches = [
+        m
+        for pattern in (_ISO_DATE_RE, _NUMERIC_DATE_RE, _MONTH_FIRST_RE, _DAY_FIRST_RE)
+        for m in pattern.finditer(text)
+        if target in _date_readings(m)
+    ]
+    if not matches:
+        return None
+    first = min(matches, key=lambda m: m.start())
+    return ProvenanceSpan(start=first.start(), end=first.end())
+
+
+def _check_date(value: str, text: str, report: HeuristicReport) -> None:
+    """Validate ISO format, then ground the date in the source.
+
+    A non-ISO value is already penalized harder (0.2) than an ungrounded one
+    (0.3), so grounding is only attempted on a parseable date — stacking a
+    second reason on an unparseable value would add noise, not signal.
+    """
+    report.provenance["invoice_date"] = []
+    try:
+        parsed = date.fromisoformat(value)
+    except ValueError:
+        report.penalize("invoice_date", 0.2, f"date {value!r} is not ISO 8601 (YYYY-MM-DD)")
+        return
+    span = _find_date_span(parsed, text)
+    if span is not None:
+        report.provenance["invoice_date"] = [span]
+    else:
+        report.penalize("invoice_date", 0.3, f"date {value!r} not found in source text")
+
+
 def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
     """Compute deterministic per-field verification factors."""
     report = HeuristicReport()
@@ -103,10 +183,7 @@ def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
                 report.penalize(field, 0.35, f"amount {value} not found in source text")
 
         if field == "invoice_date":
-            try:
-                date.fromisoformat(str(value))
-            except ValueError:
-                report.penalize(field, 0.2, f"date {value!r} is not ISO 8601 (YYYY-MM-DD)")
+            _check_date(str(value), text, report)
 
     # Arithmetic reconciliation: subtotal + tax should equal total.
     if data.subtotal is not None and data.tax is not None and data.total is not None:

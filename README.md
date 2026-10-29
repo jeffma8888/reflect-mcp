@@ -30,7 +30,7 @@ The pattern is well established: naive extraction pipelines look great in a demo
 
 ### In research terms — an evaluation harness with a verifiable reward
 
-Stripped of the invoice example, `reflect-mcp` is a small **evaluation harness with a verifiable reward**, wired into the inference path instead of bolted on after the fact. The Critic is a **decorrelated grader** — a *different* model from the Generator, because same-model self-critique rubber-stamps its own errors. The deterministic heuristics are the **programmatic pass criterion**: grounding, arithmetic reconciliation, and date validity are checkable without a model, and they can only *lower* the score, so a structurally impossible value can't be talked through on a grader's confidence alone. The gate is the **escalation path for the cases the reward signal can't settle** — which is what turns a low-confidence result into useful output instead of a failure. And `make eval` grades the harness itself: a labeled golden set, field-level accuracy, and a non-zero exit below a threshold, so the whole loop is measurable offline in CI with no secrets.
+Stripped of the invoice example, `reflect-mcp` is a small **evaluation harness with a verifiable reward**, wired into the inference path instead of bolted on after the fact. The Critic is a **decorrelated grader** — a *different* model from the Generator, because same-model self-critique rubber-stamps its own errors. The deterministic heuristics are the **programmatic pass criterion**: grounding, arithmetic reconciliation, date validity and date grounding are checkable without a model, and they can only *lower* the score, so a structurally impossible value can't be talked through on a grader's confidence alone. The gate is the **escalation path for the cases the reward signal can't settle** — which is what turns a low-confidence result into useful output instead of a failure. And `make eval` grades the harness itself: a labeled golden set, field-level accuracy, and a non-zero exit below a threshold, so the whole loop is measurable offline in CI with no secrets.
 
 ## 3. Demo
 
@@ -126,7 +126,7 @@ reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --h
 
 Exit codes (both verbs): **0** = `ok`, **1** = `needs_review`, **2** = usage/input error, **3** = pipeline error (JSON error envelope on stdout).
 
-**Heuristics-only mode** (`--heuristics-only`): skips the Critic LLM call entirely. Verification relies solely on deterministic structural checks (text grounding, arithmetic reconciliation, date validation). Useful for CI pipelines, pre-screening, or zero-cost structural-only validation. Works with both `extract` and `validate`, including batch mode.
+**Heuristics-only mode** (`--heuristics-only`): skips the Critic LLM call entirely. Verification relies solely on deterministic structural checks (text grounding, arithmetic reconciliation, date validation and grounding). Useful for CI pipelines, pre-screening, or zero-cost structural-only validation. Works with both `extract` and `validate`, including batch mode.
 
 **Batch mode** (`--batch`): reads JSONL from stdin or `--file`, emits one JSON result per line to stdout, reuses the pipeline across all lines. Exit code is the worst severity across all lines (error 3 > needs_review 1 > ok 0). Malformed lines and per-line extraction failures emit `{"status":"error","error_message":"..."}` without aborting the batch. Add `--batch-concurrency N` (N > 1) to process documents concurrently via a thread pool; each worker builds its own pipeline instance so SDK clients are never shared across threads. Output order is always preserved.
 
@@ -198,7 +198,7 @@ Three roles, one shared trace id, clean layering (`resolver`-free by design — 
 
 - **Generator** (`generator.py`) — LLM call (with configurable retry on parse failure) → validated `InvoiceData` (Pydantic). Absent fields come back `null`; the model is instructed never to invent a value.
 - **Critic** (`critic.py`) — a **different model** (`REFLECT_CRITIC_MODEL`) is shown the source *and* the candidate extraction and must ground each field, returning per-field + overall confidence (with configurable retry on parse failure). A different model matters: self-critique with the same model tends to rubber-stamp its own errors.
-- **Deterministic heuristics** (`heuristics.py`) — a free, non-LLM signal: grounding (is a committed value actually present in the source?), arithmetic reconciliation (`subtotal + tax == total`), and ISO-date validation. These *cap* the Critic — a structurally impossible value can't be waved through on the Critic's word alone.
+- **Deterministic heuristics** (`heuristics.py`) — a free, non-LLM signal: grounding (is a committed value actually present in the source?), arithmetic reconciliation (`subtotal + tax == total`), ISO-date validation, and date grounding (an ISO date must appear in the source as ISO, `MM/DD/YYYY`/`DD/MM/YYYY`/`DD.MM.YYYY`, or an English month-name form such as `March 14, 2026` / `14 Mar 2026`, otherwise it is penalized). These *cap* the Critic — a structurally impossible value can't be waved through on the Critic's word alone.
 - **Gate** (`gate.py`) — combines the two signals multiplicatively (`combined = critic_confidence × heuristic_factor`), flags any non-null field below `field_threshold`, and escalates the whole result if any field is flagged **or** overall confidence is below `overall_threshold`.
 
 The `extract` tool (`server.py`) is the only module that imports the `mcp` SDK, and `providers.py` is the only module that imports a provider SDK — so the core pipeline and the entire test suite have **zero** hard dependency on either.
@@ -212,21 +212,22 @@ make eval          # OFFLINE: deterministic, uses recorded model outputs (no API
 make eval-live     # LIVE: runs against REFLECT_PROVIDER (needs credentials)
 ```
 
-Offline run (recorded fixtures, one example carries an injected hallucination to prove the harness catches misses):
+Offline run (recorded fixtures; two examples carry an injected hallucination — a wrong total in `inv-004`, and in `inv-006` a made-up date that the date-grounding heuristic catches — to prove the harness catches misses):
 
 ```
-============================================================
+==============================================================
 reflect-mcp eval  |  mode: OFFLINE (replay fixtures)
-============================================================
-examples          : 5
-field accuracy    : 97.1%  (34/35)
-exact-match acc   : 80.0%  (4/5)
-needs-review rate : 20.0%  (1/5)
-------------------------------------------------------------
+==============================================================
+examples          : 6
+field accuracy    : 95.2%  (40/42)
+exact-match acc   : 66.7%  (4/6)
+needs-review rate : 33.3%  (2/6)
+--------------------------------------------------------------
 field-level failures (where it breaks):
   [inv-004] total: expected 583.2 but got 683.2
-============================================================
-PASS: field accuracy 97.1% >= required 90.0%
+  [inv-006] invoice_date: expected '2026-03-14' but got '2026-04-14'
+==============================================================
+PASS: field accuracy 95.2% >= required 90.0%
 ```
 
 `make eval` exits non-zero below `--min-accuracy` (default 0.90), so it works as an **offline eval-CI gate** with no secrets.

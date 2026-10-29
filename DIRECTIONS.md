@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-53
+    lenses: narrative-and-docs, new-capability
+    - Candidate A1 -- Document when the Critic doesn't run (short-circuit + heuristics-only) in README §7/§10 and the MCP tool docstrings, plus a drift test
+    - Candidate A2 -- PRODUCT.md is missing iter 18 (`validate` verb / MCP tool); add the row + a ledger-freshness test keyed off per-iteration behavior tests
+    - Candidate A3 -- Observability event catalog in README §10 + correct the "every stage carries a shared trace_id" claim, with a two-way drift test
+    - Candidate B1 -- Date-grounding heuristic: penalize an ISO-valid invoice_date that appears nowhere in the source
+    - Candidate B2 -- Omission detection: flag a field the Generator left null when the source plainly contains it
+    - Candidate B3 -- Per-field confidence thresholds: stricter gate for high-stakes fields
+    winner: B1
+    ship: pending (not yet decided)
   iter-52
     lenses: unknown
     - Candidate A1 — Short-circuit Critic when heuristics already doom all fields
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- §10 Design Decisions: document heuristic-only mode rationale + neutral-critique arithmetic
     - Candidate B3 -- §11 "What I'd productionize next" staleness sweep + shipped-item guard
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 480d13f
   iter-41
     lenses: unknown
     - Candidates
@@ -170,4 +180,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-17 scouted iterations
+18 scouted iterations

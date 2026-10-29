@@ -35,6 +35,7 @@ tool surface, small deps, MIT, publication-safe.
 | 15 | README "Use as a Python library" section + API-completeness drift test | Med | Low | DONE (iter 40) |
 | 16 | Heuristic-only verification mode (`--heuristics-only` flag) | Med | Low | DONE (iter 41) |
 | 17 | Short-circuit Critic when heuristics already doom all fields | Med | Low | DONE (iter 52) |
+| 18 | Date-grounding heuristic: penalize an ISO-valid `invoice_date` absent from the source | High | Low | DONE (iter 53) |
 
 ## Done ledger
 
@@ -54,3 +55,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 40 — README "Use as a Python library" section with full-pipeline and gate-only examples + API-completeness drift test
 - iter 41 — Heuristic-only verification mode: `--heuristics-only` flag skips Critic LLM call for zero-cost structural checks
 - iter 52 — Short-circuit Critic when heuristics already doom all fields: skip provably redundant LLM call when gate outcome is predetermined
+- iter 53 — Date-grounding heuristic: made-up ISO `invoice_date` now penalized (0.3) + `invoice_date` provenance span; golden row inv-006
