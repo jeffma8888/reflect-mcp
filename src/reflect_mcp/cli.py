@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import threading
 import typing
 from concurrent.futures import ThreadPoolExecutor
 
@@ -80,19 +81,15 @@ def _build_validate_parser() -> argparse.ArgumentParser:
 
 
 def _read_text(args: argparse.Namespace) -> str | None:
-    """Read source text from --file or stdin. Returns None on error (already printed)."""
-    if args.file is not None:
-        try:
-            with open(args.file, encoding="utf-8") as fh:
-                return fh.read()
-        except FileNotFoundError:
-            print(f"Error: file not found: {args.file}", file=sys.stderr)
-            return None
-    else:
-        if sys.stdin.isatty():
-            print("Error: no input provided. Pipe text to stdin or use --file.", file=sys.stderr)
-            return None
-        return sys.stdin.read()
+    """Read the whole input. Delegates to ``_read_input_stream`` so single, batch
+    and validate share one set of input-error messages. Returns None on error."""
+    stream = _read_input_stream(args)
+    if stream is None:
+        return None
+    try:
+        return stream.read()
+    finally:
+        _close_input(stream)
 
 
 def _build_gate_config(args: argparse.Namespace) -> "GateConfig | None":
@@ -132,22 +129,15 @@ def _read_input_stream(args: argparse.Namespace) -> "typing.TextIO | None":
         return sys.stdin
 
 
-def _run_batch(
-    pipeline: "ReflectivePipeline",
-    stream: "typing.TextIO",
-) -> int:
-    """Process JSONL lines from *stream*, print one JSON result per line, return exit code."""
-    worst = 0
-    for raw_line in stream:
-        if not raw_line.rstrip("\n\r"):
-            continue
-        output_json, code = _process_one_line(pipeline, raw_line)
-        print(output_json)
-        if code == 3:
-            worst = 3
-        elif code == 1 and worst < 3:
-            worst = max(worst, 1)
-    return worst
+def _close_input(stream: "typing.TextIO") -> None:
+    """Close a file we opened; never close the process-wide stdin."""
+    if stream is not sys.stdin:
+        stream.close()
+
+
+def _error_json(message: str) -> str:
+    """The one machine-readable failure envelope every CLI path prints."""
+    return json.dumps({"status": "error", "error_message": message})
 
 
 def _process_one_line(
@@ -159,60 +149,74 @@ def _process_one_line(
     try:
         record = json.loads(line)
     except json.JSONDecodeError as exc:
-        return json.dumps({"status": "error", "error_message": f"invalid JSON: {exc}"}), 3
+        return _error_json(f"invalid JSON: {exc}"), 3
 
     if not isinstance(record, dict) or "text" not in record:
-        return json.dumps({"status": "error", "error_message": 'missing "text" key'}), 3
+        return _error_json('missing "text" key'), 3
 
     try:
         result = pipeline.extract(record["text"])
     except Exception as exc:  # noqa: BLE001
-        return json.dumps({"status": "error", "error_message": str(exc)}), 3
+        return _error_json(str(exc)), 3
 
     code = 1 if result.status == "needs_review" else 0
     return json.dumps(result.model_dump()), code
 
 
-def _run_batch_concurrent(
+def _line_processor(
     build_pipeline: typing.Callable[[], "ReflectivePipeline"],
-    stream: "typing.TextIO",
-    concurrency: int,
-) -> int:
-    """Process JSONL lines concurrently, preserving output order."""
-    import threading  # noqa: PLC0415
+    first: "ReflectivePipeline",
+) -> typing.Callable[[str], tuple[str, int]]:
+    """Return a per-line function that gives each thread its own pipeline.
 
-    lines = [raw for raw in stream if raw.rstrip("\n\r")]
-    if not lines:
-        return 0
-
-    pipelines: dict[int, "ReflectivePipeline"] = {}
+    SDK clients are not shared across threads, so every thread lazily takes a
+    pipeline: the eagerly-built *first* one goes to whichever thread asks first
+    (the main thread when serial, so serial builds exactly one), later threads
+    build their own. A late build failure becomes that line's error envelope
+    instead of escaping the executor as a traceback.
+    """
+    local = threading.local()
+    spares = [first]
     lock = threading.Lock()
 
-    def _worker(item: tuple[int, str]) -> tuple[str, int]:
-        idx, raw_line = item
-        tid = _thread_id()
-        with lock:
-            if tid not in pipelines:
-                pipelines[tid] = build_pipeline()
-            pl = pipelines[tid]
-        return _process_one_line(pl, raw_line)
+    def _process(raw_line: str) -> tuple[str, int]:
+        pipeline = getattr(local, "pipeline", None)
+        if pipeline is None:
+            try:
+                with lock:
+                    pipeline = spares.pop() if spares else build_pipeline()
+            except Exception as exc:  # noqa: BLE001
+                return _error_json(str(exc)), 3
+            local.pipeline = pipeline
+        return _process_one_line(pipeline, raw_line)
 
+    return _process
+
+
+def _run_batch(
+    stream: "typing.TextIO",
+    process: typing.Callable[[str], tuple[str, int]],
+    concurrency: int,
+) -> int:
+    """The one batch driver: print one result per non-blank line in input order.
+
+    Serial uses builtin ``map`` so the stream is consumed lazily (line N is
+    printed before line N+1 is read); concurrent uses ``executor.map``, which
+    preserves order. Exit codes rank ok 0 < needs_review 1 < error 3, so the
+    worst is simply the max.
+    """
+    lines = (raw for raw in stream if raw.rstrip("\n\r"))
+    pool = ThreadPoolExecutor(max_workers=concurrency) if concurrency > 1 else None
+    mapper = pool.map if pool is not None else map
     worst = 0
-    with ThreadPoolExecutor(max_workers=concurrency) as executor:
-        for output_json, code in executor.map(_worker, enumerate(lines)):
+    try:
+        for output_json, code in mapper(process, lines):
             print(output_json)
-            if code == 3:
-                worst = 3
-            elif code == 1 and worst < 3:
-                worst = max(worst, 1)
+            worst = max(worst, code)
+    finally:
+        if pool is not None:
+            pool.shutdown()
     return worst
-
-
-def _thread_id() -> int:
-    """Return current thread's identity for per-thread pipeline keying."""
-    import threading  # noqa: PLC0415
-
-    return threading.get_ident()
 
 
 def run_extract(argv: list[str] | None = None) -> int:
@@ -249,7 +253,7 @@ def run_extract_from_args(args: argparse.Namespace) -> int:
         pipeline = build_default_pipeline(**pipeline_kwargs)
         result = pipeline.extract(text)
     except Exception as exc:  # noqa: BLE001
-        print(json.dumps({"status": "error", "error_message": str(exc)}))
+        print(_error_json(str(exc)))
         return 3
 
     print(json.dumps(result.model_dump(), indent=2))
@@ -260,38 +264,30 @@ def run_extract_from_args(args: argparse.Namespace) -> int:
 
 
 def _run_extract_batch(args: argparse.Namespace) -> int:
-    """Batch mode: build pipeline once (serial) or per-thread (concurrent), return worst exit code."""
+    """Batch mode at any concurrency, return the worst exit code.
+
+    The pipeline is built eagerly in the main thread, before any line is read,
+    so a provider/config failure yields one error envelope and exit 3 at every
+    ``--batch-concurrency`` (and on empty input), never a traceback or exit 1.
+    """
     from reflect_mcp.pipeline import build_default_pipeline  # noqa: PLC0415
 
     stream = _read_input_stream(args)
     if stream is None:
         return 2
 
-    concurrency = args.batch_concurrency if args.batch_concurrency is not None else 1
-    pipeline_kwargs = _build_pipeline_kwargs(args)
-
-    if concurrency > 1:
-
-        def _build() -> "ReflectivePipeline":
-            return build_default_pipeline(**pipeline_kwargs)
-
+    try:
         try:
-            return _run_batch_concurrent(_build, stream, concurrency)
-        finally:
-            if stream is not sys.stdin:
-                stream.close()
-
-    try:
-        pipeline = build_default_pipeline(**pipeline_kwargs)
-    except Exception as exc:  # noqa: BLE001
-        print(json.dumps({"status": "error", "error_message": str(exc)}))
-        return 3
-
-    try:
-        return _run_batch(pipeline, stream)
+            pipeline_kwargs = _build_pipeline_kwargs(args)
+            first = build_default_pipeline(**pipeline_kwargs)
+        except Exception as exc:  # noqa: BLE001
+            print(_error_json(str(exc)))
+            return 3
+        process = _line_processor(lambda: build_default_pipeline(**pipeline_kwargs), first)
+        concurrency = args.batch_concurrency if args.batch_concurrency is not None else 1
+        return _run_batch(stream, process, concurrency)
     finally:
-        if stream is not sys.stdin:
-            stream.close()
+        _close_input(stream)
 
 
 def run_validate(argv: list[str] | None = None) -> int:
@@ -333,7 +329,7 @@ def run_validate_from_args(args: argparse.Namespace) -> int:
         pipeline = build_default_pipeline(**pipeline_kwargs)
         result = pipeline.validate(text, data)
     except Exception as exc:  # noqa: BLE001
-        print(json.dumps({"status": "error", "error_message": str(exc)}))
+        print(_error_json(str(exc)))
         return 3
 
     print(json.dumps(result.model_dump(), indent=2))

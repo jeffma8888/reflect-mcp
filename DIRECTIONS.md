@@ -1,6 +1,26 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-57
+    lenses: performance-and-throughput
+    - Candidate A1 -- Re-land iter-56's "one batch path" (the winner was aborted for infra reasons, not on merit), which also fixes a bad-threshold traceback that returns exit 1
+    - Candidate A2 -- Delete the `heuristics_enabled` constructor knob: the exported library API can build a pipeline that returns `ok` on fabricated data
+    - Candidate A3 -- One threshold/pipeline-build rule: delete cli.py's `_build_gate_config` + `_build_pipeline_kwargs` and route single-mode `extract`/`validate` through `tools.extract_tool`/`validate_tool`
+    - Candidate B1 -- Drop the fixed 0.5s sleep before a parse/schema retry: it is pure latency on every retry
+    - Candidate B2 -- Build each provider client once per process, not once per call (and never build an unused one)
+    - Candidate B3 -- Don't throw away the paid Generator output when the Critic fails: return it in the error envelope so recovery costs one Critic call, not a full re-extract
+    winner: A1
+    ship: pending (not yet decided)
+  iter-56
+    lenses: integration-and-adoption, simplification-and-deletion
+    - Candidate A1 -- `validate` rejects `data` keys it doesn't know (and empty `data`) instead of verifying nothing and returning `ok`
+    - Candidate A2 -- Batch output is joinable: echo the caller's `id` and the 1-based input `line` on every result, and apply the empty-input pre-check per line
+    - Candidate A3 -- `validate --heuristics-only` works with no provider SDK or credentials, delivering the "zero-cost, CI" on-ramp the README promises
+    - Candidate B1 -- One CLI parser: delete cli.py's duplicate argparse stack (and the dormant `_number_in_text`)
+    - Candidate B2 -- Collapse the Generator and Critic retry loops into one `parse_with_retry` helper
+    - Candidate B3 -- One batch path: fold `_run_batch` and `_run_batch_concurrent` (and `_read_text` and `_read_input_stream`) into single implementations
+    winner: B3
+    ship: unknown
   iter-55
     lenses: integration-and-adoption
     - Candidate A1 -- A numeric `invoice_number` from the Generator crashes the run instead of being coerced to a string
@@ -10,7 +30,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `validate --batch`: verify a JSONL corpus of `{text, data}` produced by someone else's extractor
     - Candidate B3 -- Batch output carries a correlation key: echo the caller's `id` (and the 1-based input `line`) on every result, including error lines
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 9c540a3
   iter-54
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Amount-role grounding: penalize a subtotal/tax/total whose matching number sits next to a different field's label
@@ -200,4 +220,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-20 scouted iterations
+22 scouted iterations
