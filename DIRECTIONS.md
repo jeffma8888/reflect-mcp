@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-59
+    lenses: narrative-and-docs, new-capability
+    - Candidate A -- The result explains what was actually verified: `notes` stop saying "All fields cleared" when nothing was committed or no Critic ran
+    - Candidate B -- README "What verification does NOT catch" table, each row pinned by a strict-xfail test that forces the doc update when the gap closes
+    - Candidate C -- README §5's CLI block is executed by the suite: every documented command reaches its documented exit code, and `--help` carries the 0/1/2/3 contract
+    - Candidate B1 -- `needs_review` hands the reviewer evidence: each flagged field carries deterministic `suggestions` (source spans it could be), e.g. inv-004's total gets the "583.20" token
+    - Candidate B2 -- Omission detection: a null field the source plainly labels ("Total: $108.50" → `total: null`) is flagged, not silently dropped
+    - Candidate B3 -- `make eval` measures the trust contract: a silent-wrong count (wrong field not flagged) and a catch rate, with `--max-silent-wrong N` exit
+    winner: B3
+    ship: pending (not yet decided)
   iter-58
     lenses: performance-and-throughput, narrative-and-docs
     - Candidate A1 -- Make the one paid retry count: retry immediately (no 0.5s sleep) and tell the model what failed, instead of resending a byte-identical prompt
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B -- §7 Architecture + Repository layout match the module tree: add `tools.py` (iter 55), fix "Three roles" / "The `extract` tool (`server.py`)", say when the Critic doesn't run, plus a two-way file-tree drift test
     - Candidate C -- The log tells the truth about the Critic: one event name for "Critic didn't run", and the README §10 / `logging_config` "every stage carries the shared trace_id" claim corrected, with a catalog test over the `log_stage` call sites
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 9183f52
   iter-57
     lenses: performance-and-throughput
     - Candidate A1 -- Re-land iter-56's "one batch path" (the winner was aborted for infra reasons, not on merit), which also fixes a bad-threshold traceback that returns exit 1
@@ -230,4 +240,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-23 scouted iterations
+24 scouted iterations

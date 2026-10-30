@@ -30,7 +30,7 @@ The pattern is well established: naive extraction pipelines look great in a demo
 
 ### In research terms — an evaluation harness with a verifiable reward
 
-Stripped of the invoice example, `reflect-mcp` is a small **evaluation harness with a verifiable reward**, wired into the inference path instead of bolted on after the fact. The Critic is a **decorrelated grader** — a *different* model from the Generator, because same-model self-critique rubber-stamps its own errors. The deterministic heuristics are the **programmatic pass criterion**: grounding, arithmetic reconciliation, date validity and date grounding are checkable without a model, and they can only *lower* the score, so a structurally impossible value can't be talked through on a grader's confidence alone. The gate is the **escalation path for the cases the reward signal can't settle** — which is what turns a low-confidence result into useful output instead of a failure. And `make eval` grades the harness itself: a labeled golden set, field-level accuracy, and a non-zero exit below a threshold, so the whole loop is measurable offline in CI with no secrets.
+Stripped of the invoice example, `reflect-mcp` is a small **evaluation harness with a verifiable reward**, wired into the inference path instead of bolted on after the fact. The Critic is a **decorrelated grader** — a *different* model from the Generator, because same-model self-critique rubber-stamps its own errors. The deterministic heuristics are the **programmatic pass criterion**: grounding, arithmetic reconciliation, date validity and date grounding are checkable without a model, and they can only *lower* the score, so a structurally impossible value can't be talked through on a grader's confidence alone. The gate is the **escalation path for the cases the reward signal can't settle** — which is what turns a low-confidence result into useful output instead of a failure. And `make eval` grades the harness itself: a labeled golden set, field-level accuracy, a catch rate for wrong fields, and a non-zero exit on low accuracy or any silent-wrong field, so the whole loop is measurable offline in CI with no secrets.
 
 ## 3. Demo
 
@@ -280,7 +280,7 @@ The `extract` tool (`server.py`) is the only module that imports the `mcp` SDK, 
 
 ## 8. Evaluation
 
-A tiny golden-file eval treats LLM quality as **measurable, not vibes**. `eval/golden/dataset.jsonl` holds labeled messy-text → expected-fields examples; `eval/run_eval.py` runs the full pipeline over them and reports field accuracy, exact-match accuracy, needs-review rate, and *exactly where it fails*.
+A tiny golden-file eval treats LLM quality as **measurable, not vibes**. `eval/golden/dataset.jsonl` holds labeled messy-text → expected-fields examples; `eval/run_eval.py` runs the full pipeline over them and reports field accuracy, exact-match accuracy, needs-review rate, and *exactly where it fails*. It also grades the trust contract itself: **catch rate** (wrong fields the gate named in `flagged_fields`), **silent-wrong** (a wrong field not named in `flagged_fields` — returned as if it were fine), and **false alarms** (correct fields flagged anyway; reported, never gated). Each failure line is tagged `(flagged)` or `(SILENT)`.
 
 ```bash
 make eval          # OFFLINE: deterministic, uses recorded model outputs (no API keys)
@@ -297,16 +297,20 @@ examples          : 7
 field accuracy    : 93.9%  (46/49)
 exact-match acc   : 57.1%  (4/7)
 needs-review rate : 42.9%  (3/7)
+catch rate        : 100.0%  (3/3)
+silent-wrong      : 0
+false alarms      : 0
 --------------------------------------------------------------
 field-level failures (where it breaks):
-  [inv-004] total: expected 583.2 but got 683.2
-  [inv-006] invoice_date: expected '2026-03-14' but got '2026-04-14'
-  [inv-007] vendor_name: expected 'NORTHWIND TRADERS' but got 'Contoso Ltd'
+  [inv-004] total: expected 583.2 but got 683.2  (flagged)
+  [inv-006] invoice_date: expected '2026-03-14' but got '2026-04-14'  (flagged)
+  [inv-007] vendor_name: expected 'NORTHWIND TRADERS' but got 'Contoso Ltd'  (flagged)
 ==============================================================
 PASS: field accuracy 93.9% >= required 90.0%
+PASS: silent-wrong fields 0 <= allowed 0
 ```
 
-`make eval` exits non-zero below `--min-accuracy` (default 0.90), so it works as an **offline eval-CI gate** with no secrets.
+`make eval` exits non-zero when field accuracy is below `--min-accuracy` (default 0.90) **or** silent-wrong is above `--max-silent-wrong` (default 0), so it works as an **offline eval-CI gate** with no secrets — and a regression that drops a field without flagging it fails the gate even while accuracy stays above threshold.
 
 ## 9. Testing
 
