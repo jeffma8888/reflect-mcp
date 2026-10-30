@@ -160,7 +160,7 @@ Then restart Claude Desktop and ask it to *"extract the invoice fields from this
 
 When `status == "needs_review"`, do **not** use `data` blindly — confirm the fields in `flagged_fields` first.
 
-The tools never raise: failures (empty input, out-of-range thresholds, `data` that fails `InvoiceData` validation, provider or parse errors) return `{ status: "error", error_message }` instead of raising, mirroring the CLI's error envelope. `heuristics_only=True` skips the Critic LLM call, like the CLI's `--heuristics-only`.
+The tools never raise: failures (empty input, out-of-range thresholds, `data` that fails `InvoiceData` validation, provider or parse errors) return `{ status: "error", error_message }` instead of raising, mirroring the CLI's error envelope. `heuristics_only=True` skips the Critic LLM call, like the CLI's `--heuristics-only`; for `validate` it builds no provider client at all, so it needs no provider SDK or API key.
 
 **Operator threshold floor.** Over MCP, the threshold arguments are chosen by the calling agent, so they can only be raised above the operator's floor, never lowered below it. Set the floor in the server's `env` block with `REFLECT_FIELD_THRESHOLD` and `REFLECT_OVERALL_THRESHOLD` (defaults 0.70 / 0.75 when unset). A lower argument is raised to the floor, and `notes` records it (e.g. `field_threshold raised from 0.0 to 0.7.`). An agent may always ask for stricter thresholds; only the operator can lower them, e.g. `"REFLECT_FIELD_THRESHOLD": "0"`. (The agent-controlled `heuristics_only=True` argument still drops the Critic, so it is not covered by this floor.) A malformed value (not a number, including nan/inf, or outside [0, 1]) makes every call return `{ status: "error", error_message }` rather than falling back to a looser gate. The CLI does not read these variables: its `--field-threshold` / `--overall-threshold` flags stay authoritative.
 
@@ -198,7 +198,7 @@ reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --h
 
 Exit codes (both verbs): **0** = `ok`, **1** = `needs_review`, **2** = usage/input error, **3** = pipeline error (JSON error envelope on stdout).
 
-**Heuristics-only mode** (`--heuristics-only`): skips the Critic LLM call entirely. Verification relies solely on deterministic structural checks (text grounding, amount-role grounding, arithmetic reconciliation, date validation and grounding). Useful for CI pipelines, pre-screening, or zero-cost structural-only validation. Works with both `extract` and `validate`, including batch mode.
+**Heuristics-only mode** (`--heuristics-only`): skips the Critic LLM call entirely. Verification relies solely on deterministic structural checks (text grounding, amount-role grounding, arithmetic reconciliation, date validation and grounding). Useful for CI pipelines, pre-screening, or zero-cost structural-only validation. Works with both `extract` and `validate`, including batch mode. `validate --heuristics-only` builds no provider client at all, so it needs no provider SDK or API key (`extract` still builds the Generator client, so it still needs them).
 
 **Batch mode** (`--batch`): reads JSONL from stdin or `--file`, emits one JSON result per line to stdout, reuses the pipeline across all lines. Exit code is the worst severity across all lines (error 3 > needs_review 1 > ok 0). Malformed lines and per-line extraction failures emit `{"status":"error","error_message":"..."}` without aborting the batch. Add `--batch-concurrency N` (N > 1) to process documents concurrently via a thread pool; each worker builds its own pipeline instance so SDK clients are never shared across threads. Output order is always preserved. The pipeline is built once up front, so a pipeline/provider build failure or an invalid threshold flag yields a single `status:"error"` line and exit 3 at any `--batch-concurrency`.
 
@@ -225,7 +225,7 @@ else:
     print(result.data.vendor_name)            # InvoiceData fields
 ```
 
-`build_default_pipeline` reads `REFLECT_PROVIDER` / `REFLECT_GENERATOR_MODEL` / `REFLECT_CRITIC_MODEL` from the environment and returns a `ReflectivePipeline`. Pass `critic_enabled=False` to skip the Critic LLM call and use only deterministic heuristics for verification. You can also construct one manually with your own `Generator` and `Critic` instances (useful for testing with `ScriptedLLMClient`).
+`build_default_pipeline` reads `REFLECT_PROVIDER` / `REFLECT_GENERATOR_MODEL` / `REFLECT_CRITIC_MODEL` from the environment and returns a `ReflectivePipeline`. Pass `critic_enabled=False` to skip the Critic LLM call and use only deterministic heuristics for verification. Pass `generator_enabled=False` for a validate-only pipeline (validate-only: builds no Generator client); calling `.extract()` on it raises `RuntimeError`. You can also construct one manually with your own `Generator` and `Critic` instances (useful for testing with `ScriptedLLMClient`).
 
 ### Gate-only verification
 

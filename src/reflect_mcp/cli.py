@@ -326,7 +326,7 @@ def run_validate_from_args(args: argparse.Namespace) -> int:
 
     try:
         pipeline_kwargs = _build_pipeline_kwargs(args)
-        pipeline = build_default_pipeline(**pipeline_kwargs)
+        pipeline = build_default_pipeline(**pipeline_kwargs, generator_enabled=False)
         result = pipeline.validate(text, data)
     except Exception as exc:  # noqa: BLE001
         print(_error_json(str(exc)))

@@ -25,7 +25,7 @@ from reflect_mcp.schema import (
 class ReflectivePipeline:
     def __init__(
         self,
-        generator: Generator,
+        generator: Generator | None,
         critic: Critic | None,
         gate_config: GateConfig | None = None,
     ) -> None:
@@ -34,6 +34,9 @@ class ReflectivePipeline:
         self.gate_config = gate_config or GateConfig()
 
     def extract(self, text: str) -> ExtractionResult:
+        if self.generator is None:
+            # A validate-only pipeline has no Generator; fail loudly before any model call.
+            raise RuntimeError("cannot extract: pipeline was built without a Generator")
         trace_id = new_trace_id()
         log_stage("generate.start", trace_id, input_chars=len(text))
 
@@ -97,23 +100,26 @@ def build_default_pipeline(
     *,
     max_retries: int = 1,
     critic_enabled: bool = True,
+    generator_enabled: bool = True,
 ) -> ReflectivePipeline:
     """Wire up a pipeline against real providers (env-configured).
 
-    Imported lazily so tests never touch provider SDKs.
+    Imported lazily so tests never touch provider SDKs. ``generator_enabled=False``
+    is for validate-only callers: building an unused Generator client costs a
+    connection pool per call, and with the Critic also off it would make a
+    zero-model heuristics-only check fail when no provider SDK is installed.
     """
     from reflect_mcp.providers import build_client
 
-    gen_client: LLMClient = build_client("generator")
+    generator: Generator | None = None
+    if generator_enabled:
+        gen_client: LLMClient = build_client("generator")
+        generator = Generator(gen_client, max_retries=max_retries)
     critic: Critic | None = None
     if critic_enabled:
         crit_client: LLMClient = build_client("critic")
         critic = Critic(crit_client, max_retries=max_retries)
-    return ReflectivePipeline(
-        Generator(gen_client, max_retries=max_retries),
-        critic,
-        gate_config,
-    )
+    return ReflectivePipeline(generator, critic, gate_config)
 
 
 def _heuristics_doom_all(

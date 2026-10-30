@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-63
+    lenses: simplification-and-deletion, performance-and-throughput
+    - Candidate A1 -- One CLI parser and one single-document tail: delete cli.py's copy of the argparse stack and fold the two `*_from_args` tails into `_run_single` (roadmap #36)
+    - Candidate A2 -- One "the Critic didn't speak" branch: `_verify` synthesizes the neutral critique in one place and logs `critique.done` once
+    - Candidate A3 -- Delete the "pass `critic_enabled` only when opted out" rule: `tools._build_pipeline` goes away, and optionally cli's `_build_gate_config` folds into `_build_pipeline_kwargs`
+    - Candidate B1 -- Drop the fixed 0.5 s sleep before a parse/schema retry (roadmap #26)
+    - Candidate B2 -- Build provider clients only when used, and once per process (roadmap #27)
+    - Candidate B3 -- A Critic failure keeps the paid Generator output: the error envelope carries `unverified_data`, so recovery costs one Critic call instead of a full re-extract
+    winner: B2
+    ship: pending (not yet decided)
   iter-62
     lenses: integration-and-adoption, simplification-and-deletion
     - Candidate A1 -- Operator lock for `heuristics_only` over MCP: unless the server's `env` sets `REFLECT_ALLOW_HEURISTICS_ONLY=1`, an agent's `heuristics_only=True` is overridden (the Critic still runs) and `notes` says so
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Delete the `heuristics_enabled` constructor knob and the dead `_number_in_text` helper (roadmap #28)
     - Candidate B3 -- One parse-and-retry loop: replace the twin Generator/Critic retry loops with `parsing.complete_with_retry`
     winner: B2
-    ship: pending (not yet decided)
+    ship: PUSHED dd3368d
   iter-61
     lenses: hardening/DX, integration-and-adoption
     - Candidate A1 -- Amount-role grounding attributes each amount to its own line's label, so "Sales tax (8.25%): 16.50" stops false-alarming and "Total tax: 20.00" stops vouching for a wrong total
@@ -270,4 +280,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-27 scouted iterations
+28 scouted iterations

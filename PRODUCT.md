@@ -44,7 +44,7 @@ tool surface, small deps, MIT, publication-safe.
 | 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` | High | Low | QUEUED |
 | 25 | Batch output joinable: echo caller `id` + 1-based `line`; per-line empty-text pre-check | Med | Low | QUEUED |
 | 26 | Drop the fixed 0.5s sleep before a parse/schema retry (pure latency; transport retries live in SDKs) | Med | Low | QUEUED |
-| 27 | Build each provider client once per process; validate / heuristics-only build no unused clients | Med | Low | QUEUED |
+| 27 | Build each provider client once per process; validate / heuristics-only build no unused clients | Med | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
 | 28 | Delete the `heuristics_enabled` knob (Critic-less + heuristics-off returns `ok` on fabricated data) | High | Low | DONE (iter 62) |
 | 29 | README §3 demo is the real inv-004 replay output, pinned by a test that re-runs it | Med | Low | DONE (iter 58) |
 | 30 | Retry carries the parse/schema error to the model instead of a byte-identical re-request | Med | Low | QUEUED |
@@ -82,3 +82,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 60 — Amount-role grounding: a found amount unequal to its role's labelled number is penalized; golden inv-008
 - iter 61 — MCP gate floor from env (default 0.70/0.75): agent args can only raise thresholds; golden 0/0 pass
 - iter 62 — Delete `heuristics_enabled` knob + dead `_number_in_text`: every pipeline runs heuristics (0/4 → 3/1)
+- iter 63 — validate builds no Generator client; heuristics-only validate builds 0 clients, works with no SDK

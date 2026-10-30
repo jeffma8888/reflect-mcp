@@ -105,14 +105,19 @@ def _with_raise_note(result: dict[str, Any], suffix: str) -> dict[str, Any]:
     return result
 
 
-def _build_pipeline(gate_config: GateConfig, heuristics_only: bool) -> ReflectivePipeline:
-    """Call the factory, passing `critic_enabled` only when the caller opted out of the Critic.
+def _build_pipeline(
+    gate_config: GateConfig, heuristics_only: bool, *, validate_only: bool = False
+) -> ReflectivePipeline:
+    """Call the factory, adding only the kwargs the caller opted out of (Critic, Generator).
 
     Omitting the kwarg in the default case mirrors the CLI's `_build_pipeline_kwargs`.
+    `validate_only` drops the Generator client, which `validate` never calls.
     """
     kwargs: dict[str, Any] = {"gate_config": gate_config}
     if heuristics_only:
         kwargs["critic_enabled"] = False
+    if validate_only:
+        kwargs["generator_enabled"] = False
     return pipeline_module.build_default_pipeline(**kwargs)
 
 
@@ -155,7 +160,9 @@ def validate_tool(
     except ValidationError as exc:
         return _error(f"data failed InvoiceData validation: {exc}")
     try:
-        result = _build_pipeline(gate_config, heuristics_only).validate(text, invoice)
+        result = _build_pipeline(gate_config, heuristics_only, validate_only=True).validate(
+            text, invoice
+        )
     except Exception as exc:  # noqa: BLE001 - the envelope is the contract, not a traceback
         return _error(str(exc))
     return _with_raise_note(result.model_dump(), raise_note)
