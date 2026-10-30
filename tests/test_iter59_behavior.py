@@ -29,30 +29,32 @@ BASE_FAILURES = [
     ("inv-004", "total", 583.2, 683.2),
     ("inv-006", "invoice_date", "2026-03-14", "2026-04-14"),
     ("inv-007", "vendor_name", "NORTHWIND TRADERS", "Contoso Ltd"),
+    ("inv-008", "total", 75.0, 45.0),
 ]
 
-# Default offline stdout as produced by the pre-iteration HEAD (captured by
-# running HEAD's eval in a detached worktree). Every line here must survive
-# byte-identically, except the failure lines gain a tag.
+# Default offline stdout in the pre-iter-59 readout shape, migrated to the
+# current golden set. Every line here must survive byte-identically, except
+# the failure lines gain a tag.
 HEAD_STDOUT = (
     "==============================================================\n"
     "reflect-mcp eval  |  mode: OFFLINE (replay fixtures)\n"
     "==============================================================\n"
-    "examples          : 7\n"
-    "field accuracy    : 93.9%  (46/49)\n"
-    "exact-match acc   : 57.1%  (4/7)\n"
-    "needs-review rate : 42.9%  (3/7)\n"
+    "examples          : 8\n"
+    "field accuracy    : 92.9%  (52/56)\n"
+    "exact-match acc   : 50.0%  (4/8)\n"
+    "needs-review rate : 50.0%  (4/8)\n"
     "--------------------------------------------------------------\n"
     "field-level failures (where it breaks):\n"
     "  [inv-004] total: expected 583.2 but got 683.2\n"
     "  [inv-006] invoice_date: expected '2026-03-14' but got '2026-04-14'\n"
     "  [inv-007] vendor_name: expected 'NORTHWIND TRADERS' but got 'Contoso Ltd'\n"
+    "  [inv-008] total: expected 75.0 but got 45.0\n"
     "==============================================================\n"
-    "PASS: field accuracy 93.9% >= required 90.0%\n"
+    "PASS: field accuracy 92.9% >= required 90.0%\n"
 )
 
 NEW_LINES = [
-    "catch rate        : 100.0%  (3/3)",
+    "catch rate        : 100.0%  (4/4)",
     "silent-wrong      : 0",
     "false alarms      : 0",
 ]
@@ -145,14 +147,14 @@ def _eval_proc(*args: str) -> subprocess.CompletedProcess:
 def test_eb1_existing_metrics_unchanged():
     m = run_eval.evaluate(live=False)
     assert (m.examples, m.total_fields, m.correct_fields, m.exact_matches, m.reviewed) == (
-        7, 49, 46, 4, 3)
+        8, 56, 52, 4, 4)
     assert sorted(m.failures) == sorted(BASE_FAILURES)
-    assert len(m.failures) == 3
+    assert len(m.failures) == 4
 
 
 def test_eb1_new_metrics_on_shipped_fixtures():
     m = run_eval.evaluate(live=False)
-    assert m.caught == 3 and isinstance(m.caught, int)
+    assert m.caught == 4 and isinstance(m.caught, int)
     assert m.silent_wrong == 0 and isinstance(m.silent_wrong, int)
     assert m.false_alarms == 0 and isinstance(m.false_alarms, int)
     assert m.silent_failures == []
@@ -169,7 +171,7 @@ def test_eb1_catch_rate_none_when_nothing_wrong(monkeypatch, tmp_path):
     _all_correct(monkeypatch, tmp_path)
     m = run_eval.evaluate(live=False)
     assert m.failures == []
-    assert m.correct_fields == m.total_fields == 49
+    assert m.correct_fields == m.total_fields == 56
     assert m.caught == 0 and m.silent_wrong == 0
     assert m.catch_rate is None
 
@@ -181,7 +183,7 @@ def test_eb1_catch_rate_none_when_nothing_wrong(monkeypatch, tmp_path):
 def test_eb2_new_lines_placed_after_review_rate(capsys):
     assert run_eval.run(live=False, min_accuracy=0.90) == 0
     lines = _stdout_lines(capsys)
-    i = lines.index("needs-review rate : 42.9%  (3/7)")
+    i = lines.index("needs-review rate : 50.0%  (4/8)")
     assert lines[i + 1: i + 4] == NEW_LINES
     assert lines[i + 4] == "-" * 62
 
@@ -200,7 +202,7 @@ def test_eb2_other_lines_byte_identical_to_head():
 def test_eb2_label_padding_matches_existing_style(capsys):
     run_eval.run(live=False, min_accuracy=0.90)
     lines = _stdout_lines(capsys)
-    i = lines.index("needs-review rate : 42.9%  (3/7)")
+    i = lines.index("needs-review rate : 50.0%  (4/8)")
     for line in lines[i - 3: i + 4]:
         assert line[18:20] == ": ", line
     labels = [ln[:18].rstrip() for ln in lines[i + 1: i + 4]]
@@ -227,9 +229,10 @@ def test_eb3_shipped_failure_lines_all_flagged(capsys):
         "  [inv-004] total: expected 583.2 but got 683.2  (flagged)",
         "  [inv-006] invoice_date: expected '2026-03-14' but got '2026-04-14'  (flagged)",
         "  [inv-007] vendor_name: expected 'NORTHWIND TRADERS' but got 'Contoso Ltd'  (flagged)",
+        "  [inv-008] total: expected 75.0 but got 45.0  (flagged)",
     ]
     i = lines.index("field-level failures (where it breaks):")
-    assert lines[i + 1: i + 4] == expected
+    assert lines[i + 1: i + 5] == expected
     assert not any("(SILENT)" in line for line in lines)
 
 
@@ -241,7 +244,7 @@ def test_eb4_process_exit_and_stdout_tail():
     proc = _eval_proc()
     assert proc.returncode == 0
     assert proc.stdout.endswith(
-        "PASS: field accuracy 93.9% >= required 90.0%\n"
+        "PASS: field accuracy 92.9% >= required 90.0%\n"
         "PASS: silent-wrong fields 0 <= allowed 0\n"
     )
     verdicts = [ln for ln in proc.stdout.splitlines() if "silent-wrong fields" in ln]
@@ -257,10 +260,10 @@ def test_eb5_mutation_metrics(monkeypatch, tmp_path):
     m = run_eval.evaluate(live=False)
     assert m.silent_wrong == 1
     assert m.silent_failures == [("inv-001", "total", 108.5, None)]
-    assert m.caught == 3
-    assert m.correct_fields == 45
-    assert m.catch_rate == pytest.approx(0.75)
-    assert m.caught + m.silent_wrong == len(m.failures) == 4
+    assert m.caught == 4
+    assert m.correct_fields == 51
+    assert m.catch_rate == pytest.approx(0.80)
+    assert m.caught + m.silent_wrong == len(m.failures) == 5
     assert m.correct_fields + m.caught + m.silent_wrong == m.total_fields
 
 
@@ -269,15 +272,15 @@ def test_eb5_mutation_run_returns_1_and_reports(monkeypatch, tmp_path, capsys):
     assert run_eval.run(live=False, min_accuracy=0.90) == 1
     lines = _stdout_lines(capsys)
     for want in (
-        "PASS: field accuracy 91.8% >= required 90.0%",
+        "PASS: field accuracy 91.1% >= required 90.0%",
         "FAIL: silent-wrong fields 1 > allowed 0",
         "silent-wrong      : 1",
-        "catch rate        : 75.0%  (3/4)",
+        "catch rate        : 80.0%  (4/5)",
         "  [inv-001] total: expected 108.5 but got None  (SILENT)",
     ):
         assert want in lines, want
     assert lines[-2:] == [
-        "PASS: field accuracy 91.8% >= required 90.0%",
+        "PASS: field accuracy 91.1% >= required 90.0%",
         "FAIL: silent-wrong fields 1 > allowed 0",
     ]
 
@@ -365,8 +368,8 @@ def test_eb8_false_alarm_metrics(monkeypatch, tmp_path):
     m = run_eval.evaluate(live=False)
     assert m.false_alarms == 1
     assert m.silent_wrong == 0
-    assert m.correct_fields == 46
-    assert m.caught == 3
+    assert m.correct_fields == 52
+    assert m.caught == 4
 
 
 def test_eb8_false_alarm_does_not_gate(monkeypatch, tmp_path, capsys):
@@ -386,10 +389,10 @@ def test_eb8_false_alarm_does_not_gate(monkeypatch, tmp_path, capsys):
 def test_eb9_accuracy_gate_still_fails(capsys):
     assert run_eval.run(live=False, min_accuracy=0.99) == 1
     lines = _stdout_lines(capsys)
-    assert "FAIL: field accuracy 93.9% < required 99.0%" in lines
+    assert "FAIL: field accuracy 92.9% < required 99.0%" in lines
     assert "PASS: silent-wrong fields 0 <= allowed 0" in lines
     assert lines[-2:] == [
-        "FAIL: field accuracy 93.9% < required 99.0%",
+        "FAIL: field accuracy 92.9% < required 99.0%",
         "PASS: silent-wrong fields 0 <= allowed 0",
     ]
 
@@ -398,14 +401,14 @@ def test_eb9_both_failing_prints_both_reasons(monkeypatch, tmp_path, capsys):
     _null_total(monkeypatch, tmp_path)
     assert run_eval.run(live=False, min_accuracy=0.99) == 1
     lines = _stdout_lines(capsys)
-    assert "FAIL: field accuracy 91.8% < required 99.0%" in lines
+    assert "FAIL: field accuracy 91.1% < required 99.0%" in lines
     assert "FAIL: silent-wrong fields 1 > allowed 0" in lines
 
 
 def test_eb9_cli_min_accuracy_exit_1():
     proc = _eval_proc("--min-accuracy", "0.99")
     assert proc.returncode == 1
-    assert "FAIL: field accuracy 93.9% < required 99.0%" in proc.stdout
+    assert "FAIL: field accuracy 92.9% < required 99.0%" in proc.stdout
     assert "PASS: silent-wrong fields 0 <= allowed 0" in proc.stdout
 
 

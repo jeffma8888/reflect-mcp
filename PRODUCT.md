@@ -49,6 +49,7 @@ tool surface, small deps, MIT, publication-safe.
 | 29 | README §3 demo is the real inv-004 replay output, pinned by a test that re-runs it | Med | Low | DONE (iter 58) |
 | 30 | Retry carries the parse/schema error to the model instead of a byte-identical re-request | Med | Low | QUEUED |
 | 31 | `make eval` measures the trust contract: catch rate, silent-wrong, false alarms; `--max-silent-wrong` exit | High | Low | DONE (iter 59) |
+| 32 | Amount-role grounding: an amount found in the source but not the number it labels for that role is penalized | High | Low | DONE (iter 60) |
 
 ## Done ledger
 
@@ -74,3 +75,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 57 — One batch driver + one build-error rule: build/threshold failure is an envelope + exit 3 at any concurrency
 - iter 58 — README §3 demo = real inv-004 replay output (583.20 source, 683.2 model), pinned by a re-running test
 - iter 59 — `make eval` counts silent-wrong (wrong, unflagged) fields + catch rate; exits 1 above `--max-silent-wrong`
+- iter 60 — Amount-role grounding: a found amount unequal to its role's labelled number is penalized; golden inv-008

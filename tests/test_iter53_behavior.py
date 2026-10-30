@@ -309,10 +309,10 @@ def test_eb11_eval_cli_readout():
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
     out = re.sub(r"[ \t]+", " ", proc.stdout)
-    assert re.search(r"examples : 7\b", out), out
-    assert re.search(r"field accuracy : 93\.9% \(46/49\)", out), out
-    assert re.search(r"exact-match acc : 57\.1% \(4/7\)", out), out
-    assert re.search(r"needs-review rate : 42\.9% \(3/7\)", out), out
+    assert re.search(r"examples : 8\b", out), out
+    assert re.search(r"field accuracy : 92\.9% \(52/56\)", out), out
+    assert re.search(r"exact-match acc : 50\.0% \(4/8\)", out), out
+    assert re.search(r"needs-review rate : 50\.0% \(4/8\)", out), out
     assert "[inv-006] invoice_date" in out
     assert "PASS" in out
 

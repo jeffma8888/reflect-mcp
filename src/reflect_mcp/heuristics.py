@@ -9,6 +9,9 @@ combines both. Concretely we check:
   - date format: does invoice_date parse as ISO 8601?
   - date grounding: does that ISO date appear in the source in some supported
                  written form (ISO, numeric slash/dot, or English month name)?
+  - amount-role grounding: a grounded subtotal/tax/total must match one of the
+                 numbers the source *labels* for that role (e.g. "Total: 75.00"),
+                 so a swapped amount or a stray number can't pass on presence alone.
 
 Each check contributes a per-field factor in [0,1]; the gate multiplies the
 Critic confidence by this factor, so a structurally impossible value can never
@@ -49,6 +52,26 @@ _MONTH_FIRST_RE = re.compile(
 _DAY_FIRST_RE = re.compile(
     rf"(?<!\d)(\d{{1,2}})\s+({_MONTH_RE})\s+(\d{{4}})(?!\d)", re.IGNORECASE
 )
+
+# Amount-role labels. The letter lookarounds stop a label matching inside a word
+# ("Internet" is not "net"); the `sub` lookbehinds keep "Sub-total" from also
+# counting as a total label.
+_ROLE_LABELS = {
+    "subtotal": r"sub-?total|sub total|net",
+    "tax": r"tax|vat|gst",
+    "total": r"(?<!sub)(?<!sub-)(?<!sub )(?:grand total|amount due|total)",
+}
+# A labelled number sits on the label's line, at most 25 non-digit chars after
+# it, optionally currency-prefixed, written with exactly two decimals. The strict
+# money form keeps IDs and quantities ("Order 12", "Total: 15") from labelling.
+_LABELLED_AMOUNT_RES = {
+    role: re.compile(
+        rf"(?<![a-z])(?:{labels})(?![a-z])[^\d\n]{{0,25}}?(?:[$€£]\s*)?"
+        r"((?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2})(?!\d)",
+        re.IGNORECASE,
+    )
+    for role, labels in _ROLE_LABELS.items()
+}
 
 
 @dataclass
@@ -96,6 +119,30 @@ def _find_number_span(value: float, text: str) -> ProvenanceSpan | None:
 
 def _number_in_text(value: float, text: str) -> bool:
     return _find_number_span(value, text) is not None
+
+
+def _labelled_amounts(text: str, role: str) -> list[float]:
+    """Distinct numbers the source labels for *role*, in first-occurrence order."""
+    values: list[float] = []
+    for m in _LABELLED_AMOUNT_RES[role].finditer(text):
+        value = float(m.group(1).replace(",", ""))
+        if value not in values:
+            values.append(value)
+    return values
+
+
+def _check_amount_role(field: str, value: float, text: str, report: HeuristicReport) -> None:
+    """Penalize a grounded amount that differs from every number labelled for its role.
+
+    Presence alone can't tell a subtotal from a tax (and arithmetic is
+    commutative), so a swap or a stray "STORE #12" total would pass. The check
+    abstains when the source labels nothing for the role: no label, no evidence.
+    """
+    labelled = _labelled_amounts(text, field)
+    if not labelled or any(abs(v - value) < 0.005 for v in labelled):
+        return
+    shown = ", ".join(f"{v:.2f}" for v in labelled)
+    report.penalize(field, 0.3, f"source labels {field} as {shown}, extraction says {value}")
 
 
 def _date_readings(match: re.Match[str]) -> set[tuple[int, int, int]]:
@@ -178,6 +225,9 @@ def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
             span = _find_number_span(float(value), text)
             if span is not None:
                 report.provenance[field] = [span]
+                # Only a found amount gets the role check, so an ungrounded one
+                # keeps its single, clearer "not found" reason.
+                _check_amount_role(field, float(value), text, report)
             else:
                 report.provenance[field] = []
                 report.penalize(field, 0.35, f"amount {value} not found in source text")

@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-60
+    lenses: new-capability, hardening/DX
+    - Candidate A1 -- Omission detection: a null amount the source plainly labels ("Total: $108.50" → `total: null`) is flagged in `needs_review` instead of returning `ok`
+    - Candidate A2 -- Amount-role grounding: a subtotal/tax/total whose value differs from the number the source labels for that role is penalized (swapped subtotal↔tax no longer passes)
+    - Candidate A3 -- Token-boundary grounding for text fields: `invoice_number`/`vendor_name`/`currency` must match a whole source token, not a fragment ("QM-993" inside "QM-9930" is no longer grounded)
+    - Candidate B1 -- A verification that checked zero fields can't be `ok`: all-null extraction, `validate` with `{}`, or only-unknown keys ("totl") return `needs_review`, with dropped keys named in `notes` (roadmap #20 + #24)
+    - Candidate B2 -- Non-finite amounts are rejected at the boundary: `NaN`/`Infinity` from the Generator or `validate --data` is a schema error, and stdout is always strict RFC 8259 JSON
+    - Candidate B3 -- trace_id contract: unique per call and present on every log event, retries included (roadmap #21)
+    winner: A2
+    ship: pending (not yet decided)
   iter-59
     lenses: narrative-and-docs, new-capability
     - Candidate A -- The result explains what was actually verified: `notes` stop saying "All fields cleared" when nothing was committed or no Critic ran
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Omission detection: a null field the source plainly labels ("Total: $108.50" → `total: null`) is flagged, not silently dropped
     - Candidate B3 -- `make eval` measures the trust contract: a silent-wrong count (wrong field not flagged) and a catch rate, with `--max-silent-wrong N` exit
     winner: B3
-    ship: pending (not yet decided)
+    ship: PUSHED cd55f64
   iter-58
     lenses: performance-and-throughput, narrative-and-docs
     - Candidate A1 -- Make the one paid retry count: retry immediately (no 0.5s sleep) and tell the model what failed, instead of resending a byte-identical prompt
@@ -240,4 +250,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-24 scouted iterations
+25 scouted iterations

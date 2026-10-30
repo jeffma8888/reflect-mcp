@@ -389,7 +389,7 @@ def test_eb10_golden_row_inv007():
     row = _rows()["inv-007"]
     assert row["text"] == INV007_TEXT
     assert row["expected"] == INV007_EXPECTED
-    assert list(_rows())[-1] == "inv-007"
+    assert list(_rows())[6] == "inv-007"
 
 
 def test_eb10_fixture_shape():
@@ -438,10 +438,10 @@ def test_eb11_eval_cli_readout():
     proc = _eval_stdout()
     assert proc.returncode == 0, proc.stdout + proc.stderr
     out = re.sub(r"[ \t]+", " ", proc.stdout)
-    assert re.search(r"examples : 7\b", out), out
-    assert re.search(r"field accuracy : 93\.9% \(46/49\)", out), out
-    assert re.search(r"exact-match acc : 57\.1% \(4/7\)", out), out
-    assert re.search(r"needs-review rate : 42\.9% \(3/7\)", out), out
+    assert re.search(r"examples : 8\b", out), out
+    assert re.search(r"field accuracy : 92\.9% \(52/56\)", out), out
+    assert re.search(r"exact-match acc : 50\.0% \(4/8\)", out), out
+    assert re.search(r"needs-review rate : 50\.0% \(4/8\)", out), out
     assert "[inv-007] vendor_name: expected 'NORTHWIND TRADERS' but got 'Contoso Ltd'" in out
     assert "PASS" in out
 
@@ -454,7 +454,7 @@ def test_eb11_evaluate_metrics():
         sys.path.remove(str(REPO / "eval"))
     m = run_eval.evaluate(live=False)
     assert (m.examples, m.total_fields, m.correct_fields, m.exact_matches, m.reviewed) == (
-        7, 49, 46, 4, 3)
+        8, 56, 52, 4, 4)
     assert ("inv-007", "vendor_name", "NORTHWIND TRADERS", "Contoso Ltd") in m.failures
 
 

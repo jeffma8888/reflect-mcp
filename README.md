@@ -30,7 +30,7 @@ The pattern is well established: naive extraction pipelines look great in a demo
 
 ### In research terms — an evaluation harness with a verifiable reward
 
-Stripped of the invoice example, `reflect-mcp` is a small **evaluation harness with a verifiable reward**, wired into the inference path instead of bolted on after the fact. The Critic is a **decorrelated grader** — a *different* model from the Generator, because same-model self-critique rubber-stamps its own errors. The deterministic heuristics are the **programmatic pass criterion**: grounding, arithmetic reconciliation, date validity and date grounding are checkable without a model, and they can only *lower* the score, so a structurally impossible value can't be talked through on a grader's confidence alone. The gate is the **escalation path for the cases the reward signal can't settle** — which is what turns a low-confidence result into useful output instead of a failure. And `make eval` grades the harness itself: a labeled golden set, field-level accuracy, a catch rate for wrong fields, and a non-zero exit on low accuracy or any silent-wrong field, so the whole loop is measurable offline in CI with no secrets.
+Stripped of the invoice example, `reflect-mcp` is a small **evaluation harness with a verifiable reward**, wired into the inference path instead of bolted on after the fact. The Critic is a **decorrelated grader** — a *different* model from the Generator, because same-model self-critique rubber-stamps its own errors. The deterministic heuristics are the **programmatic pass criterion**: grounding, amount-role grounding (a total must match the number the source labels as the total), arithmetic reconciliation, date validity and date grounding are checkable without a model, and they can only *lower* the score, so a structurally impossible value can't be talked through on a grader's confidence alone. The gate is the **escalation path for the cases the reward signal can't settle** — which is what turns a low-confidence result into useful output instead of a failure. And `make eval` grades the harness itself: a labeled golden set, field-level accuracy, a catch rate for wrong fields, and a non-zero exit on low accuracy or any silent-wrong field, so the whole loop is measurable offline in CI with no secrets.
 
 ## 3. Demo
 
@@ -196,7 +196,7 @@ reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --h
 
 Exit codes (both verbs): **0** = `ok`, **1** = `needs_review`, **2** = usage/input error, **3** = pipeline error (JSON error envelope on stdout).
 
-**Heuristics-only mode** (`--heuristics-only`): skips the Critic LLM call entirely. Verification relies solely on deterministic structural checks (text grounding, arithmetic reconciliation, date validation and grounding). Useful for CI pipelines, pre-screening, or zero-cost structural-only validation. Works with both `extract` and `validate`, including batch mode.
+**Heuristics-only mode** (`--heuristics-only`): skips the Critic LLM call entirely. Verification relies solely on deterministic structural checks (text grounding, amount-role grounding, arithmetic reconciliation, date validation and grounding). Useful for CI pipelines, pre-screening, or zero-cost structural-only validation. Works with both `extract` and `validate`, including batch mode.
 
 **Batch mode** (`--batch`): reads JSONL from stdin or `--file`, emits one JSON result per line to stdout, reuses the pipeline across all lines. Exit code is the worst severity across all lines (error 3 > needs_review 1 > ok 0). Malformed lines and per-line extraction failures emit `{"status":"error","error_message":"..."}` without aborting the batch. Add `--batch-concurrency N` (N > 1) to process documents concurrently via a thread pool; each worker builds its own pipeline instance so SDK clients are never shared across threads. Output order is always preserved. The pipeline is built once up front, so a pipeline/provider build failure or an invalid threshold flag yields a single `status:"error"` line and exit 3 at any `--batch-concurrency`.
 
@@ -273,7 +273,7 @@ Three roles, one shared trace id, clean layering (`resolver`-free by design — 
 
 - **Generator** (`generator.py`) — LLM call (with configurable retry on parse failure) → validated `InvoiceData` (Pydantic). Absent fields come back `null`; the model is instructed never to invent a value.
 - **Critic** (`critic.py`) — a **different model** (`REFLECT_CRITIC_MODEL`) is shown the source *and* the candidate extraction and must ground each field, returning per-field + overall confidence (with configurable retry on parse failure). A different model matters: self-critique with the same model tends to rubber-stamp its own errors.
-- **Deterministic heuristics** (`heuristics.py`) — a free, non-LLM signal: grounding (is a committed value actually present in the source?), arithmetic reconciliation (`subtotal + tax == total`), ISO-date validation, and date grounding (an ISO date must appear in the source as ISO, `MM/DD/YYYY`/`DD/MM/YYYY`/`DD.MM.YYYY`, or an English month-name form such as `March 14, 2026` / `14 Mar 2026`, otherwise it is penalized). These *cap* the Critic — a structurally impossible value can't be waved through on the Critic's word alone.
+- **Deterministic heuristics** (`heuristics.py`) — a free, non-LLM signal: grounding (is a committed value actually present in the source?), amount-role grounding (a grounded `subtotal`/`tax`/`total` must match a number the source labels for that role, e.g. `Total: 75.00`, so a swapped amount or a stray item-line number is penalized), arithmetic reconciliation (`subtotal + tax == total`), ISO-date validation, and date grounding (an ISO date must appear in the source as ISO, `MM/DD/YYYY`/`DD/MM/YYYY`/`DD.MM.YYYY`, or an English month-name form such as `March 14, 2026` / `14 Mar 2026`, otherwise it is penalized). These *cap* the Critic — a structurally impossible value can't be waved through on the Critic's word alone.
 - **Gate** (`gate.py`) — combines the two signals multiplicatively (`combined = critic_confidence × heuristic_factor`), flags any non-null field below `field_threshold`, and escalates the whole result if any field is flagged **or** overall confidence is below `overall_threshold`. It also enforces the Critic's contract: a committed (non-null) field the Critic marks `grounded:false`, or returns no verdict for, has its critic confidence capped at 0.5, and duplicate verdicts for a field use the minimum confidence (on a tie, the `grounded:false` verdict wins, so verdict order never matters).
 
 The `extract` tool (`server.py`) is the only module that imports the `mcp` SDK, and `providers.py` is the only module that imports a provider SDK — so the core pipeline and the entire test suite have **zero** hard dependency on either.
@@ -287,17 +287,17 @@ make eval          # OFFLINE: deterministic, uses recorded model outputs (no API
 make eval-live     # LIVE: runs against REFLECT_PROVIDER (needs credentials)
 ```
 
-Offline run (recorded fixtures; three examples carry an injected hallucination — a wrong total in `inv-004`, in `inv-006` a made-up date that the date-grounding heuristic catches, and in `inv-007` the bill-to customer extracted as the vendor, which the Critic marks `grounded:false` — to prove the harness catches misses):
+Offline run (recorded fixtures; four examples carry an injected hallucination — a wrong total in `inv-004`, in `inv-006` a made-up date that the date-grounding heuristic catches, in `inv-007` the bill-to customer extracted as the vendor, which the Critic marks `grounded:false`, and in `inv-008` a stray item-line amount taken as the total, which amount-role grounding catches even though the Critic is fooled — to prove the harness catches misses):
 
 ```
 ==============================================================
 reflect-mcp eval  |  mode: OFFLINE (replay fixtures)
 ==============================================================
-examples          : 7
-field accuracy    : 93.9%  (46/49)
-exact-match acc   : 57.1%  (4/7)
-needs-review rate : 42.9%  (3/7)
-catch rate        : 100.0%  (3/3)
+examples          : 8
+field accuracy    : 92.9%  (52/56)
+exact-match acc   : 50.0%  (4/8)
+needs-review rate : 50.0%  (4/8)
+catch rate        : 100.0%  (4/4)
 silent-wrong      : 0
 false alarms      : 0
 --------------------------------------------------------------
@@ -305,8 +305,9 @@ field-level failures (where it breaks):
   [inv-004] total: expected 583.2 but got 683.2  (flagged)
   [inv-006] invoice_date: expected '2026-03-14' but got '2026-04-14'  (flagged)
   [inv-007] vendor_name: expected 'NORTHWIND TRADERS' but got 'Contoso Ltd'  (flagged)
+  [inv-008] total: expected 75.0 but got 45.0  (flagged)
 ==============================================================
-PASS: field accuracy 93.9% >= required 90.0%
+PASS: field accuracy 92.9% >= required 90.0%
 PASS: silent-wrong fields 0 <= allowed 0
 ```
 
