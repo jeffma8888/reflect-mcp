@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-62
+    lenses: integration-and-adoption, simplification-and-deletion
+    - Candidate A1 -- Operator lock for `heuristics_only` over MCP: unless the server's `env` sets `REFLECT_ALLOW_HEURISTICS_ONLY=1`, an agent's `heuristics_only=True` is overridden (the Critic still runs) and `notes` says so
+    - Candidate A2 -- Every result says how it was verified: a machine-readable `verification` field (`"critic+heuristics"` | `"heuristics_only"` | `"critic_skipped_doomed"`), so a consumer that auto-commits `ok` results can require a Critic-verified `ok`
+    - Candidate A3 -- The decorrelation rule is consulted where the operator configures models: `build_default_pipeline` refuses a Critic whose resolved model id equals the Generator's (error envelope / exit 3), unless `REFLECT_ALLOW_SAME_MODEL=1`
+    - Candidate B1 -- One CLI parser and one single-document run path: delete cli.py's duplicate argparse stack and fold `run_extract_from_args`/`run_validate_from_args` into one `_run_single`
+    - Candidate B2 -- Delete the `heuristics_enabled` constructor knob and the dead `_number_in_text` helper (roadmap #28)
+    - Candidate B3 -- One parse-and-retry loop: replace the twin Generator/Critic retry loops with `parsing.complete_with_retry`
+    winner: B2
+    ship: pending (not yet decided)
   iter-61
     lenses: hardening/DX, integration-and-adoption
     - Candidate A1 -- Amount-role grounding attributes each amount to its own line's label, so "Sales tax (8.25%): 16.50" stops false-alarming and "Total tax: 20.00" stops vouching for a wrong total
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `validate --heuristics-only` (CLI and MCP) runs on a base `pip install reflect-mcp` with no provider SDK and no credentials
     - Candidate B3 -- `reflect-mcp eval --golden FILE`: an installed user grades their own labelled corpus with the iter-59 trust-contract readout (accuracy, catch rate, silent-wrong) and `--max-silent-wrong` exit
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 4829966
   iter-60
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Omission detection: a null amount the source plainly labels ("Total: $108.50" → `total: null`) is flagged in `needs_review` instead of returning `ok`
@@ -260,4 +270,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-26 scouted iterations
+27 scouted iterations

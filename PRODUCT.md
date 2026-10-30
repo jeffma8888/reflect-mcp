@@ -45,13 +45,15 @@ tool surface, small deps, MIT, publication-safe.
 | 25 | Batch output joinable: echo caller `id` + 1-based `line`; per-line empty-text pre-check | Med | Low | QUEUED |
 | 26 | Drop the fixed 0.5s sleep before a parse/schema retry (pure latency; transport retries live in SDKs) | Med | Low | QUEUED |
 | 27 | Build each provider client once per process; validate / heuristics-only build no unused clients | Med | Low | QUEUED |
-| 28 | Delete the `heuristics_enabled` knob (Critic-less + heuristics-off returns `ok` on fabricated data) | High | Low | QUEUED |
+| 28 | Delete the `heuristics_enabled` knob (Critic-less + heuristics-off returns `ok` on fabricated data) | High | Low | DONE (iter 62) |
 | 29 | README §3 demo is the real inv-004 replay output, pinned by a test that re-runs it | Med | Low | DONE (iter 58) |
 | 30 | Retry carries the parse/schema error to the model instead of a byte-identical re-request | Med | Low | QUEUED |
 | 31 | `make eval` measures the trust contract: catch rate, silent-wrong, false alarms; `--max-silent-wrong` exit | High | Low | DONE (iter 59) |
 | 32 | Amount-role grounding: an amount found in the source but not the number it labels for that role is penalized | High | Low | DONE (iter 60) |
 | 33 | Amount-role labels attributed per line (first label wins, skip `N%` rates): "Total tax"/"Net total" stop vouching for a wrong total | High | Low | QUEUED |
 | 34 | MCP gate floor: `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD`; a tool arg can only raise the threshold | High | Low | DONE (iter 61) |
+| 35 | MCP `heuristics_only` needs operator opt-in (`REFLECT_ALLOW_HEURISTICS_ONLY`); golden inv-007 silent `ok` closes | High | Low | QUEUED |
+| 36 | One CLI parser + one single-run path: delete cli.py's duplicate argparse stack (−81 lines, byte-identical CLI) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -79,3 +81,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 59 — `make eval` counts silent-wrong (wrong, unflagged) fields + catch rate; exits 1 above `--max-silent-wrong`
 - iter 60 — Amount-role grounding: a found amount unequal to its role's labelled number is penalized; golden inv-008
 - iter 61 — MCP gate floor from env (default 0.70/0.75): agent args can only raise thresholds; golden 0/0 pass
+- iter 62 — Delete `heuristics_enabled` knob + dead `_number_in_text`: every pipeline runs heuristics (0/4 → 3/1)

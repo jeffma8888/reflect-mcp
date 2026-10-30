@@ -28,12 +28,10 @@ class ReflectivePipeline:
         generator: Generator,
         critic: Critic | None,
         gate_config: GateConfig | None = None,
-        heuristics_enabled: bool = True,
     ) -> None:
         self.generator = generator
         self.critic = critic
         self.gate_config = gate_config or GateConfig()
-        self.heuristics_enabled = heuristics_enabled
 
     def extract(self, text: str) -> ExtractionResult:
         trace_id = new_trace_id()
@@ -55,11 +53,11 @@ class ReflectivePipeline:
         return self._verify(text, data, trace_id)
 
     def _verify(self, text: str, data: InvoiceData, trace_id: str) -> ExtractionResult:
-        """Shared verification path: heuristics → critique → gate."""
-        if self.heuristics_enabled:
-            heuristics = run_heuristics(text, data)
-        else:
-            heuristics = run_heuristics(text, data.__class__())
+        """Shared verification path: heuristics → critique → gate.
+
+        Heuristics always run: with the Critic off they are the only check left.
+        """
+        heuristics = run_heuristics(text, data)
         log_stage("heuristics.done", trace_id, factors=heuristics.factors)
 
         if self.critic is not None:

@@ -117,10 +117,6 @@ def _find_number_span(value: float, text: str) -> ProvenanceSpan | None:
     return None
 
 
-def _number_in_text(value: float, text: str) -> bool:
-    return _find_number_span(value, text) is not None
-
-
 def _labelled_amounts(text: str, role: str) -> list[float]:
     """Distinct numbers the source labels for *role*, in first-occurrence order."""
     values: list[float] = []
