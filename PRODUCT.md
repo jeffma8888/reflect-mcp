@@ -20,7 +20,7 @@ tool surface, small deps, MIT, publication-safe.
 |---|---------|-------|------|--------|
 | 1 | CLI extract verb: pipe-friendly `reflect-mcp extract` (stdin/file → JSON stdout, exit codes) | High | Low | DONE (iter 01) |
 | 2 | Structured error result (`status="error"`) instead of raw exceptions on pipeline failure | High | Low | DONE (iter 02) |
-| 3 | Generator/Critic retry with configurable back-off on JSON parse failure | Med | Low | DONE (iter 19) |
+| 3 | Generator/Critic retry (configurable `max_retries`, fixed 0.5s delay) on JSON parse/schema failure | Med | Low | DONE (iter 19) |
 | 4 | `make typecheck` target with mypy/pyright in strict mode over `src/` | Med | Low | QUEUED |
 | 5 | Eval as a CLI verb: `reflect-mcp eval [--live] [--min-accuracy N]` | Med | Low | QUEUED |
 | 6 | Configurable confidence thresholds via env vars / CLI flags | Med | Low | PARTIAL (iter 17: CLI flags) |
@@ -29,7 +29,7 @@ tool surface, small deps, MIT, publication-safe.
 | 10 | Concurrent batch processing: `--batch-concurrency N` thread pool | Med | Low | DONE (iter 34) |
 | 11 | Field-level provenance spans in ExtractionResult | High | Low | DONE (iter 35) |
 | 12 | Export ProvenanceSpan + PEP 561 py.typed marker | Med | Low | DONE (iter 36) |
-| 9 | Reuse SDK clients across calls: move client construction to `__init__` | Med | Low | DONE (iter 03) |
+| 9 | Reuse SDK clients across calls within one pipeline instance (construction in `__init__`) | Med | Low | DONE (iter 03) |
 | 13 | Top-level `--help` subcommand listing and `--version` flag | Med | Low | DONE (iter 37) |
 | 14 | Collapse `_run_batch` serial path into `_process_one_line` | Low | Low | DONE (iter 38) |
 | 15 | README "Use as a Python library" section + API-completeness drift test | Med | Low | DONE (iter 40) |
@@ -46,6 +46,8 @@ tool surface, small deps, MIT, publication-safe.
 | 26 | Drop the fixed 0.5s sleep before a parse/schema retry (pure latency; transport retries live in SDKs) | Med | Low | QUEUED |
 | 27 | Build each provider client once per process; validate / heuristics-only build no unused clients | Med | Low | QUEUED |
 | 28 | Delete the `heuristics_enabled` knob (Critic-less + heuristics-off returns `ok` on fabricated data) | High | Low | QUEUED |
+| 29 | README §3 demo is the real inv-004 replay output, pinned by a test that re-runs it | Med | Low | DONE (iter 58) |
+| 30 | Retry carries the parse/schema error to the model instead of a byte-identical re-request | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -55,7 +57,7 @@ tool surface, small deps, MIT, publication-safe.
 - iter 15 — GateConfig from dataclass to Pydantic BaseModel with boundary validation
 - iter 16 — critic_summary in README tool-return table + schema-docs drift-detection test
 - iter 17 — CLI `--field-threshold` / `--overall-threshold` flags for confidence-gate control
-- iter 19 — Generator/Critic retry with configurable back-off on JSON parse failure
+- iter 19 — Generator/Critic retry (configurable `max_retries`, fixed 0.5s delay) on JSON parse failure
 - iter 29 — Batch extraction: `--batch` JSONL mode for multi-document processing
 - iter 34 — Concurrent batch processing: `--batch-concurrency N` thread pool for overlapping LLM calls
 - iter 35 — Field-level provenance spans: character-offset evidence linking extracted values to source text
@@ -69,3 +71,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 54 — Gate honors the Critic contract: `grounded:false` or missing verdict caps a committed field at 0.5, duplicate verdicts resolve to min; golden row inv-007
 - iter 55 — MCP tools at CLI parity: `heuristics_only` + `status:"error"` envelope; bodies in mcp-free `tools.py`
 - iter 57 — One batch driver + one build-error rule: build/threshold failure is an envelope + exit 3 at any concurrency
+- iter 58 — README §3 demo = real inv-004 replay output (583.20 source, 683.2 model), pinned by a re-running test

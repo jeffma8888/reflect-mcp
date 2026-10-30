@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-58
+    lenses: performance-and-throughput, narrative-and-docs
+    - Candidate A1 -- Make the one paid retry count: retry immediately (no 0.5s sleep) and tell the model what failed, instead of resending a byte-identical prompt
+    - Candidate A2 -- Build only the clients a call will use: validate builds no Generator client, heuristics-only builds none, and the MCP tool path reuses clients across calls
+    - Candidate A3 -- `extract --batch` pays once per distinct document: identical `text` lines in one run reuse the first line's result instead of re-paying 2 LLM calls each
+    - Candidate A -- README §3 Demo shows the run the product actually makes: replace the made-up Globex block with the real inv-004 replay output, pinned by a test that re-runs it
+    - Candidate B -- §7 Architecture + Repository layout match the module tree: add `tools.py` (iter 55), fix "Three roles" / "The `extract` tool (`server.py`)", say when the Critic doesn't run, plus a two-way file-tree drift test
+    - Candidate C -- The log tells the truth about the Critic: one event name for "Critic didn't run", and the README §10 / `logging_config` "every stage carries the shared trace_id" claim corrected, with a catalog test over the `log_stage` call sites
+    winner: A1
+    ship: pending (not yet decided)
   iter-57
     lenses: performance-and-throughput
     - Candidate A1 -- Re-land iter-56's "one batch path" (the winner was aborted for infra reasons, not on merit), which also fixes a bad-threshold traceback that returns exit 1
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Build each provider client once per process, not once per call (and never build an unused one)
     - Candidate B3 -- Don't throw away the paid Generator output when the Critic fails: return it in the error envelope so recovery costs one Critic call, not a full re-extract
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED ac9f9c7
   iter-56
     lenses: integration-and-adoption, simplification-and-deletion
     - Candidate A1 -- `validate` rejects `data` keys it doesn't know (and empty `data`) instead of verifying nothing and returning `ok`
@@ -220,4 +230,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-22 scouted iterations
+23 scouted iterations

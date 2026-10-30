@@ -34,25 +34,93 @@ Stripped of the invoice example, `reflect-mcp` is a small **evaluation harness w
 
 ## 3. Demo
 
-Messy input → typed JSON with per-field confidence → one low-confidence field flagged for review:
+Messy input → typed JSON with per-field confidence → one low-confidence field flagged for review.
+This is golden row `inv-004`, replayed offline through the real pipeline (`make eval` runs the same replay).
+The source says the amount due is **583.20**. The scripted Generator wrote **683.2**, an invented total.
+The gate caught it three ways: the arithmetic check (540.00 + 43.20 ≠ 683.2), the heuristic source search, and the Critic's `grounded: false` verdict.
 
-```jsonc
-// input
-"Hi team, bill from Globex Ltd. Ref GLX/2026/778, dated 2026-02-28.
- 540.00 before tax, tax 43.20, amount due 683.20. Pay in GBP."
+Input:
 
-// output  (the model hallucinated the total; the critic + arithmetic check caught it)
+```text
+Hi team, forwarding the bill from Globex Ltd below.
+Ref: GLX/2026/778
+Billing date 2026-02-28.
+Items came to 540.00 before tax, tax was 43.20, and the amount due is 583.20. Please pay in GBP. Thanks!
+```
+
+Output (`trace_id` is per-run and shown here as a placeholder):
+
+```json
 {
   "status": "needs_review",
-  "data": { "vendor_name": "Globex Ltd", "invoice_number": "GLX/2026/778",
-            "invoice_date": "2026-02-28", "subtotal": 540.0, "tax": 43.2,
-            "total": 683.2, "currency": "GBP" },
-  "field_confidence": { "total": 0.12, "subtotal": 0.95, "tax": 0.95, "...": 0.95 },
-  "overall_confidence": 0.70,
+  "data": {
+    "vendor_name": "Globex Ltd",
+    "invoice_number": "GLX/2026/778",
+    "invoice_date": "2026-02-28",
+    "subtotal": 540.0,
+    "tax": 43.2,
+    "total": 683.2,
+    "currency": "GBP"
+  },
+  "field_confidence": {
+    "vendor_name": 0.95,
+    "invoice_number": 0.95,
+    "invoice_date": 0.95,
+    "subtotal": 0.95,
+    "tax": 0.95,
+    "total": 0.12,
+    "currency": 0.95
+  },
+  "overall_confidence": 0.7,
   "flagged_fields": [
-    { "field": "total", "value": 683.2, "confidence": 0.12,
-      "reason": "683.20 does not reconcile with 540.00 + 43.20; not found in source" }
+    {
+      "field": "total",
+      "value": 683.2,
+      "confidence": 0.12,
+      "reason": "683.20 does not reconcile with 540.00 + 43.20 and is not in the source; critic marked the value not grounded in the source; amount 683.2 not found in source text; subtotal(540.0) + tax(43.2) != total(683.2)"
+    }
   ],
+  "field_provenance": {
+    "vendor_name": [
+      {
+        "start": 34,
+        "end": 44
+      }
+    ],
+    "invoice_number": [
+      {
+        "start": 57,
+        "end": 69
+      }
+    ],
+    "invoice_date": [
+      {
+        "start": 83,
+        "end": 93
+      }
+    ],
+    "subtotal": [
+      {
+        "start": 109,
+        "end": 115
+      }
+    ],
+    "tax": [
+      {
+        "start": 136,
+        "end": 141
+      }
+    ],
+    "total": [],
+    "currency": [
+      {
+        "start": 187,
+        "end": 190
+      }
+    ]
+  },
+  "trace_id": "trace-…",
+  "critic_summary": "Total appears hallucinated; escalate.",
   "notes": "1 field(s) below the 70% confidence threshold require human review before use."
 }
 ```
