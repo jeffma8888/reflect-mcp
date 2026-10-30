@@ -58,6 +58,11 @@ def extract(
     extraction happened (empty input, bad thresholds, provider/parse failure).
     Set heuristics_only=True to skip the Critic LLM call and verify with
     deterministic heuristics only.
+
+    field_threshold / overall_threshold can only be raised above the
+    operator's floor (env REFLECT_FIELD_THRESHOLD / REFLECT_OVERALL_THRESHOLD,
+    defaults 0.70 / 0.75); a lower value is raised to the floor and `notes`
+    says so.
     """
     return tools.extract_tool(text, field_threshold, overall_threshold, heuristics_only)
 
@@ -78,7 +83,10 @@ def validate(
     Parameters:
       - text: the source document to verify against
       - data: dict of pre-extracted fields (InvoiceData shape)
-      - field_threshold / overall_threshold: confidence gate controls
+      - field_threshold / overall_threshold: confidence gate controls; they can
+        only be raised above the operator's floor (env REFLECT_FIELD_THRESHOLD /
+        REFLECT_OVERALL_THRESHOLD, defaults 0.70 / 0.75), and a lower value is
+        raised to the floor with a note in `notes`
       - heuristics_only: skip the Critic LLM call; heuristics + gate only
 
     Returns the same ExtractionResult envelope as `extract`, or

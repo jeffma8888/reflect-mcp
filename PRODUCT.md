@@ -23,7 +23,7 @@ tool surface, small deps, MIT, publication-safe.
 | 3 | Generator/Critic retry (configurable `max_retries`, fixed 0.5s delay) on JSON parse/schema failure | Med | Low | DONE (iter 19) |
 | 4 | `make typecheck` target with mypy/pyright in strict mode over `src/` | Med | Low | QUEUED |
 | 5 | Eval as a CLI verb: `reflect-mcp eval [--live] [--min-accuracy N]` | Med | Low | QUEUED |
-| 6 | Configurable confidence thresholds via env vars / CLI flags | Med | Low | PARTIAL (iter 17: CLI flags) |
+| 6 | Configurable confidence thresholds via env vars / CLI flags | Med | Low | DONE (iter 17: CLI flags; iter 61: MCP env floor) |
 | 7 | Schema extensibility: user-defined Pydantic models beyond InvoiceData | High | Med | QUEUED |
 | 8 | Batch extraction: process multiple inputs in one invocation | Med | Med | DONE (iter 29) |
 | 10 | Concurrent batch processing: `--batch-concurrency N` thread pool | Med | Low | DONE (iter 34) |
@@ -50,6 +50,8 @@ tool surface, small deps, MIT, publication-safe.
 | 30 | Retry carries the parse/schema error to the model instead of a byte-identical re-request | Med | Low | QUEUED |
 | 31 | `make eval` measures the trust contract: catch rate, silent-wrong, false alarms; `--max-silent-wrong` exit | High | Low | DONE (iter 59) |
 | 32 | Amount-role grounding: an amount found in the source but not the number it labels for that role is penalized | High | Low | DONE (iter 60) |
+| 33 | Amount-role labels attributed per line (first label wins, skip `N%` rates): "Total tax"/"Net total" stop vouching for a wrong total | High | Low | QUEUED |
+| 34 | MCP gate floor: `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD`; a tool arg can only raise the threshold | High | Low | DONE (iter 61) |
 
 ## Done ledger
 
@@ -76,3 +78,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 58 — README §3 demo = real inv-004 replay output (583.20 source, 683.2 model), pinned by a re-running test
 - iter 59 — `make eval` counts silent-wrong (wrong, unflagged) fields + catch rate; exits 1 above `--max-silent-wrong`
 - iter 60 — Amount-role grounding: a found amount unequal to its role's labelled number is penalized; golden inv-008
+- iter 61 — MCP gate floor from env (default 0.70/0.75): agent args can only raise thresholds; golden 0/0 pass

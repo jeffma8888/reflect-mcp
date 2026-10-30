@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-61
+    lenses: hardening/DX, integration-and-adoption
+    - Candidate A1 -- Amount-role grounding attributes each amount to its own line's label, so "Sales tax (8.25%): 16.50" stops false-alarming and "Total tax: 20.00" stops vouching for a wrong total
+    - Candidate A2 -- `make typecheck`: locked strict mypy over src/ backs the README's `py.typed` "full type-checker support" claim (roadmap #4), and fixes the 5 real errors it finds today
+    - Candidate A3 -- Non-finite amounts are rejected at the input boundary, so CLI stdout is always strict RFC 8259 JSON
+    - Candidate B1 -- Operator-pinned gate floor: `REFLECT_FIELD_THRESHOLD` / `REFLECT_OVERALL_THRESHOLD` in the MCP server's `env` set the thresholds, and a tool-call argument can only tighten them
+    - Candidate B2 -- `validate --heuristics-only` (CLI and MCP) runs on a base `pip install reflect-mcp` with no provider SDK and no credentials
+    - Candidate B3 -- `reflect-mcp eval --golden FILE`: an installed user grades their own labelled corpus with the iter-59 trust-contract readout (accuracy, catch rate, silent-wrong) and `--max-silent-wrong` exit
+    winner: B1
+    ship: pending (not yet decided)
   iter-60
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Omission detection: a null amount the source plainly labels ("Total: $108.50" → `total: null`) is flagged in `needs_review` instead of returning `ok`
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Non-finite amounts are rejected at the boundary: `NaN`/`Infinity` from the Generator or `validate --data` is a schema error, and stdout is always strict RFC 8259 JSON
     - Candidate B3 -- trace_id contract: unique per call and present on every log event, retries included (roadmap #21)
     winner: A2
-    ship: pending (not yet decided)
+    ship: PUSHED 0f80a9f
   iter-59
     lenses: narrative-and-docs, new-capability
     - Candidate A -- The result explains what was actually verified: `notes` stop saying "All fields cleared" when nothing was committed or no Critic ran
@@ -250,4 +260,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-25 scouted iterations
+26 scouted iterations

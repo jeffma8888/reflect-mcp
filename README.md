@@ -162,6 +162,8 @@ When `status == "needs_review"`, do **not** use `data` blindly — confirm the f
 
 The tools never raise: failures (empty input, out-of-range thresholds, `data` that fails `InvoiceData` validation, provider or parse errors) return `{ status: "error", error_message }` instead of raising, mirroring the CLI's error envelope. `heuristics_only=True` skips the Critic LLM call, like the CLI's `--heuristics-only`.
 
+**Operator threshold floor.** Over MCP, the threshold arguments are chosen by the calling agent, so they can only be raised above the operator's floor, never lowered below it. Set the floor in the server's `env` block with `REFLECT_FIELD_THRESHOLD` and `REFLECT_OVERALL_THRESHOLD` (defaults 0.70 / 0.75 when unset). A lower argument is raised to the floor, and `notes` records it (e.g. `field_threshold raised from 0.0 to 0.7.`). An agent may always ask for stricter thresholds; only the operator can lower them, e.g. `"REFLECT_FIELD_THRESHOLD": "0"`. (The agent-controlled `heuristics_only=True` argument still drops the Critic, so it is not covered by this floor.) A malformed value (not a number, including nan/inf, or outside [0, 1]) makes every call return `{ status: "error", error_message }` rather than falling back to a looser gate. The CLI does not read these variables: its `--field-threshold` / `--overall-threshold` flags stay authoritative.
+
 ## 5. CLI
 
 For scripting, CI pipelines, or batch processing without an MCP client:
