@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-64
+    lenses: performance-and-throughput, narrative-and-docs
+    - Candidate A1 -- `validate --batch`: verify a JSONL corpus of `{text, data}` in one process, so CI drops from 129 ms/doc to under 1 ms/doc
+    - Candidate A2 -- MCP tools reuse provider clients across calls: 10 extract calls build 2 clients, not 20 (roadmap #27 remainder)
+    - Candidate A3 -- Retry immediately and tell the model what failed (roadmap #26 + #30): the failure path drops from 510 ms to about 0 and stops resending a byte-identical prompt
+    - Candidate B1 -- README §5 says heuristics-only works "including batch mode", but `validate --batch` exits 2: fix the sentence and add a two-way check that README verb+flag claims match the real argparse tree
+    - Candidate B2 -- README §7 Architecture and Repository layout match the module tree: add `tools.py`, fix "Three roles" and "The `extract` tool (`server.py`)", say when the Generator or Critic doesn't run, plus a two-way layout drift test
+    - Candidate B3 -- A heuristics-only result stops claiming "All fields cleared" and a confidence of 1.0 that no Critic produced: `notes` and `critic_summary` say what actually verified the result
+    winner: A1
+    ship: pending (not yet decided)
   iter-63
     lenses: simplification-and-deletion, performance-and-throughput
     - Candidate A1 -- One CLI parser and one single-document tail: delete cli.py's copy of the argparse stack and fold the two `*_from_args` tails into `_run_single` (roadmap #36)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Build provider clients only when used, and once per process (roadmap #27)
     - Candidate B3 -- A Critic failure keeps the paid Generator output: the error envelope carries `unverified_data`, so recovery costs one Critic call instead of a full re-extract
     winner: B2
-    ship: pending (not yet decided)
+    ship: PUSHED c511bac
   iter-62
     lenses: integration-and-adoption, simplification-and-deletion
     - Candidate A1 -- Operator lock for `heuristics_only` over MCP: unless the server's `env` sets `REFLECT_ALLOW_HEURISTICS_ONLY=1`, an agent's `heuristics_only=True` is overridden (the Critic still runs) and `notes` says so
@@ -280,4 +290,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-28 scouted iterations
+29 scouted iterations

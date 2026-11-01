@@ -80,14 +80,17 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
 def _populate_extract_parser(parser: argparse.ArgumentParser) -> None:
     """Add extract-specific arguments to *parser*."""
     _add_common_args(parser)
+    _add_batch_args(parser, '{"text": "..."}')
+
+
+def _add_batch_args(parser: argparse.ArgumentParser, line_shape: str) -> None:
+    """Add --batch/--batch-concurrency; *line_shape* is the verb's JSONL record."""
     parser.add_argument(
         "--batch",
         action="store_true",
         default=False,
-        help=(
-            "JSONL batch mode: each stdin/file line is {\"text\": \"...\"}; "
-            "emits one JSON result per line."
-        ),
+        help=f"JSONL batch mode: each stdin/file line is {line_shape}; "
+        "emits one JSON result per line.",
     )
     parser.add_argument(
         "--batch-concurrency",
@@ -104,9 +107,9 @@ def _populate_validate_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--data",
         dest="data",
-        required=True,
-        help="JSON string of pre-extracted fields to verify.",
+        help="JSON string of pre-extracted fields to verify (required unless --batch).",
     )
+    _add_batch_args(parser, '{"text": "...", "data": {...}}')
 
 
 def main() -> None:

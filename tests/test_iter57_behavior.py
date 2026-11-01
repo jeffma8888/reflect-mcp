@@ -11,7 +11,7 @@ Covers the 12 Expected Behaviors from pm.md:
   8. Input readers keep their messages (file not found / no input provided).
   9. Single (non-batch) extract unchanged.
  10. Structural deletion checks on reflect_mcp.cli.
- 11. cli.py has strictly fewer than 343 lines.
+ 11. cli.py has strictly fewer than 360 lines (raised from 343 in iter 64 for validate --batch).
  12. Bad threshold flags in batch mode -> exit 3 + one envelope, never exit 1.
 
 Isolation contract: tests drive the public CLI interface (run_extract,
@@ -443,10 +443,11 @@ def test_eb10_single_code3_fold():
 # EB-11: line count
 # ---------------------------------------------------------------------------
 
-def test_eb11_cli_shorter_than_343_lines():
+def test_eb11_cli_shorter_than_360_lines():
     path = REPO_ROOT / "src" / "reflect_mcp" / "cli.py"
     n = len(path.read_text(encoding="utf-8").splitlines())
-    assert n < 343, f"cli.py has {n} lines"
+    # iter 64: deliberate migration 343 -> 360; validate --batch adds ~20 cli.py lines.
+    assert n < 360, f"cli.py has {n} lines"
 
 
 # ---------------------------------------------------------------------------

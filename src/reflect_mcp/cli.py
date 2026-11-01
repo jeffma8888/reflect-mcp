@@ -47,11 +47,17 @@ def _build_extract_parser() -> argparse.ArgumentParser:
         description="Extract structured data from text via the reflective pipeline.",
     )
     _add_common_args(parser)
+    _add_batch_args(parser, '{"text": "..."}')
+    return parser
+
+
+def _add_batch_args(parser: argparse.ArgumentParser, line_shape: str) -> None:
+    """Add --batch/--batch-concurrency; *line_shape* is the verb's JSONL record."""
     parser.add_argument(
         "--batch",
         action="store_true",
         default=False,
-        help="JSONL batch mode: each stdin/file line is {\"text\": \"...\"}; "
+        help=f"JSONL batch mode: each stdin/file line is {line_shape}; "
         "emits one JSON result per line.",
     )
     parser.add_argument(
@@ -59,10 +65,8 @@ def _build_extract_parser() -> argparse.ArgumentParser:
         dest="batch_concurrency",
         type=int,
         default=None,
-        help="Number of concurrent workers for batch mode (default: 1). "
-        "Requires --batch.",
+        help="Number of concurrent workers for batch mode (default: 1). Requires --batch.",
     )
-    return parser
 
 
 def _build_validate_parser() -> argparse.ArgumentParser:
@@ -74,9 +78,9 @@ def _build_validate_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--data",
         dest="data",
-        required=True,
-        help="JSON string of pre-extracted fields to verify.",
+        help="JSON string of pre-extracted fields to verify (required unless --batch).",
     )
+    _add_batch_args(parser, '{"text": "...", "data": {...}}')
     return parser
 
 
@@ -143,8 +147,9 @@ def _error_json(message: str) -> str:
 def _process_one_line(
     pipeline: "ReflectivePipeline",
     raw_line: str,
+    validate: bool = False,
 ) -> tuple[str, int]:
-    """Extract from a single JSONL line. Returns (json_output, exit_code)."""
+    """Extract (or *validate* the ``data`` of) one JSONL line -> (json_output, exit_code)."""
     line = raw_line.rstrip("\n\r")
     try:
         record = json.loads(line)
@@ -153,9 +158,16 @@ def _process_one_line(
 
     if not isinstance(record, dict) or "text" not in record:
         return _error_json('missing "text" key'), 3
+    if validate and "data" not in record:
+        return _error_json('missing "data" key'), 3
 
-    try:
-        result = pipeline.extract(record["text"])
+    try:  # ``data`` is schema-checked in here, so a bad record is that line's envelope
+        if validate:
+            from reflect_mcp.schema import InvoiceData  # noqa: PLC0415
+
+            result = pipeline.validate(record["text"], InvoiceData.model_validate(record["data"]))
+        else:
+            result = pipeline.extract(record["text"])
     except Exception as exc:  # noqa: BLE001
         return _error_json(str(exc)), 3
 
@@ -166,6 +178,7 @@ def _process_one_line(
 def _line_processor(
     build_pipeline: typing.Callable[[], "ReflectivePipeline"],
     first: "ReflectivePipeline",
+    validate: bool = False,
 ) -> typing.Callable[[str], tuple[str, int]]:
     """Return a per-line function that gives each thread its own pipeline.
 
@@ -188,7 +201,7 @@ def _line_processor(
             except Exception as exc:  # noqa: BLE001
                 return _error_json(str(exc)), 3
             local.pipeline = pipeline
-        return _process_one_line(pipeline, raw_line)
+        return _process_one_line(pipeline, raw_line, validate)
 
     return _process
 
@@ -229,14 +242,10 @@ def run_extract(argv: list[str] | None = None) -> int:
 def run_extract_from_args(args: argparse.Namespace) -> int:
     """Run extract from a pre-parsed *args* namespace, return exit code."""
     if args.batch_concurrency is not None and not args.batch:
-        print(
-            "Error: --batch-concurrency requires --batch.",
-            file=sys.stderr,
-        )
+        print("Error: --batch-concurrency requires --batch.", file=sys.stderr)
         return 2
-
     if args.batch:
-        return _run_extract_batch(args)
+        return _run_jsonl_batch(args)
 
     text = _read_text(args)
     if text is None:
@@ -263,8 +272,8 @@ def run_extract_from_args(args: argparse.Namespace) -> int:
     return 1
 
 
-def _run_extract_batch(args: argparse.Namespace) -> int:
-    """Batch mode at any concurrency, return the worst exit code.
+def _run_jsonl_batch(args: argparse.Namespace, validate: bool = False) -> int:
+    """Batch mode for either verb at any concurrency, return the worst exit code.
 
     The pipeline is built eagerly in the main thread, before any line is read,
     so a provider/config failure yields one error envelope and exit 3 at every
@@ -279,11 +288,14 @@ def _run_extract_batch(args: argparse.Namespace) -> int:
     try:
         try:
             pipeline_kwargs = _build_pipeline_kwargs(args)
+            if validate:  # only validate adds the key, so extract kwargs stay as before
+                pipeline_kwargs["generator_enabled"] = False
             first = build_default_pipeline(**pipeline_kwargs)
         except Exception as exc:  # noqa: BLE001
             print(_error_json(str(exc)))
             return 3
-        process = _line_processor(lambda: build_default_pipeline(**pipeline_kwargs), first)
+        rebuild = lambda: build_default_pipeline(**pipeline_kwargs)  # noqa: E731
+        process = _line_processor(rebuild, first, validate)
         concurrency = args.batch_concurrency if args.batch_concurrency is not None else 1
         return _run_batch(stream, process, concurrency)
     finally:
@@ -299,6 +311,14 @@ def run_validate(argv: list[str] | None = None) -> int:
 
 def run_validate_from_args(args: argparse.Namespace) -> int:
     """Run validate from a pre-parsed *args* namespace, return exit code."""
+    if args.batch_concurrency is not None and not args.batch:
+        print("Error: --batch-concurrency requires --batch.", file=sys.stderr)
+        return 2
+    if args.batch != (args.data is None):
+        print("Error: validate needs exactly one of --data or --batch.", file=sys.stderr)
+        return 2
+    if args.batch:
+        return _run_jsonl_batch(args, validate=True)
     text = _read_text(args)
     if text is None:
         return 2

@@ -54,6 +54,7 @@ tool surface, small deps, MIT, publication-safe.
 | 34 | MCP gate floor: `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD`; a tool arg can only raise the threshold | High | Low | DONE (iter 61) |
 | 35 | MCP `heuristics_only` needs operator opt-in (`REFLECT_ALLOW_HEURISTICS_ONLY`); golden inv-007 silent `ok` closes | High | Low | QUEUED |
 | 36 | One CLI parser + one single-run path: delete cli.py's duplicate argparse stack (−81 lines, byte-identical CLI) | Med | Low | QUEUED |
+| 37 | `validate --batch`: verify a `{text, data}` JSONL corpus in one process (≈129 ms/doc → <1 ms/doc heuristics-only) | High | Low | DONE (iter 64) |
 
 ## Done ledger
 
@@ -83,3 +84,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 61 — MCP gate floor from env (default 0.70/0.75): agent args can only raise thresholds; golden 0/0 pass
 - iter 62 — Delete `heuristics_enabled` knob + dead `_number_in_text`: every pipeline runs heuristics (0/4 → 3/1)
 - iter 63 — validate builds no Generator client; heuristics-only validate builds 0 clients, works with no SDK
+- iter 64 — `validate --batch`: one process verifies a {text,data} JSONL corpus (200 docs 0.13s)

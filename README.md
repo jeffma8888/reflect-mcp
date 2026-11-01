@@ -194,13 +194,18 @@ echo "ACME CORP, Invoice #INV-1001, Total: \$108.50" | reflect-mcp extract --heu
 reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP","total":108.5}'
 reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --field-threshold 0.5
 reflect-mcp validate --file invoice.txt --data '{"vendor_name":"ACME CORP"}' --heuristics-only
+
+# batch validate: verify your own extractor's output over a JSONL corpus in one process
+# (one {"text": "...", "data": {...}} per line; no SDK or key needed with --heuristics-only)
+reflect-mcp validate --batch --heuristics-only --file extracted.jsonl
+cat extracted.jsonl | reflect-mcp validate --batch --batch-concurrency 4
 ```
 
 Exit codes (both verbs): **0** = `ok`, **1** = `needs_review`, **2** = usage/input error, **3** = pipeline error (JSON error envelope on stdout).
 
 **Heuristics-only mode** (`--heuristics-only`): skips the Critic LLM call entirely. Verification relies solely on deterministic structural checks (text grounding, amount-role grounding, arithmetic reconciliation, date validation and grounding). Useful for CI pipelines, pre-screening, or zero-cost structural-only validation. Works with both `extract` and `validate`, including batch mode. `validate --heuristics-only` builds no provider client at all, so it needs no provider SDK or API key (`extract` still builds the Generator client, so it still needs them).
 
-**Batch mode** (`--batch`): reads JSONL from stdin or `--file`, emits one JSON result per line to stdout, reuses the pipeline across all lines. Exit code is the worst severity across all lines (error 3 > needs_review 1 > ok 0). Malformed lines and per-line extraction failures emit `{"status":"error","error_message":"..."}` without aborting the batch. Add `--batch-concurrency N` (N > 1) to process documents concurrently via a thread pool; each worker builds its own pipeline instance so SDK clients are never shared across threads. Output order is always preserved. The pipeline is built once up front, so a pipeline/provider build failure or an invalid threshold flag yields a single `status:"error"` line and exit 3 at any `--batch-concurrency`.
+**Batch mode** (`--batch`): reads JSONL from stdin or `--file`, emits one JSON result per line to stdout, reuses the pipeline across all lines. `extract --batch` lines are `{"text": "..."}`; `validate --batch` lines are `{"text": "...", "data": {...}}`, where `data` holds the fields to verify (pass `--batch` instead of `--data`). A line missing `"data"` or whose `data` fails schema validation gets its own error line. Exit code is the worst severity across all lines (error 3 > needs_review 1 > ok 0). Malformed lines and per-line extraction failures emit `{"status":"error","error_message":"..."}` without aborting the batch. Add `--batch-concurrency N` (N > 1) to process documents concurrently via a thread pool; each worker builds its own pipeline instance so SDK clients are never shared across threads. Output order is always preserved. The pipeline is built once up front, so a pipeline/provider build failure or an invalid threshold flag yields a single `status:"error"` line and exit 3 at any `--batch-concurrency`.
 
 The bare `reflect-mcp` command (no subcommand) still starts the MCP server.
 
