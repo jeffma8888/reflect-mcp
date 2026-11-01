@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-65
+    lenses: narrative-and-docs, new-capability
+    - Candidate A1 -- A heuristics-only result stops saying "All fields cleared" and stops logging a `critique.done` that never happened: `notes`, `critic_summary` and the log name what actually verified it
+    - Candidate A2 -- "One shared trace_id, greppable end to end" becomes true: a unique id per call (26/200 → 200/200 on a batch), carried onto retry events, with the three prose sites pinned
+    - Candidate A3 -- The repo's maps match the territory: README §7 + Repository layout list `tools.py` and both tools, PRODUCT.md gets its missing iter-18 `validate` row, and a two-way check fails when a module or a shipped iteration goes unrecorded
+    - Candidate B1 -- Omission detection: a null amount the source labels ("Total: $108.50" → `total: null`) is flagged in `needs_review`, not passed as `ok`
+    - Candidate B2 -- `needs_review` gives the reviewer the answer to check: each flagged field carries deterministic `suggestions` (source-labelled value + span)
+    - Candidate B3 -- `validate --batch` rows may carry `expected`: grade the gate against your own extractor's labelled output offline, with a `--max-silent-wrong N` exit
+    winner: A1
+    ship: pending (not yet decided)
   iter-64
     lenses: performance-and-throughput, narrative-and-docs
     - Candidate A1 -- `validate --batch`: verify a JSONL corpus of `{text, data}` in one process, so CI drops from 129 ms/doc to under 1 ms/doc
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- README §7 Architecture and Repository layout match the module tree: add `tools.py`, fix "Three roles" and "The `extract` tool (`server.py`)", say when the Generator or Critic doesn't run, plus a two-way layout drift test
     - Candidate B3 -- A heuristics-only result stops claiming "All fields cleared" and a confidence of 1.0 that no Critic produced: `notes` and `critic_summary` say what actually verified the result
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 3bcb037
   iter-63
     lenses: simplification-and-deletion, performance-and-throughput
     - Candidate A1 -- One CLI parser and one single-document tail: delete cli.py's copy of the argparse stack and fold the two `*_from_args` tails into `_run_single` (roadmap #36)
@@ -290,4 +300,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-29 scouted iterations
+30 scouted iterations

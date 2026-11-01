@@ -55,6 +55,9 @@ tool surface, small deps, MIT, publication-safe.
 | 35 | MCP `heuristics_only` needs operator opt-in (`REFLECT_ALLOW_HEURISTICS_ONLY`); golden inv-007 silent `ok` closes | High | Low | QUEUED |
 | 36 | One CLI parser + one single-run path: delete cli.py's duplicate argparse stack (−81 lines, byte-identical CLI) | Med | Low | QUEUED |
 | 37 | `validate --batch`: verify a `{text, data}` JSONL corpus in one process (≈129 ms/doc → <1 ms/doc heuristics-only) | High | Low | DONE (iter 64) |
+| 38 | Heuristics-only `ok` says no Critic ran (notes) and logs `critic.skipped` (reason), not a fabricated `critique.done` | High | Low | DONE (iter 65) |
+| 39 | Omission detection: a null amount the source labels is flagged (reverses the null-abstention contract; 14-test migration) | High | Med | QUEUED |
+| 40 | `needs_review` flagged fields carry deterministic `suggestions` (source-labelled value + span) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -85,3 +88,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 62 — Delete `heuristics_enabled` knob + dead `_number_in_text`: every pipeline runs heuristics (0/4 → 3/1)
 - iter 63 — validate builds no Generator client; heuristics-only validate builds 0 clients, works with no SDK
 - iter 64 — `validate --batch`: one process verifies a {text,data} JSONL corpus (200 docs 0.13s)
+- iter 65 — Heuristics-only ok notes say no Critic ran; log critic.skipped(reason), no fake critique.done

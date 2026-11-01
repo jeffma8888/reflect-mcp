@@ -77,7 +77,8 @@ PASS: silent-wrong fields 0 <= allowed 0
 # over all golden rows, captured from HEAD 4829966.
 HEAD_PAYLOAD_SHA256 = {
     "on": "251385698ef79f3e6ef8dc68b41c02cfeac1e55c603a00935c2e1451aa7cdccc",
-    "off": "8afccd2fd53069231967bf1f6957159844d4954d6c3f5b2bdb34795842cfcacb",
+    # iter 65 changed only the Critic-off ok notes (HEURISTICS_ONLY_OK_NOTE).
+    "off": "b47dfcfc313d6c6b4319f1ba3e2d98c126d0da2c2cf12b416640f9062f6f27c5",
 }
 HEAD_PAYLOAD_KEYS = {
     "critic_summary", "data", "field_confidence", "field_provenance",

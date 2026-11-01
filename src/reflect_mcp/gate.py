@@ -39,6 +39,10 @@ UNGROUNDED_CONFIDENCE_CAP = 0.5
 
 NOT_GROUNDED_REASON = "critic marked the value not grounded in the source"
 NO_VERDICT_REASON = "critic returned no verdict for this field"
+HEURISTICS_ONLY_OK_NOTE = (
+    "No Critic ran: every field passed the deterministic heuristic checks only; "
+    "field confidences are heuristic factors, not a Critic's judgement."
+)
 
 
 class GateConfig(BaseModel):
@@ -78,8 +82,14 @@ def decide(
     heuristics: HeuristicReport,
     trace_id: str,
     config: GateConfig | None = None,
+    *,
+    critic_ran: bool = True,
 ) -> ExtractionResult:
-    """Fuse critic + heuristics into a gated ExtractionResult."""
+    """Fuse critic + heuristics into a gated ExtractionResult.
+
+    ``critic_ran=False`` words an ``ok`` honestly: with no Critic the confidences
+    are heuristic factors only, so the note must not imply a Critic cleared them.
+    """
     config = config or GateConfig()
 
     field_confidence: dict[str, float] = {}
@@ -129,7 +139,11 @@ def decide(
                 f"{config.overall_threshold:.0%} threshold; escalating for review."
             )
     else:
-        notes = "All fields cleared the confidence thresholds."
+        notes = (
+            "All fields cleared the confidence thresholds."
+            if critic_ran
+            else HEURISTICS_ONLY_OK_NOTE
+        )
 
     return ExtractionResult(
         status=status,

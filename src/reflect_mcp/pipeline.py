@@ -66,9 +66,11 @@ class ReflectivePipeline:
         if self.critic is not None:
             if _heuristics_doom_all(heuristics, data, self.gate_config.field_threshold):
                 critique = _neutral_critique(data)
-                log_stage("critic.skipped", trace_id)
+                critic_ran = False
+                log_stage("critic.skipped", trace_id, reason="all_fields_doomed")
             else:
                 critique = self.critic.critique(text, data)
+                critic_ran = True
                 log_stage(
                     "critique.done",
                     trace_id,
@@ -77,14 +79,12 @@ class ReflectivePipeline:
                 )
         else:
             critique = _neutral_critique(data)
-            log_stage(
-                "critique.done",
-                trace_id,
-                overall_confidence=critique.overall_confidence,
-                field_verdicts={v.field: v.confidence for v in critique.field_verdicts},
-            )
+            critic_ran = False
+            log_stage("critic.skipped", trace_id, reason="heuristics_only")
 
-        result = decide(data, critique, heuristics, trace_id, self.gate_config)
+        result = decide(
+            data, critique, heuristics, trace_id, self.gate_config, critic_ran=critic_ran
+        )
         log_stage(
             "decide.done",
             trace_id,
