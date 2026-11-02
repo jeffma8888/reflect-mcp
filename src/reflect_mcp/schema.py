@@ -9,7 +9,11 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+# Statuses an `ExtractionResult` / error row can carry; a dict tagged with one
+# of these and no InvoiceData field is reflect-mcp's own output fed back in.
+_ENVELOPE_STATUSES = ("ok", "needs_review", "error")
 
 
 class InvoiceData(BaseModel):
@@ -29,6 +33,25 @@ class InvoiceData(BaseModel):
     currency: Optional[str] = Field(default=None, description="ISO 4217 currency code, e.g. USD.")
 
     model_config = {"extra": "ignore"}
+
+    @model_validator(mode="before")
+    @classmethod
+    def _unwrap_result_envelope(cls, value: Any) -> Any:
+        """Verify a stored result envelope by its `data`, never as all-null.
+
+        `extra="ignore"` would otherwise parse `{"status":"ok","data":{...}}`
+        to an all-null object that verifies as `ok` -- a silent wrong answer
+        on the product's own round trip. The test is narrow (known status and
+        no field key) so plain data never changes meaning; an envelope with no
+        `data` object (a stored error row) has nothing to verify, so it fails.
+        """
+        if not isinstance(value, dict) or value.get("status") not in _ENVELOPE_STATUSES:
+            return value
+        if any(name in value for name in cls.model_fields):
+            return value
+        if isinstance(value.get("data"), dict):
+            return value["data"]
+        raise ValueError(f"a reflect-mcp {value['status']!r} result envelope has no data object to verify")
 
 
 # Canonical field order -- used for logging, gate iteration, and eval scoring.

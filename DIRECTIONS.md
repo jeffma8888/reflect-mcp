@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-68
+    lenses: integration-and-adoption, simplification-and-deletion
+    - Candidate A1 -- Re-verifying a stored reflect-mcp result works: `validate` given the product's own result envelope as `data` checks its `data` instead of returning a vacuous `ok`
+    - Candidate A2 -- Library users are shown the shipped verify path: README §6 gains a "Verify your own extractor's output" example using `build_default_pipeline(generator_enabled=False, critic_enabled=False).validate(text, data)`, and a test runs it
+    - Candidate A3 -- `--file -` means stdin, so `reflect-mcp` composes in pipelines and Makefiles like other CLIs
+    - Candidate B1 -- One CLI parser: delete cli.py's second argparse stack so `__main__` owns every flag (roadmap #36, parser half)
+    - Candidate B2 -- One parse-and-retry loop: the Generator's and Critic's twin retry loops become `parsing.complete_with_retry`
+    - Candidate B3 -- Delete `tools._build_pipeline` and its "pass a kwarg only when opted out" rule: the two MCP tools call `build_default_pipeline` directly
+    winner: A1
+    ship: pending (not yet decided)
   iter-67
     lenses: hardening/DX, integration-and-adoption
     - Candidate A1 -- Whitespace variants can't bypass party-role grounding: an NBSP, tab, double-spaced or CR-only "Bill to" line still flags a buyer extracted as the vendor
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- A batch run can end with one machine-readable verdict: `--summary PATH` writes `{lines, ok, needs_review, error, flagged_fields:{field:count}, exit}`
     - Candidate B3 -- Every result says machine-readably whether a Critic graded it (`critic_ran: bool`), so an auto-commit consumer can require a Critic-verified `ok`
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 4326d92
   iter-66
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Party-role grounding: a `vendor_name` the source shows only on a "Bill to"/"Ship to"/"Sold to" line is penalized (0.3), so heuristics-only inv-007 stops being a silent `ok`
@@ -320,4 +330,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-32 scouted iterations
+33 scouted iterations

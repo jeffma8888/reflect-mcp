@@ -41,7 +41,7 @@ tool surface, small deps, MIT, publication-safe.
 | 21 | trace_id unique per call and present on retry log events | Med | Low | QUEUED |
 | 22 | MCP tools reach CLI parity: `heuristics_only` arg + `status:"error"` envelope, offline-tested | High | Low | DONE (iter 55) |
 | 23 | One batch driver: build/threshold failure is a JSON envelope + exit 3 at any `--batch-concurrency` | High | Low | DONE (iter 57) |
-| 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` | High | Low | QUEUED |
+| 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` | High | Low | PARTIAL (iter 68: own result envelope unwrapped/rejected; unknown-key rule QUEUED) |
 | 25 | Batch output joinable: echo caller `id` + 1-based `line`; per-line empty-text pre-check | Med | Low | PARTIAL (iter 67: id echo; 1-based line QUEUED) |
 | 26 | Drop the fixed 0.5s sleep before a parse/schema retry (pure latency; transport retries live in SDKs) | Med | Low | QUEUED |
 | 27 | Build each provider client once per process; validate / heuristics-only build no unused clients | Med | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
@@ -99,3 +99,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 65 — Heuristics-only ok notes say no Critic ran; log critic.skipped(reason), no fake critique.done
 - iter 66 — Party-role grounding: vendor_name only on a bill-to/ship-to line is penalized; heuristics-only 3/1 → 4/0
 - iter 67 — Batch rows echo the input record's `id` as first key (error rows too), so output joins to input
+- iter 68 — validate verifies a stored result envelope's `data` (error envelope rejected), not an all-null `ok`
