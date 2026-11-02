@@ -12,6 +12,8 @@ combines both. Concretely we check:
   - amount-role grounding: a grounded subtotal/tax/total must match one of the
                  numbers the source *labels* for that role (e.g. "Total: 75.00"),
                  so a swapped amount or a stray number can't pass on presence alone.
+  - party-role grounding: a grounded vendor_name must not appear *only* on
+                 counterparty lines ("Bill to", "Ship to", ...), which name the buyer.
 
 Each check contributes a per-field factor in [0,1]; the gate multiplies the
 Critic confidence by this factor, so a structurally impossible value can never
@@ -74,6 +76,13 @@ _LABELLED_AMOUNT_RES = {
 }
 
 
+# Counterparty labels: a line that names the *buyer/recipient*, not the seller.
+# Only explicit "<verb> to" forms; bare "customer"/"client" lines can name the vendor.
+_COUNTERPARTY_LINE_RE = re.compile(
+    r"^\s*(?:bill(?:ed)?|ship(?:ped)?|sold|deliver(?:ed)?)\s*-?\s*to\b", re.IGNORECASE
+)
+
+
 @dataclass
 class HeuristicReport:
     """Per-field deterministic factor [0,1] + human-readable reasons."""
@@ -125,6 +134,21 @@ def _labelled_amounts(text: str, role: str) -> list[float]:
         if value not in values:
             values.append(value)
     return values
+
+
+def _check_party_role(value: str, text: str, report: HeuristicReport) -> None:
+    """Penalize a vendor_name the source shows only on counterparty lines.
+
+    Abstains when any line containing the value is not a counterparty line, so a
+    vendor named in both the header and a "Bill to" line still passes.
+    """
+    needle = value.lower()
+    lines = [ln for ln in text.split("\n") if needle in ln.lower()]
+    if lines and all(_COUNTERPARTY_LINE_RE.match(ln) for ln in lines):
+        report.penalize(
+            "vendor_name", 0.3,
+            f"vendor {value!r} appears only on a bill-to/ship-to/sold-to line (the buyer, not the seller)",
+        )
 
 
 def _check_amount_role(field: str, value: float, text: str, report: HeuristicReport) -> None:
@@ -212,6 +236,8 @@ def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
             span = _find_text_span(str(value), text)
             if span is not None:
                 report.provenance[field] = [span]
+                if field == "vendor_name":
+                    _check_party_role(str(value), text, report)
             else:
                 report.provenance[field] = []
                 if _normalize(str(value)) not in norm_text:

@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-66
+    lenses: new-capability, hardening/DX
+    - Candidate A1 -- Party-role grounding: a `vendor_name` the source shows only on a "Bill to"/"Ship to"/"Sold to" line is penalized (0.3), so heuristics-only inv-007 stops being a silent `ok`
+    - Candidate A2 -- Every committed field says which checks actually vouched for it: a machine-readable `field_checks` map (`pass` / `penalized` / `abstained` per check: grounding, amount_role, date, arithmetic, critic)
+    - Candidate A3 -- Schema extensibility, first slice: `validate` (library + CLI `--schema module:Model`) verifies a user-supplied flat Pydantic model with generic grounding over its str/float fields
+    - Candidate B1 -- trace_id contract: unique per call, and the retry events carry it (roadmap #21)
+    - Candidate B2 -- A verification that committed zero fields can't be `ok`: all-null extraction, `validate` with `{}`, or only-unknown keys (`{"totl": 108.5}`) return `needs_review` (roadmap #20 + #24)
+    - Candidate B3 -- Non-finite amounts are rejected at the boundary, so stdout is always strict RFC 8259 JSON
+    winner: A1
+    ship: pending (not yet decided)
   iter-65
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- A heuristics-only result stops saying "All fields cleared" and stops logging a `critique.done` that never happened: `notes`, `critic_summary` and the log name what actually verified it
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `needs_review` gives the reviewer the answer to check: each flagged field carries deterministic `suggestions` (source-labelled value + span)
     - Candidate B3 -- `validate --batch` rows may carry `expected`: grade the gate against your own extractor's labelled output offline, with a `--max-silent-wrong N` exit
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED acb7832
   iter-64
     lenses: performance-and-throughput, narrative-and-docs
     - Candidate A1 -- `validate --batch`: verify a JSONL corpus of `{text, data}` in one process, so CI drops from 129 ms/doc to under 1 ms/doc
@@ -300,4 +310,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-30 scouted iterations
+31 scouted iterations

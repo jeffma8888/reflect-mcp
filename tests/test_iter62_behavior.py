@@ -76,9 +76,11 @@ PASS: silent-wrong fields 0 <= allowed 0
 # sha256 of json.dumps({row_id: model_dump(mode="json") minus trace_id}, sort_keys=True)
 # over all golden rows, captured from HEAD 4829966.
 HEAD_PAYLOAD_SHA256 = {
-    "on": "251385698ef79f3e6ef8dc68b41c02cfeac1e55c603a00935c2e1451aa7cdccc",
+    # iter 66: inv-007 gains the party-role penalty.
+    "on": "34d8b134abeb9333cf4e60cdd562bba16dbaeac647f5213aefef3376b1a6d1bb",
     # iter 65 changed only the Critic-off ok notes (HEURISTICS_ONLY_OK_NOTE).
-    "off": "b47dfcfc313d6c6b4319f1ba3e2d98c126d0da2c2cf12b416640f9062f6f27c5",
+    # iter 66: inv-007 gains the party-role penalty.
+    "off": "52c06eecb2576b57a44b8d03b0aed5125e440adb91795b14941a227a987348bc",
 }
 HEAD_PAYLOAD_KEYS = {
     "critic_summary", "data", "field_confidence", "field_provenance",
@@ -245,10 +247,11 @@ def test_eb6_golden_critic_on_catches_all():
     ]
 
 
-def test_eb7_golden_critic_off_one_silent():
+def test_eb7_golden_critic_off_no_silent():
+    # iter 66: party-role grounding catches inv-007's bill-to vendor without a Critic.
     caught, silent, fa = _score(critic_on=False)
-    assert (len(caught), len(silent), len(fa)) == (3, 1, 0), (caught, silent, fa)
-    assert silent == [("inv-007", "vendor_name")]
+    assert (len(caught), len(silent), len(fa)) == (4, 0, 0), (caught, silent, fa)
+    assert silent == []
 
 
 def test_eb7_critic_off_not_all_rows_ok():

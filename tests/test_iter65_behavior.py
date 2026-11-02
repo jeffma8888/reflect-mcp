@@ -52,15 +52,17 @@ NOTE_HO = (
 )
 NR_NOTE = "1 field(s) below the 70% confidence threshold require human review before use."
 
-OK_IDS = ("inv-001", "inv-002", "inv-003", "inv-005", "inv-007")
-NR_IDS = ("inv-004", "inv-006", "inv-008")
+# iter 66: party-role grounding moves inv-007 (bill-to vendor) to needs_review.
+OK_IDS = ("inv-001", "inv-002", "inv-003", "inv-005")
+NR_IDS = ("inv-004", "inv-006", "inv-007", "inv-008")
 
 # sha256 of json.dumps({row_id: model_dump(mode="json") minus trace_id AND notes},
 # sort_keys=True) over the 8 golden rows, captured from the HEAD tree. Identical
 # for validate and extract. Everything except `notes` must stay byte-identical.
+# iter 66: inv-007 gains the party-role penalty.
 HEAD_MINUS_NOTES_SHA256 = {
-    "off": "3708cc11d664ecaf235364964dbad64c7927e6d8b0d4bbd4f5c56958e583f431",
-    "on": "a2a84ffd154a9aec29086c24f41a5a5724157957b92711e8a9ac023cc22ae1df",
+    "off": "47c894300251b07ac52ca13e11bd4edd8e8c881d42fb66fdd282d81afa6a373e",
+    "on": "052e515a0cb4850b917a705352494f144cf0c2e6bfbecee0a9eb5eb03aaac15b",
 }
 # HEAD notes per golden row with the Critic ON (must be unchanged).
 HEAD_ON_NOTES = {
@@ -393,9 +395,10 @@ def test_eb7_inv007_wrong_vendor_is_no_longer_called_cleared():
     res = _golden_results(critic_on=False, mode="validate")
     r = res["inv-007"]
     assert r.data.vendor_name == "Contoso Ltd"  # the known-wrong value
-    assert _status(r) == "ok"
+    # iter 66: party-role grounding flags it, so it gets the needs_review note.
+    assert _status(r) == "needs_review"
     assert "All fields cleared" not in r.notes
-    assert r.notes.startswith("No Critic ran")
+    assert r.notes == NR_NOTE
 
 
 @pytest.mark.parametrize("mode", ["validate", "extract"])
@@ -407,10 +410,11 @@ def test_eb7_golden_critic_on_unchanged(mode):
 
 def test_eb8_iter62_digest_pins():
     import tests.test_iter62_behavior as t62
+    # iter 66: inv-007 gains the party-role penalty.
     assert t62.HEAD_PAYLOAD_SHA256["on"] == (
-        "251385698ef79f3e6ef8dc68b41c02cfeac1e55c603a00935c2e1451aa7cdccc")
+        "34d8b134abeb9333cf4e60cdd562bba16dbaeac647f5213aefef3376b1a6d1bb")
     assert t62.HEAD_PAYLOAD_SHA256["off"] == (
-        "b47dfcfc313d6c6b4319f1ba3e2d98c126d0da2c2cf12b416640f9062f6f27c5")
+        "52c06eecb2576b57a44b8d03b0aed5125e440adb91795b14941a227a987348bc")
     for on in (True, False):
         digest, _ = t62._payload_digest(on)
         assert digest == t62.HEAD_PAYLOAD_SHA256["on" if on else "off"]
@@ -458,10 +462,10 @@ def test_eb9_cli_stdout_notes(cli_batch):
     objs = [json.loads(ln) for ln in cli_batch.stdout.splitlines() if ln.strip()]
     assert len(objs) == 8
     ok = [o for o in objs if o["status"] == "ok"]
-    assert len(ok) == 5
+    assert len(ok) == 4  # iter 66: inv-007 is now needs_review
     assert all(o["notes"] == NOTE_HO for o in ok)
     nr = [o for o in objs if o["status"] == "needs_review"]
-    assert len(nr) == 3
+    assert len(nr) == 4
     assert all(o["notes"] == NR_NOTE for o in nr)
 
 

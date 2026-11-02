@@ -41,7 +41,7 @@ from reflect_mcp import (
 )
 from reflect_mcp.critic import Critic
 from reflect_mcp.generator import Generator
-from reflect_mcp.heuristics import run_heuristics
+from reflect_mcp.heuristics import HeuristicReport, run_heuristics
 from reflect_mcp.scripted import ScriptedLLMClient
 
 REPO = Path(__file__).resolve().parents[1]
@@ -413,21 +413,31 @@ def test_eb10_pipeline_flags_vendor():
     assert result.status == "needs_review"
     flags = _flags(result)
     assert list(flags) == ["vendor_name"]
-    assert flags["vendor_name"].confidence == 0.5
+    # iter 66: 0.5 contract cap x 0.3 party-role factor.
+    assert flags["vendor_name"].confidence == 0.15
     assert CONTRACT_REASON in flags["vendor_name"].reason
 
 
 def test_eb10_catch_comes_from_grounded_signal():
-    # Heuristics alone pass the bill-to customer (it is in the source), and the
-    # same critic with grounded:true would be ok -> the contract is what catches it.
+    # The contract still catches the bill-to customer on its own: gated against a
+    # report with no vendor penalty, grounded:false alone flags it at the 0.5 cap.
     gen = InvoiceData(**json.loads(_replay()["inv-007"]["generator_raw"]))
-    h = run_heuristics(INV007_TEXT, gen)
-    assert h.factor_for("vendor_name") == 1.0
+    critique = Critic(ScriptedLLMClient([_replay()["inv-007"]["critic_raw"]])).critique(
+        INV007_TEXT, gen
+    )
+    alone = _flags(decide(gen, critique, HeuristicReport(), trace_id="t10"))
+    assert list(alone) == ["vendor_name"]
+    assert alone["vendor_name"].confidence == 0.5
+    assert CONTRACT_REASON in alone["vendor_name"].reason
+    # iter 66: party-role grounding catches it independently, so the same critic
+    # with grounded:true is no longer ok (0.9 critic x 0.3 party-role factor).
+    assert run_heuristics(INV007_TEXT, gen).factor_for("vendor_name") == 0.3
     crit = json.loads(_replay()["inv-007"]["critic_raw"])
     for v in crit["field_verdicts"]:
         v["grounded"] = True
     result = _run_row("inv-007", critic_raw=json.dumps(crit))
-    assert result.status == "ok"
+    assert result.status == "needs_review"
+    assert _flags(result)["vendor_name"].confidence == 0.27
 
 
 # ---------------------------------------------------------------------------

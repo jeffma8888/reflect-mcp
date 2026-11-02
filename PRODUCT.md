@@ -52,12 +52,15 @@ tool surface, small deps, MIT, publication-safe.
 | 32 | Amount-role grounding: an amount found in the source but not the number it labels for that role is penalized | High | Low | DONE (iter 60) |
 | 33 | Amount-role labels attributed per line (first label wins, skip `N%` rates): "Total tax"/"Net total" stop vouching for a wrong total | High | Low | QUEUED |
 | 34 | MCP gate floor: `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD`; a tool arg can only raise the threshold | High | Low | DONE (iter 61) |
-| 35 | MCP `heuristics_only` needs operator opt-in (`REFLECT_ALLOW_HEURISTICS_ONLY`); golden inv-007 silent `ok` closes | High | Low | QUEUED |
+| 35 | MCP `heuristics_only` needs operator opt-in (`REFLECT_ALLOW_HEURISTICS_ONLY`) (its inv-007 motivation closed by #41) | Med | Low | QUEUED |
 | 36 | One CLI parser + one single-run path: delete cli.py's duplicate argparse stack (−81 lines, byte-identical CLI) | Med | Low | QUEUED |
 | 37 | `validate --batch`: verify a `{text, data}` JSONL corpus in one process (≈129 ms/doc → <1 ms/doc heuristics-only) | High | Low | DONE (iter 64) |
 | 38 | Heuristics-only `ok` says no Critic ran (notes) and logs `critic.skipped` (reason), not a fabricated `critique.done` | High | Low | DONE (iter 65) |
 | 39 | Omission detection: a null amount the source labels is flagged (reverses the null-abstention contract; 14-test migration) | High | Med | QUEUED |
 | 40 | `needs_review` flagged fields carry deterministic `suggestions` (source-labelled value + span) | Med | Low | QUEUED |
+| 41 | Party-role grounding: a `vendor_name` found only on "Bill to"/"Ship to"/"Sold to"/"Deliver to" lines is penalized (0.3) | High | Low | DONE (iter 66) |
+| 42 | Date-role grounding: an `invoice_date` the source shows only on a "Due"/"Ship date" line is penalized | Med | Low | QUEUED |
+| 43 | `make eval` adds a heuristics-only (Critic-off) trust readout line: catch / silent-wrong / false alarms | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -89,3 +92,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 63 — validate builds no Generator client; heuristics-only validate builds 0 clients, works with no SDK
 - iter 64 — `validate --batch`: one process verifies a {text,data} JSONL corpus (200 docs 0.13s)
 - iter 65 — Heuristics-only ok notes say no Critic ran; log critic.skipped(reason), no fake critique.done
+- iter 66 — Party-role grounding: vendor_name only on a bill-to/ship-to line is penalized; heuristics-only 3/1 → 4/0

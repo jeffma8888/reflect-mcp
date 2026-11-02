@@ -42,9 +42,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 GOLDEN = REPO_ROOT / "eval" / "golden" / "dataset.jsonl"
 REPLAY = REPO_ROOT / "eval" / "fixtures" / "replay.json"
 
+# iter 66: party-role grounding moves inv-007 (bill-to vendor) to needs_review.
 EXPECTED_STATUS = {
-    "inv-001": "ok", "inv-002": "ok", "inv-003": "ok", "inv-005": "ok", "inv-007": "ok",
-    "inv-004": "needs_review", "inv-006": "needs_review", "inv-008": "needs_review",
+    "inv-001": "ok", "inv-002": "ok", "inv-003": "ok", "inv-005": "ok",
+    "inv-004": "needs_review", "inv-006": "needs_review", "inv-007": "needs_review",
+    "inv-008": "needs_review",
 }
 
 TEXT = "Invoice INV-1\nVendor: Acme\nDate: 2024-01-05\nTotal: 10.00 USD\n"
