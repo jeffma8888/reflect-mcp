@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-67
+    lenses: hardening/DX, integration-and-adoption
+    - Candidate A1 -- Whitespace variants can't bypass party-role grounding: an NBSP, tab, double-spaced or CR-only "Bill to" line still flags a buyer extracted as the vendor
+    - Candidate A2 -- `reflect-mcp … --batch | head -1` exits cleanly: no BrokenPipeError traceback and no exit 120 outside the documented 0/1/2/3 contract
+    - Candidate A3 -- A `--batch` JSONL that starts with a UTF-8 BOM, or has whitespace-only lines, verifies instead of emitting error lines and exit 3
+    - Candidate B1 -- `--batch` output is joinable: every row echoes the caller's `id` (and optionally the 1-based input `line`), error rows included
+    - Candidate B2 -- A batch run can end with one machine-readable verdict: `--summary PATH` writes `{lines, ok, needs_review, error, flagged_fields:{field:count}, exit}`
+    - Candidate B3 -- Every result says machine-readably whether a Critic graded it (`critic_ran: bool`), so an auto-commit consumer can require a Critic-verified `ok`
+    winner: B1
+    ship: pending (not yet decided)
   iter-66
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Party-role grounding: a `vendor_name` the source shows only on a "Bill to"/"Ship to"/"Sold to" line is penalized (0.3), so heuristics-only inv-007 stops being a silent `ok`
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- A verification that committed zero fields can't be `ok`: all-null extraction, `validate` with `{}`, or only-unknown keys (`{"totl": 108.5}`) return `needs_review` (roadmap #20 + #24)
     - Candidate B3 -- Non-finite amounts are rejected at the boundary, so stdout is always strict RFC 8259 JSON
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 618c480
   iter-65
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- A heuristics-only result stops saying "All fields cleared" and stops logging a `critique.done` that never happened: `notes`, `critic_summary` and the log name what actually verified it
@@ -310,4 +320,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-31 scouted iterations
+32 scouted iterations

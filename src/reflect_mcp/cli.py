@@ -139,9 +139,9 @@ def _close_input(stream: "typing.TextIO") -> None:
         stream.close()
 
 
-def _error_json(message: str) -> str:
-    """The one machine-readable failure envelope every CLI path prints."""
-    return json.dumps({"status": "error", "error_message": message})
+def _error_json(message: str, echo: dict[str, typing.Any] | None = None) -> str:
+    """The one failure envelope every CLI path prints; *echo* (a batch id) leads so rows join."""
+    return json.dumps({**(echo or {}), "status": "error", "error_message": message})
 
 
 def _process_one_line(
@@ -155,11 +155,12 @@ def _process_one_line(
         record = json.loads(line)
     except json.JSONDecodeError as exc:
         return _error_json(f"invalid JSON: {exc}"), 3
-
+    # Echo the caller's id verbatim as the first key so each row joins to its record.
+    echo = {"id": record["id"]} if isinstance(record, dict) and "id" in record else {}
     if not isinstance(record, dict) or "text" not in record:
-        return _error_json('missing "text" key'), 3
+        return _error_json('missing "text" key', echo), 3
     if validate and "data" not in record:
-        return _error_json('missing "data" key'), 3
+        return _error_json('missing "data" key', echo), 3
 
     try:  # ``data`` is schema-checked in here, so a bad record is that line's envelope
         if validate:
@@ -169,10 +170,10 @@ def _process_one_line(
         else:
             result = pipeline.extract(record["text"])
     except Exception as exc:  # noqa: BLE001
-        return _error_json(str(exc)), 3
+        return _error_json(str(exc), echo), 3
 
     code = 1 if result.status == "needs_review" else 0
-    return json.dumps(result.model_dump()), code
+    return json.dumps({**echo, **result.model_dump()}), code
 
 
 def _line_processor(

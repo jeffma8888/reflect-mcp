@@ -42,7 +42,7 @@ tool surface, small deps, MIT, publication-safe.
 | 22 | MCP tools reach CLI parity: `heuristics_only` arg + `status:"error"` envelope, offline-tested | High | Low | DONE (iter 55) |
 | 23 | One batch driver: build/threshold failure is a JSON envelope + exit 3 at any `--batch-concurrency` | High | Low | DONE (iter 57) |
 | 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` | High | Low | QUEUED |
-| 25 | Batch output joinable: echo caller `id` + 1-based `line`; per-line empty-text pre-check | Med | Low | QUEUED |
+| 25 | Batch output joinable: echo caller `id` + 1-based `line`; per-line empty-text pre-check | Med | Low | PARTIAL (iter 67: id echo; 1-based line QUEUED) |
 | 26 | Drop the fixed 0.5s sleep before a parse/schema retry (pure latency; transport retries live in SDKs) | Med | Low | QUEUED |
 | 27 | Build each provider client once per process; validate / heuristics-only build no unused clients | Med | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
 | 28 | Delete the `heuristics_enabled` knob (Critic-less + heuristics-off returns `ok` on fabricated data) | High | Low | DONE (iter 62) |
@@ -61,6 +61,11 @@ tool surface, small deps, MIT, publication-safe.
 | 41 | Party-role grounding: a `vendor_name` found only on "Bill to"/"Ship to"/"Sold to"/"Deliver to" lines is penalized (0.3) | High | Low | DONE (iter 66) |
 | 42 | Date-role grounding: an `invoice_date` the source shows only on a "Due"/"Ship date" line is penalized | Med | Low | QUEUED |
 | 43 | `make eval` adds a heuristics-only (Critic-off) trust readout line: catch / silent-wrong / false alarms | Med | Low | QUEUED |
+| 44 | NEXT: party-role check runs on normalized grounding too: NBSP/tab/double-space/CR "Bill to" buyer is no silent `ok` (4/6 bypass; ~8 lines, eval byte-identical; needs golden row) | High | Low | QUEUED |
+| 45 | `--batch \| head -1` exits 0 with no BrokenPipeError traceback (today exit 120; fix in `__main__.py`, cli.py at budget) | Med | Low | QUEUED |
+| 46 | `--batch` tolerates a UTF-8 BOM and skips whitespace-only lines (today error rows + exit 3) | Med | Low | QUEUED |
+| 47 | `--batch --summary PATH` writes `{lines, ok, needs_review, error, flagged_fields, exit}` for CI gates | Med | Low | QUEUED |
+| 48 | Result carries `critic_ran: bool` so a consumer can require a Critic-verified `ok` (2 src lines, 30-pin digest migration) | Med | Med | QUEUED |
 
 ## Done ledger
 
@@ -93,3 +98,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 64 — `validate --batch`: one process verifies a {text,data} JSONL corpus (200 docs 0.13s)
 - iter 65 — Heuristics-only ok notes say no Critic ran; log critic.skipped(reason), no fake critique.done
 - iter 66 — Party-role grounding: vendor_name only on a bill-to/ship-to line is penalized; heuristics-only 3/1 → 4/0
+- iter 67 — Batch rows echo the input record's `id` as first key (error rows too), so output joins to input
