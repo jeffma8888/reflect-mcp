@@ -38,13 +38,13 @@ tool surface, small deps, MIT, publication-safe.
 | 18 | Date-grounding heuristic: penalize an ISO-valid `invoice_date` absent from the source | High | Low | DONE (iter 53) |
 | 19 | Gate honors Critic contract: `grounded:false` / missing verdict caps at 0.5; duplicates use min | High | Low | DONE (iter 54) |
 | 20 | All-null extraction is `needs_review`; dropped unknown Generator keys surfaced in notes | Med | Low | QUEUED |
-| 21 | trace_id unique per call and present on retry log events | Med | Low | QUEUED |
+| 21 | trace_id unique per call and present on retry log events | Med | Low | DONE (iter 70) |
 | 22 | MCP tools reach CLI parity: `heuristics_only` arg + `status:"error"` envelope, offline-tested | High | Low | DONE (iter 55) |
 | 23 | One batch driver: build/threshold failure is a JSON envelope + exit 3 at any `--batch-concurrency` | High | Low | DONE (iter 57) |
 | 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` | High | Low | PARTIAL (iter 68: own result envelope unwrapped/rejected; unknown-key rule QUEUED) |
 | 25 | Batch output joinable: echo caller `id` + 1-based `line`; per-line empty-text pre-check | Med | Low | PARTIAL (iter 67: id echo; 1-based line QUEUED) |
 | 26 | Drop the fixed 0.5s sleep before a parse/schema retry (pure latency; transport retries live in SDKs) | Med | Low | QUEUED |
-| 27 | Build each provider client once per process; validate / heuristics-only build no unused clients | Med | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
+| 27 | NEXT: locked per-role client memo on the MCP path (20 calls 40 → 0 TCP conns; closes iter-69 unlocked boto3 build race) | High | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
 | 28 | Delete the `heuristics_enabled` knob (Critic-less + heuristics-off returns `ok` on fabricated data) | High | Low | DONE (iter 62) |
 | 29 | README §3 demo is the real inv-004 replay output, pinned by a test that re-runs it | Med | Low | DONE (iter 58) |
 | 30 | Retry carries the parse/schema error to the model instead of a byte-identical re-request | Med | Low | QUEUED |
@@ -53,7 +53,7 @@ tool surface, small deps, MIT, publication-safe.
 | 33 | Amount-role labels attributed per line (first label wins, skip `N%` rates): "Total tax"/"Net total" stop vouching for a wrong total | High | Low | QUEUED |
 | 34 | MCP gate floor: `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD`; a tool arg can only raise the threshold | High | Low | DONE (iter 61) |
 | 35 | MCP `heuristics_only` needs operator opt-in (`REFLECT_ALLOW_HEURISTICS_ONLY`) (its inv-007 motivation closed by #41) | Med | Low | QUEUED |
-| 36 | One CLI parser + one single-run path: delete cli.py's duplicate argparse stack (−81 lines, byte-identical CLI) | Med | Low | QUEUED |
+| 36 | One CLI parser + one single-run path: delete cli.py's duplicate argparse stack (−71 lines, byte-identical CLI) | Med | Low | QUEUED |
 | 37 | `validate --batch`: verify a `{text, data}` JSONL corpus in one process (≈129 ms/doc → <1 ms/doc heuristics-only) | High | Low | DONE (iter 64) |
 | 38 | Heuristics-only `ok` says no Critic ran (notes) and logs `critic.skipped` (reason), not a fabricated `critique.done` | High | Low | DONE (iter 65) |
 | 39 | Omission detection: a null amount the source labels is flagged (reverses the null-abstention contract; 14-test migration) | High | Med | QUEUED |
@@ -61,13 +61,14 @@ tool surface, small deps, MIT, publication-safe.
 | 41 | Party-role grounding: a `vendor_name` found only on "Bill to"/"Ship to"/"Sold to"/"Deliver to" lines is penalized (0.3) | High | Low | DONE (iter 66) |
 | 42 | Date-role grounding: an `invoice_date` the source shows only on a "Due"/"Ship date" line is penalized | Med | Low | QUEUED |
 | 43 | `make eval` adds a heuristics-only (Critic-off) trust readout line: catch / silent-wrong / false alarms | Med | Low | QUEUED |
-| 44 | NEXT: party-role check runs on normalized grounding too: NBSP/tab/double-space/CR "Bill to" buyer is no silent `ok` (4/6 bypass; ~8 lines, eval byte-identical; needs golden row) | High | Low | QUEUED |
+| 44 | Party-role check runs on normalized grounding too: NBSP/tab/double-space/CR "Bill to" buyer is no silent `ok` (4/6 bypass; ~8 lines, eval byte-identical; needs golden row) | High | Low | QUEUED |
 | 45 | `--batch \| head -1` exits 0 with no BrokenPipeError traceback (today exit 120; fix in `__main__.py`, cli.py at budget) | Med | Low | QUEUED |
 | 46 | `--batch` tolerates a UTF-8 BOM and skips whitespace-only lines (today error rows + exit 3) | Med | Low | QUEUED |
 | 47 | `--batch --summary PATH` writes `{lines, ok, needs_review, error, flagged_fields, exit}` for CI gates | Med | Low | QUEUED |
 | 48 | Result carries `critic_ran: bool` so a consumer can require a Critic-verified `ok` (2 src lines, 30-pin digest migration) | Med | Med | QUEUED |
 | 49 | MCP tools run on a worker thread (`async` + `asyncio.to_thread`): parallel agent calls overlap (4 calls 1.67s → 0.42s) | High | Low | DONE (iter 69) |
 | 50 | Pin `mcp>=1.x,<2` and raise the floor to a version that imports on Python 3.13 (mcp 2.x / 1.10.1 break server.py) | Med | Low | QUEUED |
+| 51 | `validate` verb: verify-only mode on caller-supplied data (record backfilled iter 70) | High | Low | DONE (iter 18) |
 
 ## Done ledger
 
@@ -77,6 +78,7 @@ tool surface, small deps, MIT, publication-safe.
 - iter 15 — GateConfig from dataclass to Pydantic BaseModel with boundary validation
 - iter 16 — critic_summary in README tool-return table + schema-docs drift-detection test
 - iter 17 — CLI `--field-threshold` / `--overall-threshold` flags for confidence-gate control
+- iter 18 — `validate` verb: verify-only mode (Critic + heuristics + gate on caller-supplied data)
 - iter 19 — Generator/Critic retry (configurable `max_retries`, fixed 0.5s delay) on JSON parse failure
 - iter 29 — Batch extraction: `--batch` JSONL mode for multi-document processing
 - iter 34 — Concurrent batch processing: `--batch-concurrency N` thread pool for overlapping LLM calls
@@ -103,3 +105,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 67 — Batch rows echo the input record's `id` as first key (error rows too), so output joins to input
 - iter 68 — validate verifies a stored result envelope's `data` (error envelope rejected), not an all-null `ok`
 - iter 69 — MCP tools are async on a worker thread: 4 parallel calls overlap (0.84s → 0.21s stub)
+- iter 70 — trace_id unique per call (50 parallel MCP calls: 8 → 50 ids); retry events carry it

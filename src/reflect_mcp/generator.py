@@ -27,7 +27,8 @@ class Generator:
         self.client = client
         self.max_retries = max_retries
 
-    def generate(self, text: str) -> InvoiceData:
+    def generate(self, text: str, trace_id: str = "") -> InvoiceData:
+        """Extract `text`; `trace_id` tags retry logs so one call stays greppable."""
         user = f"Extract the invoice fields from this document:\n\n{text}"
         last_exc: ParseError | ValidationError | None = None
         for attempt in range(1 + self.max_retries):
@@ -40,7 +41,7 @@ class Generator:
                 if attempt < self.max_retries:
                     log_stage(
                         "generate.retry",
-                        "",
+                        trace_id,
                         attempt=attempt + 1,
                         max_retries=self.max_retries,
                         error=str(exc),

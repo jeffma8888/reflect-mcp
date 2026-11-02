@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-70
+    lenses: unknown
+    - Candidate A1 -- MCP tools reuse provider clients across calls: 20 `extract` calls open 0 new connections instead of 40, and the client build stops racing between the threads iter 69 made concurrent
+    - Candidate A2 -- A parse/schema retry fires immediately and tells the model what failed: the one-bad-reply path drops from 512 ms to about 1 ms, and the paid retry is no longer a byte-identical re-roll
+    - Candidate A3 -- Heuristics on long documents run about 2× faster with identical verdicts: a 68 KB source drops from 19.6 ms to under 10 ms per `validate`
+    - Candidate B1 -- "One shared trace_id, greppable end to end" becomes true again after iter 69 made MCP calls concurrent: 50 parallel calls get 50 ids instead of 8, retry events stop logging `trace_id=""`, and the prose is pinned by a behavior test
+    - Candidate B2 -- README §7 Architecture and Repository layout describe the post-iter-69 module tree: `tools.py` listed, "the `extract` tool (`server.py`)" and "Three roles" corrected, plus a two-way layout↔`src/` drift test
+    - Candidate B3 -- PRODUCT.md's roadmap and ledger stop contradicting the repo: iter 18's `validate` verb gets its missing ledger + roadmap row, stale figures are corrected, and a check fails when a shipped iteration's behavior test has no ledger row
+    winner: B1
+    ship: pending (not yet decided)
   iter-69
     lenses: simplification-and-deletion, performance-and-throughput
     - Candidate A1 -- One single-document CLI tail: `run_extract_from_args` and `run_validate_from_args` become one-line wrappers over a shared `_run_verb(args, validate)`, taking cli.py from 360 to 337 lines with byte-identical console behavior
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- A parse/schema retry fires immediately and carries the rejection reason, so the failure path drops from 510 ms to 0.1 ms and the paid retry is no longer a byte-identical re-roll (roadmap #26 + #30)
     - Candidate B3 -- The MCP tool path builds each provider client once per process: 10 `extract` calls build 2 SDK clients (and 2 connection pools), not 20 (roadmap #27 memo half)
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 9bd522c
   iter-68
     lenses: integration-and-adoption, simplification-and-deletion
     - Candidate A1 -- Re-verifying a stored reflect-mcp result works: `validate` given the product's own result envelope as `data` checks its `data` instead of returning a vacuous `ok`
@@ -340,4 +350,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-34 scouted iterations
+35 scouted iterations

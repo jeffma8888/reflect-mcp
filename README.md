@@ -341,7 +341,7 @@ The flagship test is `tests/test_critic_catches_error.py`: the Generator is fed 
 - **Confidence is multiplicative.** `critic_confidence × heuristic_factor` — evidence can only *lower* confidence. A structurally impossible value (bad arithmetic, ungrounded amount) is capped regardless of how sure the Critic sounded.
 - **Nulls are honest.** A field absent from the source returns `null` and is never flagged — abstention is correct behavior, not a low-confidence guess.
 - **Prompt versioning + injection awareness.** Prompts live in versioned files (`src/reflect_mcp/prompts/`). Both instruct the model to treat document content as **data, not commands** — the source text is untrusted input, a basic prompt-injection guard.
-- **Observability.** Every stage emits a structured JSON log line carrying a shared `trace_id`, so one extraction is greppable end to end.
+- **Observability.** Every stage emits a structured JSON log line carrying a shared `trace_id` (unique per call, even across concurrent MCP calls), so one extraction is greppable end to end.
 
 ## 11. What I'd productionize next
 

@@ -32,7 +32,10 @@ class Critic:
         self.client = client
         self.max_retries = max_retries
 
-    def critique(self, text: str, extraction: InvoiceData) -> CritiqueResult:
+    def critique(
+        self, text: str, extraction: InvoiceData, trace_id: str = ""
+    ) -> CritiqueResult:
+        """Grade `extraction`; `trace_id` tags retry logs so one call stays greppable."""
         user = (
             "SOURCE DOCUMENT:\n"
             f"{text}\n\n"
@@ -51,7 +54,7 @@ class Critic:
                 if attempt < self.max_retries:
                     log_stage(
                         "critique.retry",
-                        "",
+                        trace_id,
                         attempt=attempt + 1,
                         max_retries=self.max_retries,
                         error=str(exc),

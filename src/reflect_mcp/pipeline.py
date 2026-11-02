@@ -40,7 +40,7 @@ class ReflectivePipeline:
         trace_id = new_trace_id()
         log_stage("generate.start", trace_id, input_chars=len(text))
 
-        data = self.generator.generate(text)
+        data = self.generator.generate(text, trace_id=trace_id)
         log_stage(
             "generate.done",
             trace_id,
@@ -69,7 +69,7 @@ class ReflectivePipeline:
                 critic_ran = False
                 log_stage("critic.skipped", trace_id, reason="all_fields_doomed")
             else:
-                critique = self.critic.critique(text, data)
+                critique = self.critic.critique(text, data, trace_id=trace_id)
                 critic_ran = True
                 log_stage(
                     "critique.done",

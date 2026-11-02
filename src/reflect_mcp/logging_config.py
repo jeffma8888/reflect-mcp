@@ -1,13 +1,15 @@
 """Structured (JSON-line) logging for each pipeline stage.
 
 Every stage -- generate, heuristics, critique, decide -- emits one JSON record
-carrying the shared `trace_id`, so a full run is greppable end to end. This is
-the concrete version of the "AI observability" story: the reflection loop is a
-pipeline you can trace, not a black box.
+carrying the shared `trace_id` (unique per call, even across concurrent calls),
+so a full run is greppable end to end. This is the concrete version of the
+"AI observability" story: the reflection loop is a pipeline you can trace, not
+a black box.
 """
 
 from __future__ import annotations
 
+import itertools
 import json
 import logging
 import os
@@ -55,6 +57,16 @@ def log_stage(stage: str, trace_id: str, **fields: Any) -> None:
     logger.info(stage, extra={"fields": record_fields})
 
 
+# Process-wide call counter: concurrent calls that start in the same
+# millisecond would otherwise share an id. `next()` on itertools.count is
+# atomic under CPython, so no lock is needed.
+_TRACE_SEQ = itertools.count()
+
+
 def new_trace_id() -> str:
-    """Monotonic-ish, human-sortable trace id -- no external dep."""
-    return f"trace-{int(time.time() * 1000):x}-{os.getpid():x}"
+    """Human-sortable trace id, unique per call -- no external dep.
+
+    The ms timestamp keeps ids sortable; the sequence suffix keeps them
+    distinct when parallel MCP calls start within the same millisecond.
+    """
+    return f"trace-{int(time.time() * 1000):x}-{os.getpid():x}-{next(_TRACE_SEQ):x}"
