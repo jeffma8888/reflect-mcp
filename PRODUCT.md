@@ -66,6 +66,8 @@ tool surface, small deps, MIT, publication-safe.
 | 46 | `--batch` tolerates a UTF-8 BOM and skips whitespace-only lines (today error rows + exit 3) | Med | Low | QUEUED |
 | 47 | `--batch --summary PATH` writes `{lines, ok, needs_review, error, flagged_fields, exit}` for CI gates | Med | Low | QUEUED |
 | 48 | Result carries `critic_ran: bool` so a consumer can require a Critic-verified `ok` (2 src lines, 30-pin digest migration) | Med | Med | QUEUED |
+| 49 | MCP tools run on a worker thread (`async` + `asyncio.to_thread`): parallel agent calls overlap (4 calls 1.67s → 0.42s) | High | Low | DONE (iter 69) |
+| 50 | Pin `mcp>=1.x,<2` and raise the floor to a version that imports on Python 3.13 (mcp 2.x / 1.10.1 break server.py) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -100,3 +102,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 66 — Party-role grounding: vendor_name only on a bill-to/ship-to line is penalized; heuristics-only 3/1 → 4/0
 - iter 67 — Batch rows echo the input record's `id` as first key (error rows too), so output joins to input
 - iter 68 — validate verifies a stored result envelope's `data` (error envelope rejected), not an all-null `ok`
+- iter 69 — MCP tools are async on a worker thread: 4 parallel calls overlap (0.84s → 0.21s stub)

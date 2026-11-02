@@ -8,11 +8,14 @@ Provider is chosen via env (REFLECT_PROVIDER + provider credentials). This modul
 is intentionally the ONLY one that imports `mcp`, so the rest of the package --
 and the whole test suite -- has no hard dependency on the MCP SDK. It only
 declares the tool surface; the bodies live in `reflect_mcp.tools` so they are
-tested offline.
+tested offline. The tools are `async` and hand that sync body to
+`asyncio.to_thread` because FastMCP runs a sync tool inline on its event loop,
+which would serialize parallel calls and stall pings/cancellations meanwhile.
 """
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from reflect_mcp import tools
@@ -31,7 +34,7 @@ mcp = FastMCP("reflect-mcp")
 
 
 @mcp.tool()
-def extract(
+async def extract(
     text: str,
     field_threshold: float = 0.70,
     overall_threshold: float = 0.75,
@@ -64,11 +67,13 @@ def extract(
     defaults 0.70 / 0.75); a lower value is raised to the floor and `notes`
     says so.
     """
-    return tools.extract_tool(text, field_threshold, overall_threshold, heuristics_only)
+    return await asyncio.to_thread(
+        tools.extract_tool, text, field_threshold, overall_threshold, heuristics_only
+    )
 
 
 @mcp.tool()
-def validate(
+async def validate(
     text: str,
     data: dict[str, Any],
     field_threshold: float = 0.70,
@@ -82,7 +87,9 @@ def validate(
 
     Parameters:
       - text: the source document to verify against
-      - data: dict of pre-extracted fields (InvoiceData shape)
+      - data: dict of pre-extracted InvoiceData fields, or a stored reflect-mcp
+        result envelope (e.g. an earlier `extract` result), whose `data`
+        object is what gets verified
       - field_threshold / overall_threshold: confidence gate controls; they can
         only be raised above the operator's floor (env REFLECT_FIELD_THRESHOLD /
         REFLECT_OVERALL_THRESHOLD, defaults 0.70 / 0.75), and a lower value is
@@ -93,7 +100,9 @@ def validate(
     { status: "error", error_message } when the input or `data` is invalid or
     the pipeline fails.
     """
-    return tools.validate_tool(text, data, field_threshold, overall_threshold, heuristics_only)
+    return await asyncio.to_thread(
+        tools.validate_tool, text, data, field_threshold, overall_threshold, heuristics_only
+    )
 
 
 def main() -> None:

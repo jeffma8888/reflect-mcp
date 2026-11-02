@@ -518,6 +518,11 @@ class TestEB11ServerParity:
                     called.add(f.attr)
                 elif isinstance(f, ast.Name):
                     called.add(f.id)
+                for arg in node.args:
+                    if isinstance(arg, ast.Attribute):
+                        called.add(arg.attr)
+                    elif isinstance(arg, ast.Name):
+                        called.add(arg.id)
         assert target in called
 
     def test_only_server_imports_mcp(self):

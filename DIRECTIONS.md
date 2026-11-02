@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-69
+    lenses: simplification-and-deletion, performance-and-throughput
+    - Candidate A1 -- One single-document CLI tail: `run_extract_from_args` and `run_validate_from_args` become one-line wrappers over a shared `_run_verb(args, validate)`, taking cli.py from 360 to 337 lines with byte-identical console behavior
+    - Candidate A2 -- One parse-and-retry loop: the Generator and Critic retry loops (identical apart from the target model, prompt and stage name) become `parsing.complete_parsed(...)`, and the two `_RETRY_DELAY_SECONDS` constants become one
+    - Candidate A3 -- One MCP tool body: `extract_tool` and `validate_tool` share `_run_tool`, and `tools._build_pipeline` with its "pass a kwarg only when opted out" rule is deleted
+    - Candidate B1 -- The MCP server stops serializing tool calls: `extract`/`validate` run on a worker thread, so 4 parallel agent calls take 0.42 s instead of 1.67 s and the event loop keeps serving
+    - Candidate B2 -- A parse/schema retry fires immediately and carries the rejection reason, so the failure path drops from 510 ms to 0.1 ms and the paid retry is no longer a byte-identical re-roll (roadmap #26 + #30)
+    - Candidate B3 -- The MCP tool path builds each provider client once per process: 10 `extract` calls build 2 SDK clients (and 2 connection pools), not 20 (roadmap #27 memo half)
+    winner: B1
+    ship: pending (not yet decided)
   iter-68
     lenses: integration-and-adoption, simplification-and-deletion
     - Candidate A1 -- Re-verifying a stored reflect-mcp result works: `validate` given the product's own result envelope as `data` checks its `data` instead of returning a vacuous `ok`
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- One parse-and-retry loop: the Generator's and Critic's twin retry loops become `parsing.complete_with_retry`
     - Candidate B3 -- Delete `tools._build_pipeline` and its "pass a kwarg only when opted out" rule: the two MCP tools call `build_default_pipeline` directly
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 6068d69
   iter-67
     lenses: hardening/DX, integration-and-adoption
     - Candidate A1 -- Whitespace variants can't bypass party-role grounding: an NBSP, tab, double-spaced or CR-only "Bill to" line still flags a buyer extracted as the vendor
@@ -330,4 +340,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-33 scouted iterations
+34 scouted iterations

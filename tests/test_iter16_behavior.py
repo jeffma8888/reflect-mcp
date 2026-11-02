@@ -28,7 +28,7 @@ def _extract_docstring() -> str:
     """Parse server.py's extract() function docstring from the AST."""
     tree = ast.parse(SERVER_PY.read_text())
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "extract":
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "extract":
             doc = ast.get_docstring(node)
             assert doc is not None, "extract() must have a docstring"
             return doc
