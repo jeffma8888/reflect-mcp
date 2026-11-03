@@ -38,6 +38,7 @@ from unittest.mock import patch
 import pytest
 
 from reflect_mcp.schema import ExtractionResult
+from tests._golden import frozen_eval
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 VERBS = ["run_extract", "run_validate"]
@@ -430,13 +431,9 @@ def test_eb6_extraction_result_gains_no_field():
 
 
 def test_eb6_eval_stdout_byte_identical_to_head():
-    p = subprocess.run(
-        [sys.executable, "eval/run_eval.py"], capture_output=True, cwd=str(REPO_ROOT),
-        env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "PYTHONPATH": str(REPO_ROOT / "src")},
-        timeout=300,
-    )
+    p = frozen_eval(timeout=300)
     assert p.returncode == 0, p.stderr[-2000:]
-    assert hashlib.sha256(p.stdout).hexdigest() == HEAD_EVAL_STDOUT_SHA256
+    assert hashlib.sha256(p.stdout.encode()).hexdigest() == HEAD_EVAL_STDOUT_SHA256
 
 
 # ---------------------------------------------------------------------------

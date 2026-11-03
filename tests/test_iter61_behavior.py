@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import ast
 import json
-import subprocess
 import sys
 from pathlib import Path
 
@@ -44,11 +43,10 @@ from tests.conftest import CORRECT_EXTRACTION, SOURCE, critique_all
 REPO = Path(__file__).resolve().parents[1]
 SERVER = REPO / "src" / "reflect_mcp" / "server.py"
 README = REPO / "README.md"
-GOLDEN = REPO / "eval" / "golden" / "dataset.jsonl"
-REPLAY = REPO / "eval" / "fixtures" / "replay.json"
 
 sys.path.insert(0, str(REPO / "eval"))
 import run_eval  # noqa: E402
+from tests._golden import frozen_eval, frozen_replay, frozen_rows  # noqa: E402
 
 FIELD_ENV = "REFLECT_FIELD_THRESHOLD"
 OVERALL_ENV = "REFLECT_OVERALL_THRESHOLD"
@@ -405,11 +403,11 @@ WRONG = {
 
 
 def _golden_rows():
-    return [json.loads(line) for line in GOLDEN.read_text().splitlines() if line.strip()]
+    return frozen_rows()
 
 
 def _adversarial_pass(monkeypatch, field_arg=0.0, overall_arg=0.0):
-    replay = json.loads(REPLAY.read_text())
+    replay = frozen_replay()
     caught = silent = false_alarms = 0
     statuses: dict[str, str] = {}
     wrong_seen: dict[str, set] = {}
@@ -508,9 +506,6 @@ class TestEB10Docs:
 
     def test_make_eval_stdout_unchanged(self):
         from tests.test_iter60_behavior import EXPECTED_STDOUT
-        proc = subprocess.run(
-            [sys.executable, str(REPO / "eval" / "run_eval.py")],
-            cwd=REPO, capture_output=True, text=True, timeout=120,
-        )
+        proc = frozen_eval()
         assert proc.returncode == 0, proc.stdout + proc.stderr
         assert proc.stdout == EXPECTED_STDOUT

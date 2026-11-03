@@ -45,10 +45,9 @@ from reflect_mcp.heuristics import HeuristicReport, run_heuristics
 from reflect_mcp.pipeline import ReflectivePipeline
 from reflect_mcp.schema import InvoiceData
 from reflect_mcp.scripted import ScriptedLLMClient
+from tests._golden import frozen_eval, frozen_replay, frozen_rows
 
 REPO = Path(__file__).resolve().parents[1]
-GOLDEN = REPO / "eval" / "golden" / "dataset.jsonl"
-REPLAY = REPO / "eval" / "fixtures" / "replay.json"
 
 FIELDS = ("vendor_name", "invoice_number", "invoice_date", "subtotal", "tax", "total", "currency")
 NR_NOTE = "1 field(s) below the 70% confidence threshold require human review before use."
@@ -125,11 +124,11 @@ def _h(text: str, **fields):
 
 
 def _replay() -> dict:
-    return json.loads(REPLAY.read_text())
+    return frozen_replay()
 
 
 def _golden() -> list[dict]:
-    rows = [json.loads(ln) for ln in GOLDEN.read_text().splitlines() if ln.strip()]
+    rows = frozen_rows()
     assert len(rows) == 8
     return rows
 
@@ -442,8 +441,7 @@ def test_eb8_head_digest_table_complete():
 # ---------------------------------------------------------------------------
 
 def test_eb9_eval_stdout_byte_identical_to_head():
-    proc = subprocess.run([sys.executable, str(REPO / "eval" / "run_eval.py")],
-                          cwd=REPO, capture_output=True, text=True, timeout=120)
+    proc = frozen_eval()
     assert proc.returncode == 0, proc.stdout + proc.stderr[-2000:]
     assert proc.stdout == HEAD_EVAL_STDOUT
 

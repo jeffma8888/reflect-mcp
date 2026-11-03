@@ -20,10 +20,10 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "eval"))
 
 import run_eval  # noqa: E402
+from tests._golden import frozen_eval, frozen_replay, frozen_rows, use_frozen_golden  # noqa: E402
 
 README = REPO / "README.md"
 SHIPPED_REPLAY = REPO / "eval" / "fixtures" / "replay.json"
-GOLDEN = REPO / "eval" / "golden" / "dataset.jsonl"
 
 BASE_FAILURES = [
     ("inv-004", "total", 583.2, 683.2),
@@ -58,19 +58,30 @@ NEW_LINES = [
     "silent-wrong      : 0",
     "false alarms      : 0",
 ]
+# iter 72: the live 9-row dataset (inv-009 adds one flagged catch).
+LIVE_NEW_LINES = [
+    "catch rate        : 100.0%  (5/5)",
+    "silent-wrong      : 0",
+    "false alarms      : 0",
+]
 
 
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
 
+@pytest.fixture(autouse=True)
+def _frozen_golden(monkeypatch, tmp_path):
+    """Every in-process eval here pins the frozen 8-row subset (iter 72)."""
+    use_frozen_golden(monkeypatch, tmp_path)
+
+
 def _replay() -> dict:
-    return json.loads(SHIPPED_REPLAY.read_text())
+    return frozen_replay()
 
 
 def _golden() -> dict:
-    rows = [json.loads(line) for line in GOLDEN.read_text().splitlines() if line.strip()]
-    return {r["id"]: r for r in rows}
+    return {r["id"]: r for r in frozen_rows()}
 
 
 def _install(monkeypatch, tmp_path, data: dict) -> Path:
@@ -134,6 +145,11 @@ def _readme_eval_block() -> str:
 
 
 def _eval_proc(*args: str) -> subprocess.CompletedProcess:
+    return frozen_eval(*args)
+
+
+def _live_eval_proc(*args: str) -> subprocess.CompletedProcess:
+    """The committed (live) dataset: only the README-block pin follows it."""
     return subprocess.run(
         [sys.executable, str(REPO / "eval" / "run_eval.py"), *args],
         cwd=REPO, capture_output=True, text=True, timeout=120,
@@ -417,11 +433,11 @@ def test_eb9_cli_min_accuracy_exit_1():
 # ---------------------------------------------------------------------------
 
 def test_eb10_readme_block_equals_stdout():
-    proc = _eval_proc()
+    proc = _live_eval_proc()
     assert proc.returncode == 0
     block = _readme_eval_block()
     assert block == proc.stdout
-    for line in NEW_LINES:
+    for line in LIVE_NEW_LINES:
         assert line + "\n" in block
     assert "(flagged)" in block
 

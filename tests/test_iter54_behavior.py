@@ -43,6 +43,7 @@ from reflect_mcp.critic import Critic
 from reflect_mcp.generator import Generator
 from reflect_mcp.heuristics import HeuristicReport, run_heuristics
 from reflect_mcp.scripted import ScriptedLLMClient
+from tests._golden import frozen_eval, use_frozen_golden
 
 REPO = Path(__file__).resolve().parents[1]
 GOLDEN = REPO / "eval" / "golden" / "dataset.jsonl"
@@ -123,7 +124,12 @@ def _run_row(row_id: str, critic_raw: str | None = None):
     return pipe.extract(row["text"])
 
 
+def _frozen_eval_stdout() -> subprocess.CompletedProcess:
+    return frozen_eval()
+
+
 def _eval_stdout() -> subprocess.CompletedProcess:
+    """The committed (live) dataset: only the README-block pin follows it."""
     return subprocess.run(
         [sys.executable, str(REPO / "eval" / "run_eval.py")],
         cwd=REPO, capture_output=True, text=True, timeout=120,
@@ -445,7 +451,7 @@ def test_eb10_catch_comes_from_grounded_signal():
 # ---------------------------------------------------------------------------
 
 def test_eb11_eval_cli_readout():
-    proc = _eval_stdout()
+    proc = _frozen_eval_stdout()
     assert proc.returncode == 0, proc.stdout + proc.stderr
     out = re.sub(r"[ \t]+", " ", proc.stdout)
     assert re.search(r"examples : 8\b", out), out
@@ -456,12 +462,13 @@ def test_eb11_eval_cli_readout():
     assert "PASS" in out
 
 
-def test_eb11_evaluate_metrics():
+def test_eb11_evaluate_metrics(monkeypatch, tmp_path):
     sys.path.insert(0, str(REPO / "eval"))
     try:
         import run_eval
     finally:
         sys.path.remove(str(REPO / "eval"))
+    use_frozen_golden(monkeypatch, tmp_path)
     m = run_eval.evaluate(live=False)
     assert (m.examples, m.total_fields, m.correct_fields, m.exact_matches, m.reviewed) == (
         8, 56, 52, 4, 4)

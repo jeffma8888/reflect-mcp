@@ -27,7 +27,6 @@ from __future__ import annotations
 import hashlib
 import inspect
 import json
-import subprocess
 import sys
 from pathlib import Path
 
@@ -41,9 +40,9 @@ from reflect_mcp.generator import Generator
 from reflect_mcp.pipeline import ReflectivePipeline
 from reflect_mcp.schema import InvoiceData
 from reflect_mcp.scripted import ScriptedLLMClient
+from tests._golden import frozen_eval, frozen_replay, frozen_rows
 
 REPO = Path(__file__).resolve().parents[1]
-REPLAY = REPO / "eval" / "fixtures" / "replay.json"
 
 sys.path.insert(0, str(REPO / "eval"))
 import run_eval  # noqa: E402
@@ -117,13 +116,13 @@ def _status(result) -> str:
 
 
 def _replay() -> dict:
-    return json.loads(REPLAY.read_text())
+    return frozen_replay()
 
 
 def _golden_results(critic_on: bool) -> dict[str, object]:
     rep = _replay()
     out = {}
-    for row in run_eval.load_golden():
+    for row in frozen_rows():
         fx = rep[row["id"]]
         crit = _crit([fx["critic_raw"]]) if critic_on else None
         pipe = ReflectivePipeline(_gen([fx["generator_raw"]]), crit)
@@ -266,10 +265,7 @@ def test_eb7_critic_off_not_all_rows_ok():
 # ---------------------------------------------------------------------------
 
 def test_eb8_eval_stdout_identical_to_head():
-    proc = subprocess.run(
-        [sys.executable, str(REPO / "eval" / "run_eval.py")],
-        capture_output=True, text=True, cwd=str(REPO), timeout=120,
-    )
+    proc = frozen_eval()
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout == HEAD_EVAL_STDOUT
 

@@ -47,10 +47,9 @@ from reflect_mcp.generator import Generator
 from reflect_mcp.pipeline import ReflectivePipeline
 from reflect_mcp.schema import ExtractionResult, InvoiceData
 from reflect_mcp.scripted import ScriptedLLMClient
+from tests._golden import frozen_eval, frozen_replay, frozen_rows
 
 REPO = Path(__file__).resolve().parents[1]
-GOLDEN = REPO / "eval" / "golden" / "dataset.jsonl"
-REPLAY = REPO / "eval" / "fixtures" / "replay.json"
 
 T = "ACME CORP\nInvoice INV-1\nTotal: $10.00"
 BAD = {"vendor_name": "WRONG CO", "total": 999.0}
@@ -355,11 +354,9 @@ def test_eb9_library_error_envelope_raises_validation_error():
 # ---------------------------------------------------------------------------
 
 def test_eb10_eval_stdout_byte_identical_to_head():
-    env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "PYTHONPATH": str(REPO / "src")}
-    proc = subprocess.run([sys.executable, str(REPO / "eval" / "run_eval.py")], capture_output=True,
-                          env=env, cwd=str(REPO), timeout=300)
+    proc = frozen_eval(timeout=300)
     assert proc.returncode == 0, proc.stderr[-2000:]
-    assert hashlib.sha256(proc.stdout).hexdigest() == HEAD_EVAL_STDOUT_SHA256
+    assert hashlib.sha256(proc.stdout.encode()).hexdigest() == HEAD_EVAL_STDOUT_SHA256
 
 
 def test_eb10_extraction_result_fields_unchanged():
@@ -367,8 +364,8 @@ def test_eb10_extraction_result_fields_unchanged():
 
 
 def test_eb10_extract_output_unchanged_over_golden_matrix():
-    replay = json.loads(REPLAY.read_text())
-    rows = [json.loads(ln) for ln in GOLDEN.read_text().splitlines() if ln.strip()]
+    replay = frozen_replay()
+    rows = frozen_rows()
     assert len(rows) == 8
     out = {}
     for crit in (False, True):

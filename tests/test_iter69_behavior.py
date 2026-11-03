@@ -27,7 +27,6 @@ import asyncio
 import hashlib
 import inspect
 import re
-import subprocess
 import sys
 import threading
 import time
@@ -37,6 +36,7 @@ from pathlib import Path
 import pytest
 
 from reflect_mcp import tools
+from tests._golden import frozen_eval
 
 REPO = Path(__file__).resolve().parent.parent
 SERVER_PY = REPO / "src" / "reflect_mcp" / "server.py"
@@ -466,10 +466,7 @@ class TestEB9NoNewDependency:
         assert offenders == []
 
     def test_eval_stdout_byte_identical_to_head(self):
-        proc = subprocess.run(
-            [sys.executable, "eval/run_eval.py"],
-            capture_output=True, cwd=REPO, timeout=120,
-        )
-        assert proc.returncode == 0, proc.stderr.decode()[-2000:]
+        proc = frozen_eval()
+        assert proc.returncode == 0, proc.stderr[-2000:]
         assert proc.stdout, "eval printed nothing"
-        assert hashlib.sha256(proc.stdout).hexdigest() == HEAD_EVAL_STDOUT_SHA256
+        assert hashlib.sha256(proc.stdout.encode()).hexdigest() == HEAD_EVAL_STDOUT_SHA256

@@ -296,17 +296,17 @@ make eval          # OFFLINE: deterministic, uses recorded model outputs (no API
 make eval-live     # LIVE: runs against REFLECT_PROVIDER (needs credentials)
 ```
 
-Offline run (recorded fixtures; four examples carry an injected hallucination — a wrong total in `inv-004`, in `inv-006` a made-up date that the date-grounding heuristic catches, in `inv-007` the bill-to customer extracted as the vendor, which the Critic marks `grounded:false` and party-role grounding catches too, also in heuristics-only mode, and in `inv-008` a stray item-line amount taken as the total, which amount-role grounding catches even though the Critic is fooled — to prove the harness catches misses):
+Offline run (recorded fixtures; five examples carry an injected hallucination — a wrong total in `inv-004`, in `inv-006` a made-up date that the date-grounding heuristic catches, in `inv-007` the bill-to customer extracted as the vendor, which the Critic marks `grounded:false` and party-role grounding catches too, also in heuristics-only mode, in `inv-008` a stray item-line amount taken as the total, which amount-role grounding catches even though the Critic is fooled, and in `inv-009` a due date extracted as the invoice date, which date-role grounding catches even though the Critic is fooled — to prove the harness catches misses):
 
 ```
 ==============================================================
 reflect-mcp eval  |  mode: OFFLINE (replay fixtures)
 ==============================================================
-examples          : 8
-field accuracy    : 92.9%  (52/56)
-exact-match acc   : 50.0%  (4/8)
-needs-review rate : 50.0%  (4/8)
-catch rate        : 100.0%  (4/4)
+examples          : 9
+field accuracy    : 92.1%  (58/63)
+exact-match acc   : 44.4%  (4/9)
+needs-review rate : 55.6%  (5/9)
+catch rate        : 100.0%  (5/5)
 silent-wrong      : 0
 false alarms      : 0
 --------------------------------------------------------------
@@ -315,8 +315,9 @@ field-level failures (where it breaks):
   [inv-006] invoice_date: expected '2026-03-14' but got '2026-04-14'  (flagged)
   [inv-007] vendor_name: expected 'NORTHWIND TRADERS' but got 'Contoso Ltd'  (flagged)
   [inv-008] total: expected 75.0 but got 45.0  (flagged)
+  [inv-009] invoice_date: expected '2026-07-01' but got '2026-07-31'  (flagged)
 ==============================================================
-PASS: field accuracy 92.9% >= required 90.0%
+PASS: field accuracy 92.1% >= required 90.0%
 PASS: silent-wrong fields 0 <= allowed 0
 ```
 

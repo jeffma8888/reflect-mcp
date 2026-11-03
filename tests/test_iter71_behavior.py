@@ -42,10 +42,9 @@ from reflect_mcp.heuristics import run_heuristics
 from reflect_mcp.pipeline import ReflectivePipeline
 from reflect_mcp.schema import InvoiceData
 from reflect_mcp.scripted import ScriptedLLMClient
+from tests._golden import frozen_eval, frozen_replay, frozen_rows
 
 REPO = Path(__file__).resolve().parents[1]
-GOLDEN = REPO / "eval" / "golden" / "dataset.jsonl"
-REPLAY = REPO / "eval" / "fixtures" / "replay.json"
 README = REPO / "README.md"
 
 FIELDS = ("vendor_name", "invoice_number", "invoice_date", "subtotal", "tax", "total", "currency")
@@ -97,11 +96,11 @@ def _flag_fields(r) -> list[str]:
 
 
 def _replay() -> dict:
-    return json.loads(REPLAY.read_text())
+    return frozen_replay()
 
 
 def _golden() -> list[dict]:
-    return [json.loads(ln) for ln in GOLDEN.read_text().splitlines() if ln.strip()]
+    return frozen_rows()
 
 
 # ---------------------------------------------------------------------------
@@ -299,8 +298,7 @@ def test_eb8_golden_rows_have_no_invoice_date_role_factor():
 # ---------------------------------------------------------------------------
 
 def test_eb9_eval_stdout_sha_and_exit():
-    proc = subprocess.run([sys.executable, str(REPO / "eval" / "run_eval.py")],
-                          cwd=REPO, capture_output=True, text=True, timeout=180)
+    proc = frozen_eval()
     assert proc.returncode == 0, proc.stdout + proc.stderr[-2000:]
     assert hashlib.sha256(proc.stdout.encode()).hexdigest() == HEAD_EVAL_SHA256, proc.stdout
     assert "silent-wrong" in proc.stdout

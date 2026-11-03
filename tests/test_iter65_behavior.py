@@ -35,15 +35,11 @@ from reflect_mcp.heuristics import run_heuristics
 from reflect_mcp.pipeline import ReflectivePipeline
 from reflect_mcp.schema import CritiqueResult, InvoiceData
 from reflect_mcp.scripted import ScriptedLLMClient
+from tests._golden import frozen_eval, frozen_replay, frozen_rows
 from tests.conftest import CORRECT_EXTRACTION, SOURCE, critique_all
 
 REPO = Path(__file__).resolve().parents[1]
-GOLDEN = REPO / "eval" / "golden" / "dataset.jsonl"
-REPLAY = REPO / "eval" / "fixtures" / "replay.json"
 README = REPO / "README.md"
-
-sys.path.insert(0, str(REPO / "eval"))
-import run_eval  # noqa: E402
 
 NOTE_OK = "All fields cleared the confidence thresholds."
 NOTE_HO = (
@@ -134,13 +130,13 @@ def _clean_data() -> InvoiceData:
 
 
 def _replay() -> dict:
-    return json.loads(REPLAY.read_text())
+    return frozen_replay()
 
 
 def _golden_rows() -> list[dict]:
     rep = _replay()
     rows = []
-    for row in run_eval.load_golden():
+    for row in frozen_rows():
         fx = rep[row["id"]]
         rows.append({"id": row["id"], "text": row["text"], "fx": fx,
                      "data": json.loads(fx["generator_raw"])})
@@ -553,9 +549,7 @@ def test_eb10_tool_critic_on_keeps_note_ok(monkeypatch, _clean_env):
 
 def test_eb11_eval_stdout_unchanged():
     import tests.test_iter62_behavior as t62
-    proc = subprocess.run([sys.executable, str(REPO / "eval" / "run_eval.py")],
-                          capture_output=True, text=True, cwd=str(REPO), timeout=120,
-                          env={**_cli_env()})
+    proc = frozen_eval()
     assert proc.returncode == 0, proc.stderr[-2000:]
     assert proc.stdout == t62.HEAD_EVAL_STDOUT
 

@@ -30,7 +30,6 @@ import inspect
 import json
 import logging
 import re
-import subprocess
 import sys
 import threading
 import types
@@ -47,6 +46,7 @@ from reflect_mcp.pipeline import ReflectivePipeline, build_default_pipeline
 from reflect_mcp.schema import InvoiceData
 from reflect_mcp.scripted import ScriptedLLMClient
 from tests.conftest import CORRECT_EXTRACTION, SOURCE, critique_all
+from tests._golden import frozen_eval
 
 REPO = Path(__file__).resolve().parent.parent
 README = REPO / "README.md"
@@ -325,12 +325,10 @@ def test_eb8_two_extracts_get_different_ids(logcap):
 # ---------------------------------------------------------------------------
 
 def test_eb10_eval_stdout_byte_identical_to_head():
-    proc = subprocess.run(
-        [sys.executable, "eval/run_eval.py"], capture_output=True, cwd=REPO, timeout=180,
-    )
-    assert proc.returncode == 0, proc.stderr.decode()[-2000:]
+    proc = frozen_eval()
+    assert proc.returncode == 0, proc.stderr[-2000:]
     assert proc.stdout
-    assert hashlib.sha256(proc.stdout).hexdigest() == HEAD_EVAL_STDOUT_SHA256
+    assert hashlib.sha256(proc.stdout.encode()).hexdigest() == HEAD_EVAL_STDOUT_SHA256
 
 
 def test_eb10_result_trace_id_still_prefixed():

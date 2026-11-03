@@ -22,8 +22,6 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -35,6 +33,7 @@ from reflect_mcp.pipeline import ReflectivePipeline
 from reflect_mcp.schema import InvoiceData
 from reflect_mcp.scripted import ScriptedLLMClient
 from tests.conftest import CORRECT_EXTRACTION, SOURCE
+from tests._golden import frozen_eval
 
 REPO = Path(__file__).resolve().parents[1]
 GOLDEN = REPO / "eval" / "golden" / "dataset.jsonl"
@@ -303,10 +302,7 @@ def test_eb11_inv006_pipeline_needs_review():
 
 
 def test_eb11_eval_cli_readout():
-    proc = subprocess.run(
-        [sys.executable, str(REPO / "eval" / "run_eval.py")],
-        cwd=REPO, capture_output=True, text=True, timeout=120,
-    )
+    proc = frozen_eval()
     assert proc.returncode == 0, proc.stdout + proc.stderr
     out = re.sub(r"[ \t]+", " ", proc.stdout)
     assert re.search(r"examples : 8\b", out), out

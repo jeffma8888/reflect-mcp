@@ -37,10 +37,9 @@ from pathlib import Path
 import pytest
 
 import reflect_mcp.pipeline as pipeline_mod
+from tests._golden import frozen_replay, frozen_rows
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-GOLDEN = REPO_ROOT / "eval" / "golden" / "dataset.jsonl"
-REPLAY = REPO_ROOT / "eval" / "fixtures" / "replay.json"
 
 # iter 66: party-role grounding moves inv-007 (bill-to vendor) to needs_review.
 EXPECTED_STATUS = {
@@ -66,12 +65,9 @@ CRIT_MODEL = "crit-model-y"
 # ---------------------------------------------------------------------------
 
 def _golden_rows() -> list[dict]:
-    replay = json.loads(REPLAY.read_text())
+    replay = frozen_replay()
     rows = []
-    for line in GOLDEN.read_text().splitlines():
-        if not line.strip():
-            continue
-        row = json.loads(line)
+    for row in frozen_rows():
         data = json.loads(replay[row["id"]]["generator_raw"])
         rows.append({"id": row["id"], "text": row["text"], "data": data})
     assert len(rows) == 8

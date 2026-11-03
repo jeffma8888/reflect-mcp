@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-72
+    lenses: new-capability, hardening/DX
+    - Candidate A1 -- Identifier-role grounding: an `invoice_number` the source shows only on a PO / order / customer / account line is penalized (roadmap #53)
+    - Candidate A2 -- Currency grounding from unambiguous money symbols: "€" grounds `EUR`, "£" grounds `GBP` (also ₹ → INR, ₩ → KRW)
+    - Candidate A3 -- `needs_review` hands the reviewer the answer to check: a flagged field carries deterministic `suggestions` (the value the source labels for that role) (roadmap #40)
+    - Candidate B1 -- Golden-set pin paydown (roadmap #52, NEXT): 55 of the 79 failures from adding a golden row come from loaders that hard-assert "exactly 8 rows"; one shared frozen-id helper retires them, so inv-009 can land
+    - Candidate B2 -- Token-boundary grounding: a truncated `invoice_number` ("INV-100" inside "INV-1001") or a partial `currency` ("US" inside "USD") stops being silently grounded
+    - Candidate B3 -- Date-role label boundary: a correct invoice date that shares its line with an earlier "Amount Due:" / "Ship to:" field stops false-alarming, and no catch is lost
+    winner: B1
+    ship: pending (not yet decided)
   iter-71
     lenses: new-capability
     - A1 -- A heuristics-only result reports `overall_confidence: 1.0`, which the tool docs call "the critic's overall confidence", and its `needs_review` notes never say that no Critic ran
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Currency grounding from the money symbol: "€1487.50" grounds `EUR`, "£" grounds `GBP`, and a code contradicted by the symbols on the labelled amounts is penalized
     - Candidate B3 -- Identifier-role grounding: an `invoice_number` seen only on a "PO"/"Order no"/"Customer ID"/"Account" line is penalized
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 823cdfb
   iter-70
     lenses: unknown
     - Candidate A1 -- MCP tools reuse provider clients across calls: 20 `extract` calls open 0 new connections instead of 40, and the client build stops racing between the threads iter 69 made concurrent
@@ -360,4 +370,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-36 scouted iterations
+37 scouted iterations

@@ -26,7 +26,6 @@ as the seam to disable for the counterfactual.
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 from pathlib import Path
 
@@ -47,6 +46,7 @@ README = REPO / "README.md"
 
 sys.path.insert(0, str(REPO / "eval"))
 import run_eval  # noqa: E402
+from tests._golden import frozen_eval, use_frozen_golden  # noqa: E402
 
 FIELDS = ("vendor_name", "invoice_number", "invoice_date", "subtotal", "tax", "total", "currency")
 AMOUNTS = ("subtotal", "tax", "total")
@@ -401,21 +401,34 @@ def test_eb10_inv008_flagged_by_role_check():
 
 
 def test_eb10_eval_stdout_exact():
-    proc = subprocess.run(
-        [sys.executable, str(REPO / "eval" / "run_eval.py")],
-        cwd=REPO, capture_output=True, text=True, timeout=120,
-    )
+    proc = frozen_eval()
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert proc.stdout == EXPECTED_STDOUT
 
 
-def test_eb10_readme_block_matches_stdout():
+# Readout lines whose counts move with the golden-set size (iter 72: the README
+# shows the live dataset; the frozen 8-row counts are pinned by test_eb10_eval_stdout_exact).
+_SIZE_DEPENDENT = ("examples ", "field accuracy ", "exact-match acc ", "needs-review rate ",
+                   "catch rate ", "PASS: field accuracy ")
+
+
+def _readme_eval_lines() -> list[str]:
     text = README.read_text()
-    inner = EXPECTED_STDOUT.rstrip("\n")
-    assert f"```\n{inner}\n```" in text
+    start = text.index("```\n" + EXPECTED_STDOUT.splitlines()[0] + "\nreflect-mcp eval")
+    return text[start + 4: text.index("\n```", start + 4)].splitlines()
 
 
-def test_eb10_genuine_catch_when_role_check_disabled(monkeypatch, capsys):
+def test_eb10_readme_block_matches_stdout():
+    """Every size-independent frozen readout line is in the README block, in order."""
+    readme = _readme_eval_lines()
+    frozen = [ln for ln in EXPECTED_STDOUT.splitlines() if not ln.startswith(_SIZE_DEPENDENT)]
+    remaining = iter(readme)
+    missing = [ln for ln in frozen if ln not in remaining]  # ordered-subsequence check
+    assert missing == [], (missing, readme)
+
+
+def test_eb10_genuine_catch_when_role_check_disabled(monkeypatch, capsys, tmp_path):
+    use_frozen_golden(monkeypatch, tmp_path)
     _disable_role_check(monkeypatch)
     m = run_eval.evaluate(live=False)
     assert m.silent_wrong == 1
@@ -426,7 +439,8 @@ def test_eb10_genuine_catch_when_role_check_disabled(monkeypatch, capsys):
     assert "FAIL: silent-wrong fields 1 > allowed 0" in lines
 
 
-def test_eb10_role_check_enabled_eval_passes():
+def test_eb10_role_check_enabled_eval_passes(monkeypatch, tmp_path):
+    use_frozen_golden(monkeypatch, tmp_path)
     m = run_eval.evaluate(live=False)
     assert m.silent_wrong == 0
     assert run_eval.run(live=False, min_accuracy=0.90) == 0
