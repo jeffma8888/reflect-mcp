@@ -17,7 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # MCP server surface (only needed to actually serve the tool over MCP).
-server = ["mcp>=1.2.0"]
+server = ["mcp>=1.28,<2"]
 # Provider SDKs are optional so the base install + offline tests stay light.
 anthropic = ["anthropic>=0.39"]
 openai = ["openai>=1.30"]

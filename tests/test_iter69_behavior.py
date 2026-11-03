@@ -43,8 +43,10 @@ SERVER_PY = REPO / "src" / "reflect_mcp" / "server.py"
 README = REPO / "README.md"
 
 # Measured on a `git archive HEAD` copy of iter-68 (commit before this change).
+# The pyproject digest was re-measured in iter 73, whose spec raised the
+# `server` extra to `mcp>=1.28,<2` (still no new dependency).
 HEAD_EXTRACT_DOC_SHA256 = "1c4b6a7ce36fd548e7cafd2477cb3adb66a6581c62cf02ad2ea81793d5208c62"
-HEAD_PYPROJECT_SHA256 = "a477e3111ef82955d91d76f2024fd1f668beb8cba41591205b127bcc629ef9a6"
+HEAD_PYPROJECT_SHA256 = "dd0ed377201577a815f007b212adf2546fd6c074e04610e299eeb3c87545d1a9"
 HEAD_EVAL_STDOUT_SHA256 = "9df9499d6aa3a9b96961beee122f3408e0c6477f485258e54d609030ac18a7f7"
 
 TEXT = "Invoice INV-1\nTotal: $10.00"
@@ -54,6 +56,23 @@ DATA = {"invoice_number": "INV-1", "total": 10.0}
 # ---------------------------------------------------------------------------
 # Stub SDK fixture
 # ---------------------------------------------------------------------------
+
+class _StubCallToolResult:
+    """Attribute holder standing in for `mcp.types.CallToolResult`."""
+
+    def __init__(self, content=None, structuredContent=None, isError=False, **kwargs):
+        self.content = content
+        self.structuredContent = structuredContent
+        self.isError = isError
+
+
+class _StubTextContent:
+    """Attribute holder standing in for `mcp.types.TextContent`."""
+
+    def __init__(self, type, text, **kwargs):
+        self.type = type
+        self.text = text
+
 
 class _StubFastMCP:
     instances: list["_StubFastMCP"] = []
@@ -87,11 +106,16 @@ def server(monkeypatch):
     mcp_server_mod = types.ModuleType("mcp.server")
     fastmcp_mod = types.ModuleType("mcp.server.fastmcp")
     fastmcp_mod.FastMCP = _StubFastMCP
+    mcp_types_mod = types.ModuleType("mcp.types")
+    mcp_types_mod.CallToolResult = _StubCallToolResult
+    mcp_types_mod.TextContent = _StubTextContent
     mcp_mod.server = mcp_server_mod
+    mcp_mod.types = mcp_types_mod
     mcp_server_mod.fastmcp = fastmcp_mod
     monkeypatch.setitem(sys.modules, "mcp", mcp_mod)
     monkeypatch.setitem(sys.modules, "mcp.server", mcp_server_mod)
     monkeypatch.setitem(sys.modules, "mcp.server.fastmcp", fastmcp_mod)
+    monkeypatch.setitem(sys.modules, "mcp.types", mcp_types_mod)
     sys.modules.pop("reflect_mcp.server", None)
     import importlib
 
@@ -162,7 +186,7 @@ def _strip_trace(d):
 
 class TestEB2ErrorParity:
     def test_extract_empty_matches_tools(self, server):
-        got = asyncio.run(server.extract(""))
+        got = asyncio.run(server.extract("")).structuredContent
         want = tools.extract_tool("")
         assert isinstance(got, dict)
         assert got["status"] == "error"
@@ -170,7 +194,7 @@ class TestEB2ErrorParity:
         assert _strip_trace(got) == _strip_trace(want)
 
     def test_validate_empty_matches_tools(self, server):
-        got = asyncio.run(server.validate("", {}))
+        got = asyncio.run(server.validate("", {})).structuredContent
         want = tools.validate_tool("", {})
         assert isinstance(got, dict)
         assert got["status"] == "error"
@@ -191,7 +215,7 @@ class TestEB2ErrorParity:
 
 class TestEB3HeuristicsOnlyParity:
     def test_validate_heuristics_only_matches_tools(self, server):
-        got = asyncio.run(server.validate(TEXT, dict(DATA), heuristics_only=True))
+        got = asyncio.run(server.validate(TEXT, dict(DATA), heuristics_only=True)).structuredContent
         want = tools.validate_tool(TEXT, dict(DATA), 0.70, 0.75, True)
         assert isinstance(got, dict) and "status" in got
         assert got["status"] != "error", got
@@ -207,14 +231,14 @@ class TestEB3HeuristicsOnlyParity:
 class TestEB4CallTimeLookup:
     def test_extract_spy(self, server, monkeypatch):
         calls = []
-        sentinel = {"status": "ok", "marker": object()}
+        sentinel = {"status": "ok", "marker": "sentinel"}
 
         def spy(*args, **kwargs):
             calls.append((args, kwargs))
             return sentinel
 
         monkeypatch.setattr(tools, "extract_tool", spy)
-        got = asyncio.run(server.extract("doc", 0.9, 0.95, True))
+        got = asyncio.run(server.extract("doc", 0.9, 0.95, True)).structuredContent
         assert len(calls) == 1
         args, kwargs = calls[0]
         assert args == ("doc", 0.9, 0.95, True)
@@ -223,14 +247,14 @@ class TestEB4CallTimeLookup:
 
     def test_validate_spy(self, server, monkeypatch):
         calls = []
-        sentinel = {"status": "ok", "marker": object()}
+        sentinel = {"status": "ok", "marker": "sentinel"}
 
         def spy(*args, **kwargs):
             calls.append((args, kwargs))
             return sentinel
 
         monkeypatch.setattr(tools, "validate_tool", spy)
-        got = asyncio.run(server.validate("doc", {"total": 1.0}, 0.8, 0.85, True))
+        got = asyncio.run(server.validate("doc", {"total": 1.0}, 0.8, 0.85, True)).structuredContent
         assert len(calls) == 1
         args, kwargs = calls[0]
         assert args == ("doc", {"total": 1.0}, 0.8, 0.85, True)
@@ -310,7 +334,7 @@ def _run_overlap(server, fn_name):
         ticks_during = ticks
         stop.set()
         await hb
-        return results, elapsed, ticks_during
+        return [r.structuredContent for r in results], elapsed, ticks_during
 
     return asyncio.run(main())
 

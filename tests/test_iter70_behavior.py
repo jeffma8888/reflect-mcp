@@ -100,6 +100,23 @@ def nosleep(monkeypatch):
     monkeypatch.setattr(critic_mod.time, "sleep", lambda *_a, **_k: None)
 
 
+class _StubCallToolResult:
+    """Attribute holder standing in for `mcp.types.CallToolResult`."""
+
+    def __init__(self, content=None, structuredContent=None, isError=False, **kwargs):
+        self.content = content
+        self.structuredContent = structuredContent
+        self.isError = isError
+
+
+class _StubTextContent:
+    """Attribute holder standing in for `mcp.types.TextContent`."""
+
+    def __init__(self, type, text, **kwargs):
+        self.type = type
+        self.text = text
+
+
 class _StubFastMCP:
     def __init__(self, name, *args, **kwargs):
         self.name = name
@@ -119,11 +136,16 @@ def server(monkeypatch):
     mcp_server_mod = types.ModuleType("mcp.server")
     fastmcp_mod = types.ModuleType("mcp.server.fastmcp")
     fastmcp_mod.FastMCP = _StubFastMCP
+    mcp_types_mod = types.ModuleType("mcp.types")
+    mcp_types_mod.CallToolResult = _StubCallToolResult
+    mcp_types_mod.TextContent = _StubTextContent
     mcp_mod.server = mcp_server_mod
+    mcp_mod.types = mcp_types_mod
     mcp_server_mod.fastmcp = fastmcp_mod
     monkeypatch.setitem(sys.modules, "mcp", mcp_mod)
     monkeypatch.setitem(sys.modules, "mcp.server", mcp_server_mod)
     monkeypatch.setitem(sys.modules, "mcp.server.fastmcp", fastmcp_mod)
+    monkeypatch.setitem(sys.modules, "mcp.types", mcp_types_mod)
     sys.modules.pop("reflect_mcp.server", None)
     mod = importlib.import_module("reflect_mcp.server")
     try:
@@ -188,7 +210,7 @@ def test_eb3_parallel_mcp_validate_distinct_ids(server):
             *[server.validate(SOURCE, dict(CORRECT_EXTRACTION), heuristics_only=True) for _ in range(50)]
         )
 
-    results = asyncio.run(main())
+    results = [r.structuredContent for r in asyncio.run(main())]
     assert len(results) == 50
     assert all(isinstance(r, dict) for r in results)
     ids = [r.get("trace_id") for r in results]

@@ -19,9 +19,10 @@ and any lower argument is raised to it, with the raise recorded in `notes`.
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import ValidationError
+from typing_extensions import TypedDict
 
 from reflect_mcp import pipeline as pipeline_module
 from reflect_mcp.gate import GateConfig
@@ -29,6 +30,41 @@ from reflect_mcp.pipeline import ReflectivePipeline
 from reflect_mcp.schema import InvoiceData
 
 EMPTY_INPUT_MESSAGE = "input is empty"
+
+
+class _ToolStatus(TypedDict):
+    """The one key every tool result carries, so it is the only required one.
+
+    A required base class rather than `Required[...]`: under
+    `from __future__ import annotations` the qualifier is a string, so
+    `__required_keys__` comes out empty and FastMCP's outputSchema would drop
+    `status` from `required` (pydantic alone resolves it, which hides the bug).
+    """
+
+    status: Literal["ok", "needs_review", "error"]
+
+
+class ToolResult(_ToolStatus, total=False):
+    """The envelope both MCP tools return, published as their `outputSchema`.
+
+    Without it a host reading `tools/list` sees "any object" and learns nothing
+    about `status`. Everything but `status` is optional, because an error row
+    carries just `status` + `error_message` while ok/needs_review rows carry the
+    extraction keys. It lives here (not in `server.py`) so the schema is
+    testable without the MCP SDK; `typing_extensions.TypedDict` because pydantic
+    rejects `typing.TypedDict` on Python < 3.12. Only the envelope is typed: the
+    inner objects stay plain objects, mirroring `ExtractionResult.model_dump()`.
+    """
+
+    data: dict[str, Any]
+    field_confidence: dict[str, float]
+    overall_confidence: float
+    flagged_fields: list[dict[str, Any]]
+    field_provenance: dict[str, list[dict[str, Any]]]
+    trace_id: str
+    critic_summary: str
+    notes: str
+    error_message: str
 
 
 def _error(message: str) -> dict[str, Any]:

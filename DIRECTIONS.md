@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-73
+    lenses: hardening/DX, integration-and-adoption
+    - Candidate A1 -- Token-boundary grounding: a truncated `invoice_number` ("INV-100" inside "INV-1001", "2045" inside "20451") or a partial `currency` ("US" inside "USD") stops being a silent `ok` (roadmap #54)
+    - Candidate A2 -- `reflect-mcp … --batch | head -1` exits within the documented contract: no BrokenPipeError traceback, no exit 120 (roadmap #45)
+    - Candidate A3 -- A `--batch` JSONL that starts with a UTF-8 BOM, or contains whitespace-only lines, verifies instead of emitting anonymous error rows and exit 3 (roadmap #46)
+    - Candidate B1 -- MCP tools publish a real outputSchema: agents and hosts get a typed `status` enum (`ok`/`needs_review`/`error`) instead of "any object", and `status:"error"` results set `isError`
+    - Candidate B2 -- The CLI composes in pipelines: `--file -` means stdin, and `--data @PATH` reads the data JSON from a file, so "verify my extractor's output" is a two-file Makefile rule rather than shell quoting
+    - Candidate B3 -- `--batch` rows echo the 1-based input `line`, so error rows and id-less rows still join back to their input (roadmap #25 remainder)
+    winner: B1
+    ship: pending (not yet decided)
   iter-72
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Identifier-role grounding: an `invoice_number` the source shows only on a PO / order / customer / account line is penalized (roadmap #53)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Token-boundary grounding: a truncated `invoice_number` ("INV-100" inside "INV-1001") or a partial `currency` ("US" inside "USD") stops being silently grounded
     - Candidate B3 -- Date-role label boundary: a correct invoice date that shares its line with an earlier "Amount Due:" / "Ship to:" field stops false-alarming, and no catch is lost
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 7e300d5
   iter-71
     lenses: new-capability
     - A1 -- A heuristics-only result reports `overall_confidence: 1.0`, which the tool docs call "the critic's overall confidence", and its `needs_review` notes never say that no Critic ran
@@ -370,4 +380,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-37 scouted iterations
+38 scouted iterations

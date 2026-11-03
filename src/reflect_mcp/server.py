@@ -11,18 +11,27 @@ declares the tool surface; the bodies live in `reflect_mcp.tools` so they are
 tested offline. The tools are `async` and hand that sync body to
 `asyncio.to_thread` because FastMCP runs a sync tool inline on its event loop,
 which would serialize parallel calls and stall pings/cancellations meanwhile.
+
+Each tool returns a `CallToolResult` annotated with `tools.ToolResult`, so
+`tools/list` advertises an outputSchema with a required `status` enum and a
+`status:"error"` row reaches the host as `isError: true`. The structuredContent
+is built explicitly: annotating `-> ToolResult` alone would make FastMCP
+re-dump the dict with `None` defaults that fail the published schema.
 """
 
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+import json
+from typing import Annotated, Any
 
 from reflect_mcp import tools
 from reflect_mcp.logging_config import get_logger
+from reflect_mcp.tools import ToolResult
 
 try:
     from mcp.server.fastmcp import FastMCP
+    from mcp.types import CallToolResult, TextContent
 except ImportError as exc:  # pragma: no cover - only hit without the server extra
     raise SystemExit(
         "The MCP SDK is not installed. Install the server extra:\n"
@@ -33,13 +42,26 @@ except ImportError as exc:  # pragma: no cover - only hit without the server ext
 mcp = FastMCP("reflect-mcp")
 
 
+def _structured(result: dict[str, Any]) -> CallToolResult:
+    """Wrap a tool-body dict so hosts get it unchanged as structuredContent and text.
+
+    `isError` mirrors `status == "error"` so a host that branches on the MCP
+    error flag never mistakes a failed extraction for a result.
+    """
+    return CallToolResult(
+        content=[TextContent(type="text", text=json.dumps(result))],
+        structuredContent=result,
+        isError=result["status"] == "error",
+    )
+
+
 @mcp.tool()
 async def extract(
     text: str,
     field_threshold: float = 0.70,
     overall_threshold: float = 0.75,
     heuristics_only: bool = False,
-) -> dict[str, Any]:
+) -> Annotated[CallToolResult, ToolResult]:
     """Extract structured invoice/receipt data from messy text, verified by a
     second-model critic and a human-in-the-loop confidence gate.
 
@@ -67,8 +89,10 @@ async def extract(
     defaults 0.70 / 0.75); a lower value is raised to the floor and `notes`
     says so.
     """
-    return await asyncio.to_thread(
-        tools.extract_tool, text, field_threshold, overall_threshold, heuristics_only
+    return _structured(
+        await asyncio.to_thread(
+            tools.extract_tool, text, field_threshold, overall_threshold, heuristics_only
+        )
     )
 
 
@@ -79,7 +103,7 @@ async def validate(
     field_threshold: float = 0.70,
     overall_threshold: float = 0.75,
     heuristics_only: bool = False,
-) -> dict[str, Any]:
+) -> Annotated[CallToolResult, ToolResult]:
     """Verify pre-extracted data against source text without running the Generator.
 
     Runs the Critic + deterministic heuristics + confidence gate on data you
@@ -100,8 +124,10 @@ async def validate(
     { status: "error", error_message } when the input or `data` is invalid or
     the pipeline fails.
     """
-    return await asyncio.to_thread(
-        tools.validate_tool, text, data, field_threshold, overall_threshold, heuristics_only
+    return _structured(
+        await asyncio.to_thread(
+            tools.validate_tool, text, data, field_threshold, overall_threshold, heuristics_only
+        )
     )
 
 

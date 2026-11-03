@@ -67,13 +67,14 @@ tool surface, small deps, MIT, publication-safe.
 | 47 | `--batch --summary PATH` writes `{lines, ok, needs_review, error, flagged_fields, exit}` for CI gates | Med | Low | QUEUED |
 | 48 | Result carries `critic_ran: bool` so a consumer can require a Critic-verified `ok` (2 src lines, 30-pin digest migration) | Med | Med | QUEUED |
 | 49 | MCP tools run on a worker thread (`async` + `asyncio.to_thread`): parallel agent calls overlap (4 calls 1.67s → 0.42s) | High | Low | DONE (iter 69) |
-| 50 | Pin `mcp>=1.x,<2` and raise the floor to a version that imports on Python 3.13 (mcp 2.x / 1.10.1 break server.py) | Med | Low | QUEUED |
+| 50 | Pin `mcp>=1.x,<2` and raise the floor to a version that imports on Python 3.13 (mcp 2.x / 1.10.1 break server.py) | Med | Low | PARTIAL (iter 73: `mcp>=1.28,<2`; lower measured floor QUEUED) |
 | 51 | `validate` verb: verify-only mode on caller-supplied data (record backfilled iter 70) | High | Low | DONE (iter 18) |
 | 52 | Golden row inv-009 (due date as invoice date; pre-iter-71 heuristics silent-wrong 1) + pin paydown: HEAD-identity pins read a frozen inv-001..008 subset (`tests/_golden.py`) | High | Low | DONE (iter 72) |
 | 53 | NEXT: Identifier-role grounding: an `invoice_number` seen only on a PO/order-no/customer-id line is penalized (iter-72 A1: 5/5 silent ok caught; abstain unless an invoice-id label exists, else inv-002 false-alarms) | Med | Low | QUEUED |
 | 54 | Token-boundary grounding for `invoice_number`/`currency`: "INV-100" in "INV-1001", "US" in "USD" stop grounding (iter-72 B2: 4/4 silent ok; ~15 lines) | High | Low | QUEUED |
 | 55 | Date-role label is colon-scoped: "Ship to: … Invoice date: X" stops false-alarming (iter-72 B3: 4/4 fixed, 6/6 catches kept; REV iter71 digit-split loses 2) | Med | Low | QUEUED |
 | 56 | Currency grounded by unambiguous symbol on a labelled amount ("€"→EUR, "£"→GBP; never "$") (iter-72 A2: removes a measured false alarm) | Med | Low | QUEUED |
+| 57 | MCP tools publish a typed outputSchema (`status` enum required) + `structuredContent`; `status:"error"` sets `isError` (iter-73 B1) | High | Low | DONE (iter 73) |
 
 ## Done ledger
 
@@ -113,3 +114,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 70 — trace_id unique per call (50 parallel MCP calls: 8 → 50 ids); retry events carry it
 - iter 71 — Date-role grounding: invoice_date seen only as a due/ship/delivery date is penalized (0.3)
 - iter 72 — Golden row inv-009 + frozen-subset pins: a new golden row no longer breaks ~79 HEAD-identity tests
+- iter 73 — MCP outputSchema requires a `status` enum; results carry structuredContent; error sets isError

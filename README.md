@@ -160,6 +160,8 @@ Then restart Claude Desktop and ask it to *"extract the invoice fields from this
 
 When `status == "needs_review"`, do **not** use `data` blindly — confirm the fields in `flagged_fields` first.
 
+**Typed results.** Both tools publish an `outputSchema` in `tools/list` whose only required key is a `status` enum (`ok` / `needs_review` / `error`), so a host knows the envelope before the first call. Every result carries `structuredContent` (the envelope above, with the same JSON as the text content), and a `status: "error"` result sets `isError: true`, so a host that branches on the MCP error flag never treats a failed extraction as a result.
+
 The tools never raise: failures (empty input, out-of-range thresholds, `data` that fails `InvoiceData` validation, provider or parse errors) return `{ status: "error", error_message }` instead of raising, mirroring the CLI's error envelope. `validate` also accepts a stored reflect-mcp result envelope as `data` (e.g. an earlier `extract` result) and verifies its `data` object; an envelope with no `data` object (a stored error row) is a schema error, returned as an error envelope. `heuristics_only=True` skips the Critic LLM call, like the CLI's `--heuristics-only` (an `ok` result's `notes` then begin "No Critic ran"); for `validate` it builds no provider client at all, so it needs no provider SDK or API key.
 
 **Parallel calls.** Both tools are `async` and run the pipeline on a worker thread, so parallel tool calls from one client overlap instead of queuing, and the server keeps answering other requests (pings, cancellations, `tools/list`) while an extraction runs. A cancelled call's pipeline still runs to completion on its worker thread (including any model calls); only its result is discarded.
