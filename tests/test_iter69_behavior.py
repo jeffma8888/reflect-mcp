@@ -45,7 +45,8 @@ README = REPO / "README.md"
 # Measured on a `git archive HEAD` copy of iter-68 (commit before this change).
 # The pyproject digest was re-measured in iter 73, whose spec raised the
 # `server` extra to `mcp>=1.28,<2` (still no new dependency).
-HEAD_EXTRACT_DOC_SHA256 = "1c4b6a7ce36fd548e7cafd2477cb3adb66a6581c62cf02ad2ea81793d5208c62"
+# iter 74: re-pinned after the docstring documented the null threshold defaults.
+HEAD_EXTRACT_DOC_SHA256 = "ffb2abddca88f224e23356908a4f9fe082eebe915dce8ad1d536a3132a509002"
 HEAD_PYPROJECT_SHA256 = "dd0ed377201577a815f007b212adf2546fd6c074e04610e299eeb3c87545d1a9"
 HEAD_EVAL_STDOUT_SHA256 = "9df9499d6aa3a9b96961beee122f3408e0c6477f485258e54d609030ac18a7f7"
 
@@ -159,8 +160,8 @@ class TestEB1Coroutines:
     def test_extract_signature(self, server):
         assert _params(server.extract) == [
             ("text", inspect.Parameter.empty),
-            ("field_threshold", 0.70),
-            ("overall_threshold", 0.75),
+            ("field_threshold", None),  # iter 74: omitted means server default
+            ("overall_threshold", None),
             ("heuristics_only", False),
         ]
 
@@ -168,8 +169,8 @@ class TestEB1Coroutines:
         assert _params(server.validate) == [
             ("text", inspect.Parameter.empty),
             ("data", inspect.Parameter.empty),
-            ("field_threshold", 0.70),
-            ("overall_threshold", 0.75),
+            ("field_threshold", None),  # iter 74: omitted means server default
+            ("overall_threshold", None),
             ("heuristics_only", False),
         ]
 
@@ -266,7 +267,7 @@ class TestEB4CallTimeLookup:
         monkeypatch.setattr(tools, "extract_tool",
                             lambda *a, **k: calls.append((a, k)) or {"status": "ok"})
         asyncio.run(server.extract("doc"))
-        assert calls == [(("doc", 0.70, 0.75, False), {})]
+        assert calls == [(("doc", None, None, False), {})]  # iter 74: None defaults
 
 
 # ---------------------------------------------------------------------------

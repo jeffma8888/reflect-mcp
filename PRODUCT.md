@@ -41,7 +41,7 @@ tool surface, small deps, MIT, publication-safe.
 | 21 | trace_id unique per call and present on retry log events | Med | Low | DONE (iter 70) |
 | 22 | MCP tools reach CLI parity: `heuristics_only` arg + `status:"error"` envelope, offline-tested | High | Low | DONE (iter 55) |
 | 23 | One batch driver: build/threshold failure is a JSON envelope + exit 3 at any `--batch-concurrency` | High | Low | DONE (iter 57) |
-| 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` | High | Low | PARTIAL (iter 68: own result envelope unwrapped/rejected; unknown-key rule QUEUED) |
+| 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` (iter-74 A2: `{"totl":999}` → `ok`, all-null; MCP `data` schema names no fields) | High | Low | PARTIAL (iter 68: own result envelope unwrapped/rejected; unknown-key rule QUEUED) |
 | 25 | Batch output joinable: echo caller `id` + 1-based `line`; per-line empty-text pre-check | Med | Low | PARTIAL (iter 67: id echo; 1-based line QUEUED) |
 | 26 | Drop the fixed 0.5s sleep before a parse/schema retry (pure latency; transport retries live in SDKs) | Med | Low | QUEUED |
 | 27 | NEXT: locked per-role client memo on the MCP path (20 calls 40 → 0 TCP conns; closes iter-69 unlocked boto3 build race) | High | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
@@ -53,7 +53,7 @@ tool surface, small deps, MIT, publication-safe.
 | 33 | Amount-role labels attributed per line (first label wins, skip `N%` rates): "Total tax"/"Net total" stop vouching for a wrong total | High | Low | QUEUED |
 | 34 | MCP gate floor: `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD`; a tool arg can only raise the threshold | High | Low | DONE (iter 61) |
 | 35 | MCP `heuristics_only` needs operator opt-in (`REFLECT_ALLOW_HEURISTICS_ONLY`) (its inv-007 motivation closed by #41) | Med | Low | QUEUED |
-| 36 | One CLI parser + one single-run path: delete cli.py's duplicate argparse stack (−71 lines, byte-identical CLI) | Med | Low | QUEUED |
+| 36 | One CLI flag set: delete `__main__`'s copy of `_add_common_args`/`_add_batch_args` (152→104 lines, 0 test edits; iter-74 B1) | Med | Low | QUEUED |
 | 37 | `validate --batch`: verify a `{text, data}` JSONL corpus in one process (≈129 ms/doc → <1 ms/doc heuristics-only) | High | Low | DONE (iter 64) |
 | 38 | Heuristics-only `ok` says no Critic ran (notes) and logs `critic.skipped` (reason), not a fabricated `critique.done` | High | Low | DONE (iter 65) |
 | 39 | Omission detection: a null amount the source labels is flagged (reverses the null-abstention contract; 14-test migration) | High | Med | QUEUED |
@@ -75,6 +75,9 @@ tool surface, small deps, MIT, publication-safe.
 | 55 | Date-role label is colon-scoped: "Ship to: … Invoice date: X" stops false-alarming (iter-72 B3: 4/4 fixed, 6/6 catches kept; REV iter71 digit-split loses 2) | Med | Low | QUEUED |
 | 56 | Currency grounded by unambiguous symbol on a labelled amount ("€"→EUR, "£"→GBP; never "$") (iter-72 A2: removes a measured false alarm) | Med | Low | QUEUED |
 | 57 | MCP tools publish a typed outputSchema (`status` enum required) + `structuredContent`; `status:"error"` sets `isError` (iter-73 B1) | High | Low | DONE (iter 73) |
+| 58 | MCP threshold args default to `null`: inputSchema stops advertising 0.7/0.75; an omitted arg never gets a "raised from" note (iter-74 A1) | High | Low | DONE (iter 74) |
+| 59 | NEXT: one autouse conftest floor reset: suite green with `REFLECT_*_THRESHOLD` exported (HEAD: 5–7 fail; tests only, net −22; iter-74 B3) | Med | Low | QUEUED |
+| 60 | `validate --batch` grades rows carrying `expected` (caught/silent-wrong/false alarms) + `--max-silent-wrong` exit; grader moves to `grading.py` (iter-74 A3) | High | Med | QUEUED |
 
 ## Done ledger
 
@@ -115,3 +118,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 71 — Date-role grounding: invoice_date seen only as a due/ship/delivery date is penalized (0.3)
 - iter 72 — Golden row inv-009 + frozen-subset pins: a new golden row no longer breaks ~79 HEAD-identity tests
 - iter 73 — MCP outputSchema requires a `status` enum; results carry structuredContent; error sets isError
+- iter 74 — MCP threshold args default to null: no fake 0.7/0.75 in inputSchema, no raise note unless asked

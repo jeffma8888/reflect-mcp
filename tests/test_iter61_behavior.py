@@ -55,11 +55,12 @@ OVERALL_ENV = "REFLECT_OVERALL_THRESHOLD"
 HEAD_TABLE_ROWS = (
     "| Tool | Args | Returns |",
     "| --- | --- | --- |",
-    "| `extract` | `text: str`, `field_threshold=0.70`, `overall_threshold=0.75`, "
+    # iter 74: the MCP threshold args now default to null (see the floor paragraph).
+    "| `extract` | `text: str`, `field_threshold=null`, `overall_threshold=null`, "
     "`heuristics_only=False` | `{ status, data, field_confidence, overall_confidence, "
     "flagged_fields, field_provenance, critic_summary, trace_id, notes }` |",
-    "| `validate` | `text: str`, `data: dict`, `field_threshold=0.70`, "
-    "`overall_threshold=0.75`, `heuristics_only=False` | Same `ExtractionResult` "
+    "| `validate` | `text: str`, `data: dict`, `field_threshold=null`, "
+    "`overall_threshold=null`, `heuristics_only=False` | Same `ExtractionResult` "
     "envelope as `extract` |",
 )
 
@@ -277,7 +278,8 @@ class TestEB4Notes:
         monkeypatch.setenv(FIELD_ENV, "0.9")
         monkeypatch.setenv(OVERALL_ENV, "0.85")
         _install(monkeypatch)
-        result = tools.extract_tool(SOURCE)
+        # iter 74: only an explicit argument below the floor is noted; pass 0.7/0.75.
+        result = tools.extract_tool(SOURCE, 0.7, 0.75)
         base = _direct_notes("extract", 0.9, 0.85)
         assert result["notes"] == (
             base + " field_threshold raised from 0.7 to 0.9. "

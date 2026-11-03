@@ -519,7 +519,8 @@ def test_eb10_validate_tool_with_raise_suffix(_clean_env):
 def test_eb10_validate_tool_env_floor_suffix(monkeypatch, _clean_env):
     monkeypatch.setenv(FIELD_ENV, "0.9")
     monkeypatch.setenv(OVERALL_ENV, "0.85")
-    res = tools.validate_tool(SOURCE, dict(CORRECT_EXTRACTION), heuristics_only=True)
+    # iter 74: only an explicit argument below the floor is noted; pass 0.7/0.75.
+    res = tools.validate_tool(SOURCE, dict(CORRECT_EXTRACTION), 0.7, 0.75, heuristics_only=True)
     assert res["status"] == "ok", res
     assert res["notes"] == (
         NOTE_HO + " field_threshold raised from 0.7 to 0.9. "

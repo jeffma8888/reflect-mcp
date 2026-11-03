@@ -177,8 +177,9 @@ class TestEB1ImportWithoutMcp:
         assert list(e) == ["text", "field_threshold", "overall_threshold", "heuristics_only"]
         assert list(v) == ["text", "data", "field_threshold", "overall_threshold", "heuristics_only"]
         for params in (e, v):
-            assert params["field_threshold"].default == 0.70
-            assert params["overall_threshold"].default == 0.75
+            # iter 74: omitted thresholds are None ("server default"), not 0.70/0.75.
+            assert params["field_threshold"].default is None
+            assert params["overall_threshold"].default is None
             assert params["heuristics_only"].default is False
 
 

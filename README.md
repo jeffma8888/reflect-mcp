@@ -155,8 +155,8 @@ Then restart Claude Desktop and ask it to *"extract the invoice fields from this
 
 | Tool | Args | Returns |
 | --- | --- | --- |
-| `extract` | `text: str`, `field_threshold=0.70`, `overall_threshold=0.75`, `heuristics_only=False` | `{ status, data, field_confidence, overall_confidence, flagged_fields, field_provenance, critic_summary, trace_id, notes }` |
-| `validate` | `text: str`, `data: dict`, `field_threshold=0.70`, `overall_threshold=0.75`, `heuristics_only=False` | Same `ExtractionResult` envelope as `extract` |
+| `extract` | `text: str`, `field_threshold=null`, `overall_threshold=null`, `heuristics_only=False` | `{ status, data, field_confidence, overall_confidence, flagged_fields, field_provenance, critic_summary, trace_id, notes }` |
+| `validate` | `text: str`, `data: dict`, `field_threshold=null`, `overall_threshold=null`, `heuristics_only=False` | Same `ExtractionResult` envelope as `extract` |
 
 When `status == "needs_review"`, do **not** use `data` blindly — confirm the fields in `flagged_fields` first.
 
@@ -166,7 +166,7 @@ The tools never raise: failures (empty input, out-of-range thresholds, `data` th
 
 **Parallel calls.** Both tools are `async` and run the pipeline on a worker thread, so parallel tool calls from one client overlap instead of queuing, and the server keeps answering other requests (pings, cancellations, `tools/list`) while an extraction runs. A cancelled call's pipeline still runs to completion on its worker thread (including any model calls); only its result is discarded.
 
-**Operator threshold floor.** Over MCP, the threshold arguments are chosen by the calling agent, so they can only be raised above the operator's floor, never lowered below it. Set the floor in the server's `env` block with `REFLECT_FIELD_THRESHOLD` and `REFLECT_OVERALL_THRESHOLD` (defaults 0.70 / 0.75 when unset). A lower argument is raised to the floor, and `notes` records it (e.g. `field_threshold raised from 0.0 to 0.7.`). An agent may always ask for stricter thresholds; only the operator can lower them, e.g. `"REFLECT_FIELD_THRESHOLD": "0"`. (The agent-controlled `heuristics_only=True` argument still drops the Critic, so it is not covered by this floor.) A malformed value (not a number, including nan/inf, or outside [0, 1]) makes every call return `{ status: "error", error_message }` rather than falling back to a looser gate. The CLI does not read these variables: its `--field-threshold` / `--overall-threshold` flags stay authoritative.
+**Operator threshold floor.** Over MCP, the threshold arguments are chosen by the calling agent, so they can only be raised above the operator's floor, never lowered below it. Set the floor in the server's `env` block with `REFLECT_FIELD_THRESHOLD` and `REFLECT_OVERALL_THRESHOLD` (defaults 0.70 / 0.75 when unset). An omitted (or `null`) threshold means 0.70 / 0.75, or the floor if higher, and adds no note. An explicit argument below the floor is raised to it, and `notes` records it (e.g. `field_threshold raised from 0.0 to 0.7.`). An agent may always ask for stricter thresholds; only the operator can lower them, e.g. `"REFLECT_FIELD_THRESHOLD": "0"`. (The agent-controlled `heuristics_only=True` argument still drops the Critic, so it is not covered by this floor.) A malformed value (not a number, including nan/inf, or outside [0, 1]) makes every call return `{ status: "error", error_message }` rather than falling back to a looser gate. The CLI does not read these variables: its `--field-threshold` / `--overall-threshold` flags stay authoritative.
 
 ## 5. CLI
 

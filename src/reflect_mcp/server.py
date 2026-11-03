@@ -58,8 +58,8 @@ def _structured(result: dict[str, Any]) -> CallToolResult:
 @mcp.tool()
 async def extract(
     text: str,
-    field_threshold: float = 0.70,
-    overall_threshold: float = 0.75,
+    field_threshold: float | None = None,
+    overall_threshold: float | None = None,
     heuristics_only: bool = False,
 ) -> Annotated[CallToolResult, ToolResult]:
     """Extract structured invoice/receipt data from messy text, verified by a
@@ -86,8 +86,9 @@ async def extract(
 
     field_threshold / overall_threshold can only be raised above the
     operator's floor (env REFLECT_FIELD_THRESHOLD / REFLECT_OVERALL_THRESHOLD,
-    defaults 0.70 / 0.75); a lower value is raised to the floor and `notes`
-    says so.
+    defaults 0.70 / 0.75). Omit them (or pass null) for 0.70 / 0.75, or the
+    operator floor if higher. An explicit value below the floor is raised to
+    it and `notes` says so; an omitted one never adds a note.
     """
     return _structured(
         await asyncio.to_thread(
@@ -100,8 +101,8 @@ async def extract(
 async def validate(
     text: str,
     data: dict[str, Any],
-    field_threshold: float = 0.70,
-    overall_threshold: float = 0.75,
+    field_threshold: float | None = None,
+    overall_threshold: float | None = None,
     heuristics_only: bool = False,
 ) -> Annotated[CallToolResult, ToolResult]:
     """Verify pre-extracted data against source text without running the Generator.
@@ -116,8 +117,10 @@ async def validate(
         object is what gets verified
       - field_threshold / overall_threshold: confidence gate controls; they can
         only be raised above the operator's floor (env REFLECT_FIELD_THRESHOLD /
-        REFLECT_OVERALL_THRESHOLD, defaults 0.70 / 0.75), and a lower value is
-        raised to the floor with a note in `notes`
+        REFLECT_OVERALL_THRESHOLD, defaults 0.70 / 0.75). Omit them (or pass
+        null) for 0.70 / 0.75, or the operator floor if higher. An explicit
+        value below the floor is raised to it with a note in `notes`; an
+        omitted one never adds a note
       - heuristics_only: skip the Critic LLM call; heuristics + gate only
 
     Returns the same ExtractionResult envelope as `extract`, or

@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-74
+    lenses: integration-and-adoption
+    - Candidate A1 -- MCP threshold args default to the operator floor: the published inputSchema stops advertising a `0.7`/`0.75` default the server never applies, and a call that omits them stops getting "field_threshold raised from 0.7" notes
+    - Candidate A2 -- An agent can learn what `validate` checks: the MCP `data` argument publishes the invoice field names, and a `data` whose keys are all unknown is no longer a silent `ok` that verified nothing
+    - Candidate A3 -- Your own labelled corpus gets the trust readout: `validate --batch` rows that carry `expected` are graded (caught / silent-wrong / false alarms), with a `--max-silent-wrong N` exit for CI
+    - Candidate B1 -- One CLI flag set: `__main__` stops carrying its own copy of `cli`'s argparse helpers (152 → 104 lines, zero test edits)
+    - Candidate B2 -- One parse-and-retry loop: Generator and Critic share `parsing.complete_parsed` (src −19 lines, two `_RETRY_DELAY_SECONDS` → one)
+    - Candidate B3 -- One operator-floor reset for the whole suite: a single autouse `conftest` fixture replaces 6 per-file env-clearing copies, and the suite stops failing under an exported `REFLECT_*_THRESHOLD`
+    winner: A1
+    ship: pending (not yet decided)
   iter-73
     lenses: hardening/DX, integration-and-adoption
     - Candidate A1 -- Token-boundary grounding: a truncated `invoice_number` ("INV-100" inside "INV-1001", "2045" inside "20451") or a partial `currency` ("US" inside "USD") stops being a silent `ok` (roadmap #54)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- The CLI composes in pipelines: `--file -` means stdin, and `--data @PATH` reads the data JSON from a file, so "verify my extractor's output" is a two-file Makefile rule rather than shell quoting
     - Candidate B3 -- `--batch` rows echo the 1-based input `line`, so error rows and id-less rows still join back to their input (roadmap #25 remainder)
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED c466b8c
   iter-72
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Identifier-role grounding: an `invoice_number` the source shows only on a PO / order / customer / account line is penalized (roadmap #53)
@@ -380,4 +390,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-38 scouted iterations
+39 scouted iterations

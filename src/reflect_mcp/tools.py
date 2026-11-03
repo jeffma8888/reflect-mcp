@@ -14,6 +14,8 @@ Over MCP the threshold arguments are filled in by the *calling agent*, not the
 human, so they can only tighten the thresholds: the operator pins a floor with
 `REFLECT_FIELD_THRESHOLD` / `REFLECT_OVERALL_THRESHOLD` (defaults 0.70 / 0.75)
 and any lower argument is raised to it, with the raise recorded in `notes`.
+An omitted (`None`) threshold means "the package default, or the floor if
+higher", and writes no note: the agent asked for nothing, so nothing was raised.
 """
 
 from __future__ import annotations
@@ -103,18 +105,29 @@ def _raise_note(name: str, requested: float, floor: float) -> str:
 
 
 def _gate_config(
-    field_threshold: float, overall_threshold: float
+    field_threshold: float | None, overall_threshold: float | None
 ) -> tuple[GateConfig, str] | dict[str, Any]:
     """Validate the caller's thresholds, then raise them to the operator floor.
 
     Validation runs first so an out-of-range or NaN argument stays an error
     instead of being silently "fixed" by the clamp (`max(nan, x)` is also
-    order-dependent). Returns the effective config plus the notes suffix
-    (empty when nothing was raised), or the error envelope; never builds a
-    pipeline, so a bad value costs no LLM call.
+    order-dependent). An omitted threshold takes the package default before
+    the clamp, so its effective value is `max(default, floor)` -- never below
+    the default even under a lower floor -- and it gets no raise note, which
+    would otherwise blame the agent for a value it never sent. Returns the
+    effective config plus the notes suffix (empty when nothing was raised), or
+    the error envelope; never builds a pipeline, so a bad value costs no LLM call.
     """
+    explicit = {
+        name: value
+        for name, value in (
+            ("field_threshold", field_threshold),
+            ("overall_threshold", overall_threshold),
+        )
+        if value is not None
+    }
     try:
-        requested = GateConfig(field_threshold=field_threshold, overall_threshold=overall_threshold)
+        requested = GateConfig(**explicit)
         field_floor = _env_floor(FIELD_FLOOR_ENV, _PACKAGE_DEFAULTS.field_threshold)
         overall_floor = _env_floor(OVERALL_FLOOR_ENV, _PACKAGE_DEFAULTS.overall_threshold)
     except (ValidationError, ValueError) as exc:
@@ -125,7 +138,7 @@ def _gate_config(
             ("field_threshold", requested.field_threshold, field_floor),
             ("overall_threshold", requested.overall_threshold, overall_floor),
         )
-        if req < floor
+        if name in explicit and req < floor
     ]
     effective = GateConfig(
         field_threshold=max(requested.field_threshold, field_floor),
@@ -159,8 +172,8 @@ def _build_pipeline(
 
 def extract_tool(
     text: str,
-    field_threshold: float = 0.70,
-    overall_threshold: float = 0.75,
+    field_threshold: float | None = None,
+    overall_threshold: float | None = None,
     heuristics_only: bool = False,
 ) -> dict[str, Any]:
     """Run the full Generator -> Critic -> gate pipeline; return a result or error dict."""
@@ -180,8 +193,8 @@ def extract_tool(
 def validate_tool(
     text: str,
     data: dict[str, Any],
-    field_threshold: float = 0.70,
-    overall_threshold: float = 0.75,
+    field_threshold: float | None = None,
+    overall_threshold: float | None = None,
     heuristics_only: bool = False,
 ) -> dict[str, Any]:
     """Verify pre-extracted *data* against *text* (no Generator); return a result or error dict."""
