@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-71
+    lenses: new-capability
+    - A1 -- A heuristics-only result reports `overall_confidence: 1.0`, which the tool docs call "the critic's overall confidence", and its `needs_review` notes never say that no Critic ran
+    - A2 -- README §7 Architecture and Repository layout describe the post-iter-69 module tree, plus a two-way layout↔`src/` drift test
+    - A3 -- PRODUCT.md reports two different speedups for the same iter-69 ship, and nothing checks that roadmap DONE rows and ledger lines agree
+    - Candidate B1 -- Date-role grounding: an `invoice_date` the source shows only on a "Due"/"Ship date" line is penalized (roadmap #42)
+    - Candidate B2 -- Currency grounding from the money symbol: "€1487.50" grounds `EUR`, "£" grounds `GBP`, and a code contradicted by the symbols on the labelled amounts is penalized
+    - Candidate B3 -- Identifier-role grounding: an `invoice_number` seen only on a "PO"/"Order no"/"Customer ID"/"Account" line is penalized
+    winner: B1
+    ship: pending (not yet decided)
   iter-70
     lenses: unknown
     - Candidate A1 -- MCP tools reuse provider clients across calls: 20 `extract` calls open 0 new connections instead of 40, and the client build stops racing between the threads iter 69 made concurrent
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- README §7 Architecture and Repository layout describe the post-iter-69 module tree: `tools.py` listed, "the `extract` tool (`server.py`)" and "Three roles" corrected, plus a two-way layout↔`src/` drift test
     - Candidate B3 -- PRODUCT.md's roadmap and ledger stop contradicting the repo: iter 18's `validate` verb gets its missing ledger + roadmap row, stale figures are corrected, and a check fails when a shipped iteration's behavior test has no ledger row
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 1a09a74
   iter-69
     lenses: simplification-and-deletion, performance-and-throughput
     - Candidate A1 -- One single-document CLI tail: `run_extract_from_args` and `run_validate_from_args` become one-line wrappers over a shared `_run_verb(args, validate)`, taking cli.py from 360 to 337 lines with byte-identical console behavior
@@ -350,4 +360,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-35 scouted iterations
+36 scouted iterations

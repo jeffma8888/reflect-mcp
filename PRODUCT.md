@@ -59,7 +59,7 @@ tool surface, small deps, MIT, publication-safe.
 | 39 | Omission detection: a null amount the source labels is flagged (reverses the null-abstention contract; 14-test migration) | High | Med | QUEUED |
 | 40 | `needs_review` flagged fields carry deterministic `suggestions` (source-labelled value + span) | Med | Low | QUEUED |
 | 41 | Party-role grounding: a `vendor_name` found only on "Bill to"/"Ship to"/"Sold to"/"Deliver to" lines is penalized (0.3) | High | Low | DONE (iter 66) |
-| 42 | Date-role grounding: an `invoice_date` the source shows only on a "Due"/"Ship date" line is penalized | Med | Low | QUEUED |
+| 42 | Date-role grounding: an `invoice_date` the source shows only on a "Due"/"Ship date" line is penalized | Med | Low | DONE (iter 71) |
 | 43 | `make eval` adds a heuristics-only (Critic-off) trust readout line: catch / silent-wrong / false alarms | Med | Low | QUEUED |
 | 44 | Party-role check runs on normalized grounding too: NBSP/tab/double-space/CR "Bill to" buyer is no silent `ok` (4/6 bypass; ~8 lines, eval byte-identical; needs golden row) | High | Low | QUEUED |
 | 45 | `--batch \| head -1` exits 0 with no BrokenPipeError traceback (today exit 120; fix in `__main__.py`, cli.py at budget) | Med | Low | QUEUED |
@@ -69,6 +69,8 @@ tool surface, small deps, MIT, publication-safe.
 | 49 | MCP tools run on a worker thread (`async` + `asyncio.to_thread`): parallel agent calls overlap (4 calls 1.67s → 0.42s) | High | Low | DONE (iter 69) |
 | 50 | Pin `mcp>=1.x,<2` and raise the floor to a version that imports on Python 3.13 (mcp 2.x / 1.10.1 break server.py) | Med | Low | QUEUED |
 | 51 | `validate` verb: verify-only mode on caller-supplied data (record backfilled iter 70) | High | Low | DONE (iter 18) |
+| 52 | NEXT: golden row inv-009 (due date as invoice date; HEAD+row silent-wrong 1) + pin paydown: HEAD-identity pins filter to inv-001..008 (78 pins fail today) | High | Low | QUEUED |
+| 53 | Identifier-role grounding: an `invoice_number` seen only on a PO/order-no/customer-id line is penalized (iter-71 scout B3) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -106,3 +108,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 68 — validate verifies a stored result envelope's `data` (error envelope rejected), not an all-null `ok`
 - iter 69 — MCP tools are async on a worker thread: 4 parallel calls overlap (0.84s → 0.21s stub)
 - iter 70 — trace_id unique per call (50 parallel MCP calls: 8 → 50 ids); retry events carry it
+- iter 71 — Date-role grounding: invoice_date seen only as a due/ship/delivery date is penalized (0.3)

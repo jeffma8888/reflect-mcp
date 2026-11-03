@@ -14,6 +14,9 @@ combines both. Concretely we check:
                  so a swapped amount or a stray number can't pass on presence alone.
   - party-role grounding: a grounded vendor_name must not appear *only* on
                  counterparty lines ("Bill to", "Ship to", ...), which name the buyer.
+  - date-role grounding: a grounded invoice_date must not appear *only* as a
+                 due/payment/ship/delivery date ("Due date: ..."), which an invoice
+                 states but which is not the invoice's own date.
 
 Each check contributes a per-field factor in [0,1]; the gate multiplies the
 Critic confidence by this factor, so a structurally impossible value can never
@@ -54,6 +57,7 @@ _MONTH_FIRST_RE = re.compile(
 _DAY_FIRST_RE = re.compile(
     rf"(?<!\d)(\d{{1,2}})\s+({_MONTH_RE})\s+(\d{{4}})(?!\d)", re.IGNORECASE
 )
+_DATE_PATTERNS = (_ISO_DATE_RE, _NUMERIC_DATE_RE, _MONTH_FIRST_RE, _DAY_FIRST_RE)
 
 # Amount-role labels. The letter lookarounds stop a label matching inside a word
 # ("Internet" is not "net"); the `sub` lookbehinds keep "Sub-total" from also
@@ -80,6 +84,15 @@ _LABELLED_AMOUNT_RES = {
 # Only explicit "<verb> to" forms; bare "customer"/"client" lines can name the vendor.
 _COUNTERPARTY_LINE_RE = re.compile(
     r"^\s*(?:bill(?:ed)?|ship(?:ped)?|sold|deliver(?:ed)?)\s*-?\s*to\b", re.IGNORECASE
+)
+
+
+# Date-role labels: label text before a date token that marks it as a due,
+# payment, ship or delivery date -- a date the invoice states, but not its date.
+# Whole words only, so "Shipment ref 2026-07-31" stays unlabelled.
+_OTHER_DATE_LABEL_RE = re.compile(
+    r"(?<![a-z])(?:due|pay(?:ment)?\s+by|ship(?:ped|ping)?|deliver(?:y|ed))(?![a-z])",
+    re.IGNORECASE,
 )
 
 
@@ -192,7 +205,7 @@ def _find_date_span(iso_value: date, text: str) -> ProvenanceSpan | None:
     target = (iso_value.year, iso_value.month, iso_value.day)
     matches = [
         m
-        for pattern in (_ISO_DATE_RE, _NUMERIC_DATE_RE, _MONTH_FIRST_RE, _DAY_FIRST_RE)
+        for pattern in _DATE_PATTERNS
         for m in pattern.finditer(text)
         if target in _date_readings(m)
     ]
@@ -200,6 +213,45 @@ def _find_date_span(iso_value: date, text: str) -> ProvenanceSpan | None:
         return None
     first = min(matches, key=lambda m: m.start())
     return ProvenanceSpan(start=first.start(), end=first.end())
+
+
+def _date_role_labels(target: tuple[int, int, int], text: str) -> list[bool]:
+    """For each token writing *target*, whether its label is a due/ship/delivery role.
+
+    A token's label is the text between the previous date token on its line (or
+    the line start) and the token itself, so in "Invoice date: X   Due date: Y"
+    the "Due" label belongs to Y alone and X stays neutral.
+    """
+    labelled: list[bool] = []
+    for line in text.split("\n"):
+        tokens = sorted(
+            (m for pattern in _DATE_PATTERNS for m in pattern.finditer(line)),
+            key=lambda m: m.start(),
+        )
+        label_start = 0
+        for token in tokens:
+            if target in _date_readings(token):
+                label = line[label_start : token.start()]
+                labelled.append(_OTHER_DATE_LABEL_RE.search(label) is not None)
+            label_start = token.end()
+    return labelled
+
+
+def _check_date_role(iso_value: date, value: str, text: str, report: HeuristicReport) -> None:
+    """Penalize an invoice_date that the source writes only as a due/ship/delivery date.
+
+    Models confuse an invoice's dates more than any other field, and a copied due
+    date passes plain date grounding because it *is* in the source. The check
+    abstains when any token writing the value is not role-labelled: the same day
+    can be both the invoice date and the ship date, and no label means no evidence.
+    """
+    labelled = _date_role_labels((iso_value.year, iso_value.month, iso_value.day), text)
+    if labelled and all(labelled):
+        report.penalize(
+            "invoice_date",
+            0.3,
+            f"date {value!r} appears only as a due/ship/delivery date, not the invoice date",
+        )
 
 
 def _check_date(value: str, text: str, report: HeuristicReport) -> None:
@@ -218,6 +270,7 @@ def _check_date(value: str, text: str, report: HeuristicReport) -> None:
     span = _find_date_span(parsed, text)
     if span is not None:
         report.provenance["invoice_date"] = [span]
+        _check_date_role(parsed, value, text, report)
     else:
         report.penalize("invoice_date", 0.3, f"date {value!r} not found in source text")
 
