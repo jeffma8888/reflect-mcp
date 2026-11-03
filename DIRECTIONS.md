@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-75
+    lenses: simplification-and-deletion, performance-and-throughput
+    - Candidate A1 -- One single-document CLI path: `run_extract_from_args` and `run_validate_from_args` become one-line wrappers over `_run_verb(args, validate)`, taking cli.py from 360 to 342 lines with byte-identical console behavior
+    - Candidate A2 -- One CLI flag set: `__main__` stops carrying its own byte-identical copy of `cli`'s `_add_common_args`/`_add_batch_args` (152 → 104 lines, 0 test edits; roadmap #36)
+    - Candidate A3 -- One "the Critic didn't speak" branch: `_verify`'s two copies of neutral critique + `critic_ran=False` + `critic.skipped` collapse into one `skip` reason (pipeline.py 163 → 159, 0 test edits)
+    - Candidate B1 -- `--batch --batch-concurrency N` streams again: the first result row comes out after ~0.2 s instead of after stdin EOF, and memory stays flat instead of holding the whole input
+    - Candidate B2 -- MCP tool path builds each provider client once per process (locked per-role memo; roadmap #27, marked NEXT): 20 `extract` calls open 2 connections instead of 40, and parallel calls stop racing the SDK client build
+    - Candidate B3 -- The Critic writes `rationale` only for fields it doubts: about 28% of every Critic reply's bytes are paid output tokens the product never shows
+    winner: B1
+    ship: pending (not yet decided)
   iter-74
     lenses: integration-and-adoption
     - Candidate A1 -- MCP threshold args default to the operator floor: the published inputSchema stops advertising a `0.7`/`0.75` default the server never applies, and a call that omits them stops getting "field_threshold raised from 0.7" notes
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- One parse-and-retry loop: Generator and Critic share `parsing.complete_parsed` (src −19 lines, two `_RETRY_DELAY_SECONDS` → one)
     - Candidate B3 -- One operator-floor reset for the whole suite: a single autouse `conftest` fixture replaces 6 per-file env-clearing copies, and the suite stops failing under an exported `REFLECT_*_THRESHOLD`
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED ac7df7e
   iter-73
     lenses: hardening/DX, integration-and-adoption
     - Candidate A1 -- Token-boundary grounding: a truncated `invoice_number` ("INV-100" inside "INV-1001", "2045" inside "20451") or a partial `currency` ("US" inside "USD") stops being a silent `ok` (roadmap #54)
@@ -390,4 +400,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-39 scouted iterations
+40 scouted iterations

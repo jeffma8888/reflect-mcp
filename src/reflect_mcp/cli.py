@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import sys
 import threading
 import typing
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 
 
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
@@ -207,6 +208,18 @@ def _line_processor(
     return _process
 
 
+def _windowed(pool: ThreadPoolExecutor, process: typing.Callable[[str], tuple[str, int]],
+              lines: typing.Iterable[str], size: int) -> typing.Iterator[tuple[str, int]]:
+    """Yield results in input order, <= *size* in flight (``executor.map`` reads all input first)."""
+    window: collections.deque[Future[tuple[str, int]]] = collections.deque()
+    for raw in lines:
+        window.append(pool.submit(process, raw))
+        while window and (window[0].done() or len(window) >= size):
+            yield window.popleft().result()
+    while window:
+        yield window.popleft().result()
+
+
 def _run_batch(
     stream: "typing.TextIO",
     process: typing.Callable[[str], tuple[str, int]],
@@ -215,16 +228,16 @@ def _run_batch(
     """The one batch driver: print one result per non-blank line in input order.
 
     Serial uses builtin ``map`` so the stream is consumed lazily (line N is
-    printed before line N+1 is read); concurrent uses ``executor.map``, which
-    preserves order. Exit codes rank ok 0 < needs_review 1 < error 3, so the
-    worst is simply the max.
+    printed before line N+1 is read); concurrent keeps at most ``2 * concurrency``
+    lines pending, so output streams in input order with bounded memory. Exit
+    codes rank ok 0 < needs_review 1 < error 3, so the worst is simply the max.
     """
     lines = (raw for raw in stream if raw.rstrip("\n\r"))
     pool = ThreadPoolExecutor(max_workers=concurrency) if concurrency > 1 else None
-    mapper = pool.map if pool is not None else map
     worst = 0
     try:
-        for output_json, code in mapper(process, lines):
+        results = _windowed(pool, process, lines, 2 * concurrency) if pool else map(process, lines)
+        for output_json, code in results:
             print(output_json)
             worst = max(worst, code)
     finally:
