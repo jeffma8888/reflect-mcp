@@ -41,7 +41,7 @@ tool surface, small deps, MIT, publication-safe.
 | 21 | trace_id unique per call and present on retry log events | Med | Low | DONE (iter 70) |
 | 22 | MCP tools reach CLI parity: `heuristics_only` arg + `status:"error"` envelope, offline-tested | High | Low | DONE (iter 55) |
 | 23 | One batch driver: build/threshold failure is a JSON envelope + exit 3 at any `--batch-concurrency` | High | Low | DONE (iter 57) |
-| 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` (iter-74 A2: `{"totl":999}` → `ok`, all-null; MCP `data` schema names no fields) | High | Low | PARTIAL (iter 68: own result envelope unwrapped/rejected; unknown-key rule QUEUED) |
+| 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` (iter-74 A2: `{"totl":999}` → `ok`, all-null; MCP `data` schema names no fields) | High | Low | DONE (iter 68: own envelope unwrapped; iter 79: unknown keys rejected, naming them; `{}` still QUEUED) |
 | 25 | Batch output joinable: echo caller `id` + 1-based `line`; per-line empty-text pre-check | Med | Low | PARTIAL (iter 67: id echo; 1-based line QUEUED) |
 | 26 | Drop the fixed 0.5s sleep before a parse/schema retry (pure latency; transport retries live in SDKs) | Med | Low | QUEUED |
 | 27 | NEXT: locked per-role client memo on the MCP path (20 calls 40 → 0 TCP conns; closes iter-69 unlocked boto3 build race) | High | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
@@ -128,3 +128,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 76 — `ok` notes name heuristic-penalized fields that still cleared; all-null `ok` says nothing verified
 - iter 77 — Identifier-role grounding: invoice_number seen only on a PO/order/customer line is penalized; golden inv-010
 - iter 78 — `| head -1` keeps the exit contract: worst produced row's code, no traceback, input stops (was 120)
+- iter 79 — validate rejects unknown data keys (typo'd vendr_name was a silent ok); envelope keys exempt

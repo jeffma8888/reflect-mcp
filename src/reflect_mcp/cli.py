@@ -167,7 +167,7 @@ def _process_one_line(
         if validate:
             from reflect_mcp.schema import InvoiceData  # noqa: PLC0415
 
-            result = pipeline.validate(record["text"], InvoiceData.model_validate(record["data"]))
+            result = pipeline.validate(record["text"], InvoiceData.model_validate(record["data"], context={"caller": True}))
         else:
             result = pipeline.extract(record["text"])
     except Exception as exc:  # noqa: BLE001
@@ -355,7 +355,7 @@ def run_validate_from_args(args: argparse.Namespace) -> int:
     from reflect_mcp.schema import InvoiceData  # noqa: PLC0415
 
     try:
-        data = InvoiceData.model_validate(data_dict)
+        data = InvoiceData.model_validate(data_dict, context={"caller": True})
     except ValidationError as exc:
         print(f"Error: --data failed InvoiceData validation: {exc}", file=sys.stderr)
         return 2

@@ -70,11 +70,12 @@ HEAD_RESULT_FIELDS = [
 # with trace_id popped.
 HEAD_NON_ENVELOPE_DIGESTS = {
     "bad": "eb22fab6b3b9b06d1393e2c2760112e3f4f853586526e1d698f330bae479215f",
-    "paid": "9bbd5b946615839afe3db3a47e536e1d656010ce769c7ca4d7fafe6236e6f468",  # iter 76: all-null notes now say nothing was verified
-    "mixed": "f5d20f0b21a855d783931723ce04b5be562cd6055884692487ad8cce9af182d0",
     "empty": "9bbd5b946615839afe3db3a47e536e1d656010ce769c7ca4d7fafe6236e6f468",  # iter 76: all-null notes now say nothing was verified
     "good": "0e4b12cbb757cd30906af85f91cc41a17d9c3f7ff05bd16575b5a356addb80b4",
 }
+# iter 79: "paid" and "mixed" carry keys that are not InvoiceData fields, so they
+# are now schema errors (asserted by name below) instead of digest-pinned results.
+UNKNOWN_KEYS_REJECTED = {"paid": "status", "mixed": "data, status"}
 # sha256 over {row_id:critic_on -> digest(extract result minus trace_id)} for
 # the 8 golden rows x {critic off, critic on}, scripted from replay fixtures.
 HEAD_EXTRACT_MATRIX_SHA256 = "b3a87b0e94df00bcdfcc4c4369b9c9d127014640b8ac3b0cf64f3d9a56929776"
@@ -319,16 +320,21 @@ NON_ENVELOPES = {
 
 @pytest.mark.parametrize("name", list(NON_ENVELOPES))
 def test_eb8_non_envelope_byte_identical_to_head(name):
+    if name in UNKNOWN_KEYS_REJECTED:  # iter 79: stray top-level keys are a schema error, not ok
+        out = _v(NON_ENVELOPES[name])
+        assert out["status"] == "error", out
+        assert f"unknown field(s): {UNKNOWN_KEYS_REJECTED[name]} (known:" in out["error_message"]
+        return
     assert _digest(_v(NON_ENVELOPES[name])) == HEAD_NON_ENVELOPE_DIGESTS[name]
 
 
 def test_eb8_non_envelope_verdicts():
     assert (_v(dict(BAD))["status"], _flags(_v(dict(BAD)))) == ("needs_review", ["vendor_name", "total"])
     paid = _v({"status": "paid"})
-    assert paid["status"] == "ok" and all(v is None for v in paid["data"].values())
+    assert paid["status"] == "error" and "unknown field(s): status " in paid["error_message"]  # iter 79
     mixed = _v({"status": "ok", "vendor_name": "WRONG CO", "data": GOOD})
-    assert mixed["status"] == "needs_review" and _flags(mixed) == ["vendor_name"]
-    assert mixed["data"]["vendor_name"] == "WRONG CO" and mixed["data"]["total"] is None
+    assert mixed["status"] == "error"  # iter 79: was needs_review on vendor_name, data dropped
+    assert "unknown field(s): data, status " in mixed["error_message"]  # iter 79
     empty = _v({})
     assert empty["status"] == "ok" and all(v is None for v in empty["data"].values())
 

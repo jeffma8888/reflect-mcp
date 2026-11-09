@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, model_validator
 
 # Statuses an `ExtractionResult` / error row can carry; a dict tagged with one
 # of these and no InvoiceData field is reflect-mcp's own output fed back in.
@@ -33,6 +33,25 @@ class InvoiceData(BaseModel):
     currency: Optional[str] = Field(default=None, description="ISO 4217 currency code, e.g. USD.")
 
     model_config = {"extra": "ignore"}
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def _reject_unknown_caller_keys(cls, value: Any, handler: Any, info: ValidationInfo) -> Any:
+        """Fail caller data whose keys are not all fields, naming the strays.
+
+        `extra="ignore"` must stay for Generator replies (a chatty model's extra
+        key is harmless), but on caller data a typo such as `vendr_name` would
+        drop that field from verification and still return `ok`. The rule is
+        opt-in via ``context={"caller": True}`` and runs on the post-unwrap
+        dict, so a stored result envelope is judged by its inner `data` only.
+        """
+        if isinstance(value, dict) and info.context and info.context.get("caller"):
+            # str() so a library caller's non-str key still yields an envelope.
+            unknown = sorted(map(str, set(cls._unwrap_result_envelope(value)) - set(cls.model_fields)))
+            if unknown:
+                known = ", ".join(cls.model_fields)
+                raise ValueError(f"unknown field(s): {', '.join(unknown)} (known: {known})")
+        return handler(value)
 
     @model_validator(mode="before")
     @classmethod

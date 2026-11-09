@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-79
+    lenses: integration-and-adoption
+    - Candidate A1 -- Unreadable input (non-UTF-8 byte, directory, no permission) exits 2 with one `Error:` line instead of a traceback whose exit 1 means `needs_review`
+    - Candidate A2 -- `validate` stops silently dropping a misspelt field: `{"total":10.0,"vendr_name":"Acme"}` is rejected naming `vendr_name`, not a verified `ok` (roadmap #24 remainder)
+    - Candidate A3 -- The suite stays green under an operator's exported `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD` (roadmap #59, marked NEXT)
+    - Candidate B1 -- The documented MCP launch is proven by a real MCP client: `mcp` joins the dev group, and one stdio test runs the bare `reflect-mcp` command through initialize → tools/list → tools/call
+    - Candidate B2 -- `--batch` rows reach a piped consumer as each one finishes: per-row flush, so `… | jq` or a `while read` loop sees row 1 after 0.11 s, not at stdin EOF (roadmap #63)
+    - Candidate B3 -- A CI gate can tell "one bad line" from "everything failed": `--batch --summary PATH` writes `{lines, ok, needs_review, error, flagged_fields, exit}` (roadmap #47)
+    winner: A2
+    ship: pending (not yet decided)
   iter-78
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Token-boundary grounding: a truncated `invoice_number` ("FS-2045" inside "FS-20451") or a partial `currency` ("US" inside "USD") stops being a silent `ok` (roadmap #54, golden row inv-011)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- The suite stays green with `REFLECT_FIELD_THRESHOLD` / `REFLECT_OVERALL_THRESHOLD` exported: one autouse conftest fixture resets the operator floor (roadmap #59, marked NEXT)
     - Candidate B3 -- `validate --batch | head -1` exits within the documented 0/1/2/3 contract: no BrokenPipeError traceback, no exit 120, at any `--batch-concurrency` (roadmap #45)
     winner: B3
-    ship: pending (not yet decided)
+    ship: PUSHED 7be732b
   iter-77
     lenses: narrative-and-docs
     - Candidate A1 -- An `ok` on partial data stops saying "every field passed" / "All fields cleared" when only some fields were committed; the note counts what was checked
@@ -430,4 +440,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-43 scouted iterations
+44 scouted iterations

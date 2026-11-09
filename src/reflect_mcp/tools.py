@@ -205,7 +205,7 @@ def validate_tool(
         return resolved
     gate_config, raise_note = resolved
     try:
-        invoice = InvoiceData.model_validate(data)
+        invoice = InvoiceData.model_validate(data, context={"caller": True})
     except ValidationError as exc:
         return _error(f"data failed InvoiceData validation: {exc}")
     try:

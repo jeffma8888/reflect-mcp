@@ -74,7 +74,9 @@ CASES = {
 }
 
 # Captured from the HEAD tree (see module docstring).
-HEAD_MINUS_NOTES_SHA256 = "a1b7f22168615838b2cb57ecae19bfd1d859376f2a803933fbbeb6745af11ca8"
+# iter 79: re-pinned over the matrix minus ho/totl/* (was a1b7f221... over all rows);
+# the subset digest is identical on the iter-78 HEAD tree and the iter-79 tree.
+HEAD_MINUS_NOTES_SHA256 = "b82058ac872b2f6efd211fd4e74af3c7ea18daaf95c65f11bf175a2b53fa822c"
 HEAD_NR_NOTES_SHA256 = "bd9e9b5b0b4df28e07239d8e018a09a330f6a3cef3afff9c04854def11330184"
 HEAD_DEFAULT_NOTES = {
     "inv-001": OK_NOTE, "inv-002": OK_NOTE, "inv-003": OK_NOTE, "inv-005": OK_NOTE,
@@ -287,6 +289,9 @@ def test_eb4_decide_no_critic_penalized():
 @pytest.mark.parametrize("thr", [0.0, 0.30, 0.70])
 def test_eb5_heuristics_only_nothing_committed(name, thr):
     r = _ho(CASES[name], thr)
+    if name == "totl":  # iter 79: an unknown caller key is a schema error, not an all-null ok
+        assert _status(r) == "error" and "unknown field(s): totl" in r["error_message"]
+        return
     assert _status(r) == "ok"
     assert r["notes"] == NV_HO
     assert "cleared" not in r["notes"] and "passed" not in r["notes"]
@@ -333,7 +338,9 @@ def test_eb6_two_fields_literal():
 
 # ---------------------------------------------------------------- EB7
 def test_eb7_everything_but_notes_identical_to_head(matrix):
-    assert _sha(_minus_notes(matrix)) == HEAD_MINUS_NOTES_SHA256
+    # iter 79: the ho/totl rows are now schema errors (asserted in EB5); pin the rest.
+    rest = {k: v for k, v in matrix.items() if not k.startswith("ho/totl/")}
+    assert _sha(_minus_notes(rest)) == HEAD_MINUS_NOTES_SHA256
 
 
 def test_eb7_needs_review_notes_identical_to_head(matrix):
