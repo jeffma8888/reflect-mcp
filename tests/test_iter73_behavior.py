@@ -386,8 +386,11 @@ class TestOnlyServerImportsMcp:
             try:
                 importlib.import_module(full)
             finally:
+                # Re-import also rebinds the package attribute; restore both so
+                # later mock.patch("reflect_mcp.<n>.X") hits the live module.
                 if saved is not None:
                     sys.modules[full] = saved
+                    setattr(reflect_mcp, n, saved)
 
 
 # ---------------------------------------------------------------------------

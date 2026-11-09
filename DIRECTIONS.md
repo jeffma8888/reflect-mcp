@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-80
+    lenses: integration-and-adoption, simplification-and-deletion
+    - Candidate A1 -- CI runs the gates the product already ships: a `.github/workflows/ci.yml` on Python 3.10 and 3.13 runs `uv run pytest` and `make eval`, and the suite goes green on the advertised 3.10 floor (today 47 red)
+    - Candidate A2 -- MCP `validate`'s published `data` schema names the InvoiceData fields and stops advertising `additionalProperties: true`, which iter 79's rejection now makes false
+    - Candidate A3 -- Hosts learn the tools' nature and the `needs_review` contract before the first call: MCP tool `annotations` (title, `readOnlyHint`, `openWorldHint`) and a server `instructions` string
+    - Candidate B1 -- One CLI flag set: `reflect-mcp extract|validate` and the `cli.run_*` entry points the tests drive build their flags from one function, and `__main__`'s duplicate goes (roadmap #36)
+    - Candidate B2 -- One parse-and-retry loop: Generator and Critic share `parsing.complete_parsed`, so there is one retry loop and one `RETRY_DELAY_SECONDS`, not two copies
+    - Candidate B3 -- One "Critic didn't speak" branch: `_verify` picks a `skip` reason once, instead of two copies of the neutral critique, `critic_ran=False` and `critic.skipped`
+    winner: A1
+    ship: pending (not yet decided)
   iter-79
     lenses: integration-and-adoption
     - Candidate A1 -- Unreadable input (non-UTF-8 byte, directory, no permission) exits 2 with one `Error:` line instead of a traceback whose exit 1 means `needs_review`
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `--batch` rows reach a piped consumer as each one finishes: per-row flush, so `… | jq` or a `while read` loop sees row 1 after 0.11 s, not at stdin EOF (roadmap #63)
     - Candidate B3 -- A CI gate can tell "one bad line" from "everything failed": `--batch --summary PATH` writes `{lines, ok, needs_review, error, flagged_fields, exit}` (roadmap #47)
     winner: A2
-    ship: pending (not yet decided)
+    ship: PUSHED 83ce30c
   iter-78
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Token-boundary grounding: a truncated `invoice_number` ("FS-2045" inside "FS-20451") or a partial `currency` ("US" inside "USD") stops being a silent `ok` (roadmap #54, golden row inv-011)
@@ -440,4 +450,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-44 scouted iterations
+45 scouted iterations

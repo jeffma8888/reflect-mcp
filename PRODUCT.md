@@ -83,6 +83,7 @@ tool surface, small deps, MIT, publication-safe.
 | 63 | `--batch` flushes each row so a piped consumer sees it immediately (stdout is block-buffered on pipes) | Med | Low | QUEUED |
 | 64 | Critic emits `rationale` only for doubted fields (30% of critic_raw bytes are discarded on `ok`; iter-75 B3; needs live evidence) | Low | Med | QUEUED |
 | 65 | `ok` notes name heuristic-penalized fields that cleared a lowered threshold; all-null `ok` says nothing was verified (iter-76 B1) | High | Low | DONE (iter 76) |
+| 66 | CI: `.github/workflows/ci.yml` runs `uv run pytest` + `make eval` on Python 3.10 (floor) and 3.13; iter73 import sweep stops leaking package attrs (3.10: 47 red → 0) | High | Low | DONE (iter 80) |
 
 ## Done ledger
 
@@ -129,3 +130,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 77 — Identifier-role grounding: invoice_number seen only on a PO/order/customer line is penalized; golden inv-010
 - iter 78 — `| head -1` keeps the exit contract: worst produced row's code, no traceback, input stops (was 120)
 - iter 79 — validate rejects unknown data keys (typo'd vendr_name was a silent ok); envelope keys exempt
+- iter 80 — CI runs the offline suite + `make eval` on 3.10 and 3.13; iter73 sweep restores package attrs

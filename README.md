@@ -338,6 +338,8 @@ make test          # deterministic offline suite
 make cov           # with coverage
 ```
 
+CI (`.github/workflows/ci.yml`) runs this offline suite and `make eval` on Python 3.10 (the `requires-python` floor) and 3.13 on every push to `main` and every pull request.
+
 The flagship test is `tests/test_critic_catches_error.py`: the Generator is fed a deliberately wrong value (`vendor_name = "Invoice"` — a word that *does* appear in the source, so the deterministic grounding check can't catch it), and the test asserts the **second-model Critic** catches it and the gate routes to `needs_review`. It also flips only the Critic's verdict and shows the decision flip to `ok` — proving the verification step is doing real work, not the plumbing.
 
 ## 10. Design decisions
@@ -353,7 +355,7 @@ The flagship test is `tests/test_critic_catches_error.py`: the Generator is fed 
 
 - **Caching** of Generator/Critic calls; per-request cost/latency budgets.
 - A real **human-review queue** (persist `needs_review` payloads, route to a reviewer UI, feed corrections back as new golden examples).
-- **Offline eval in CI** on every PR (the `make eval` gate is already CI-shaped) plus periodic **live** eval to catch model drift.
+- **Live eval on a schedule** — the offline `make eval` gate already runs in CI on every push to `main` and every PR; add periodic **live** eval to catch model drift.
 - **Confidence calibration** — replace hand-set thresholds with thresholds tuned on the labeled set to hit a target precision.
 - Streaming + partial results, and a richer schema library (invoices, receipts, resumes, log lines) behind the same verify-then-gate loop.
 

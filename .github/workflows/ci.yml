@@ -1,0 +1,62 @@
+# Continuous integration for reflect-mcp.
+#
+# The product promises two things CI can check on every push to main and every PR: the suite runs
+# fully offline (no network, no API keys -- the single LLM seam is scripted),
+# and `make eval` exits non-zero when field accuracy drops below threshold or a
+# silent-wrong answer appears. Network access is used only to install the
+# locked dependency set; no step sets a provider or a credential.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    # GitHub's default job timeout is 360 minutes; a wedged subprocess test
+    # should turn red quickly instead. A healthy run takes well under a minute.
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # requires-python = ">=3.10"; prove both the advertised floor and a
+        # current release, so the floor promise is executed, not just declared.
+        python-version: ["3.10", "3.13"]
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          # Full history: several tests compare against earlier commits
+          # (`git show <sha>`); a shallow clone would silently skip them.
+          fetch-depth: 0
+
+      - name: Install uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+
+      # --locked fails the build if uv.lock has drifted from pyproject.toml.
+      # --extra server installs the real MCP SDK, so the importorskip("mcp")
+      # tests that are skipped in a bare dev env actually run here.
+      - name: Install the locked dependency set (with the MCP server extra)
+        run: uv sync --locked --extra server
+
+      - name: Run the test suite (offline)
+        run: uv run pytest
+
+      # The eval's threshold exit is the gate: accuracy below --min-accuracy or
+      # any silent-wrong answer fails the build. Replay fixtures only, no keys.
+      - name: Run the offline eval gate
+        run: make eval
