@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-78
+    lenses: new-capability, hardening/DX
+    - Candidate A1 -- Token-boundary grounding: a truncated `invoice_number` ("FS-2045" inside "FS-20451") or a partial `currency` ("US" inside "USD") stops being a silent `ok` (roadmap #54, golden row inv-011)
+    - Candidate A2 -- `needs_review` hands the reviewer the value to check: flagged amount and invoice-number fields carry deterministic `suggestions` (roadmap #40)
+    - Candidate A3 -- Your own labelled corpus gets the trust readout: `validate --batch` rows that carry `expected` are graded (caught / silent-wrong / false alarm), with a `--max-silent-wrong N` exit (roadmap #60)
+    - Candidate B1 -- Identifier-role false alarms closed: a correct `invoice_number` on a multi-label header row ("PO: 4410   Invoice #: INV-77"), after "Customer's invoice", or under an "Invoices2024" non-label stops being penalized to 0.3
+    - Candidate B2 -- The suite stays green with `REFLECT_FIELD_THRESHOLD` / `REFLECT_OVERALL_THRESHOLD` exported: one autouse conftest fixture resets the operator floor (roadmap #59, marked NEXT)
+    - Candidate B3 -- `validate --batch | head -1` exits within the documented 0/1/2/3 contract: no BrokenPipeError traceback, no exit 120, at any `--batch-concurrency` (roadmap #45)
+    winner: B3
+    ship: pending (not yet decided)
   iter-77
     lenses: narrative-and-docs
     - Candidate A1 -- An `ok` on partial data stops saying "every field passed" / "All fields cleared" when only some fields were committed; the note counts what was checked
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `needs_review` hands the reviewer the value to check: each heuristic-flagged field carries deterministic `suggestions`, the value(s) the source labels for that role (roadmap #40)
     - Candidate B3 -- Omission detection: a `null` amount the source plainly labels ("Total: 108.50") is flagged, not a silent `ok` that says "every field passed" (roadmap #39)
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 56871a5
   iter-76
     lenses: performance-and-throughput, narrative-and-docs
     - Candidate A1 -- `--batch` rows reach a piped consumer as each one finishes, not at EOF: the first row arrives after 0.12 s instead of 2.76 s (roadmap #63)
@@ -420,4 +430,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-42 scouted iterations
+43 scouted iterations

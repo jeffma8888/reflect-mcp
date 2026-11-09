@@ -62,7 +62,7 @@ tool surface, small deps, MIT, publication-safe.
 | 42 | Date-role grounding: an `invoice_date` the source shows only on a "Due"/"Ship date" line is penalized | Med | Low | DONE (iter 71) |
 | 43 | `make eval` adds a heuristics-only (Critic-off) trust readout line: catch / silent-wrong / false alarms | Med | Low | QUEUED |
 | 44 | Party-role check runs on normalized grounding too: NBSP/tab/double-space/CR "Bill to" buyer is no silent `ok` (4/6 bypass; ~8 lines, eval byte-identical; needs golden row) | High | Low | QUEUED |
-| 45 | `--batch \| head -1` exits 0 with no BrokenPipeError traceback (today exit 120; fix in `__main__.py`, cli.py at budget) | Med | Low | QUEUED |
+| 45 | `--batch \| head -1` keeps the 0/1/2/3 contract: worst code of rows produced, no traceback, input stops (was exit 120) | Med | Low | DONE (iter 78) |
 | 46 | `--batch` tolerates a UTF-8 BOM and skips whitespace-only lines (today error rows + exit 3) | Med | Low | QUEUED |
 | 47 | `--batch --summary PATH` writes `{lines, ok, needs_review, error, flagged_fields, exit}` for CI gates | Med | Low | QUEUED |
 | 48 | Result carries `critic_ran: bool` so a consumer can require a Critic-verified `ok` (2 src lines, 30-pin digest migration) | Med | Med | QUEUED |
@@ -127,3 +127,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 75 — Concurrent `--batch` streams through a bounded 2N window: row 1 after ≤2N pulls, not stdin EOF
 - iter 76 — `ok` notes name heuristic-penalized fields that still cleared; all-null `ok` says nothing verified
 - iter 77 — Identifier-role grounding: invoice_number seen only on a PO/order/customer line is penalized; golden inv-010
+- iter 78 — `| head -1` keeps the exit contract: worst produced row's code, no traceback, input stops (was 120)

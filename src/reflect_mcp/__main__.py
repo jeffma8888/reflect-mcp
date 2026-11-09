@@ -9,7 +9,9 @@ compatibility.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
+import typing
 
 from reflect_mcp import __version__
 
@@ -125,16 +127,37 @@ def main() -> None:
     if args.command == "extract":
         from reflect_mcp.cli import run_extract_from_args  # noqa: PLC0415
 
-        sys.exit(run_extract_from_args(args))
+        _exit_with_verb(run_extract_from_args, args)
 
     if args.command == "validate":
         from reflect_mcp.cli import run_validate_from_args  # noqa: PLC0415
 
-        sys.exit(run_validate_from_args(args))
+        _exit_with_verb(run_validate_from_args, args)
 
     from reflect_mcp.server import main as server_main  # noqa: PLC0415
 
     server_main()
+
+
+def _exit_with_verb(
+    verb: typing.Callable[[argparse.Namespace], int], args: argparse.Namespace
+) -> typing.NoReturn:
+    """Run a CLI verb and exit with its code, even if stdout's reader closed early.
+
+    ``| head -1`` closes the pipe, so a write or the final flush raises
+    ``BrokenPipeError``; left alone, Python prints a traceback and exits 120,
+    breaking the documented 0/1/2/3 contract. Pointing fd 1 at devnull silences
+    the interpreter's exit-time flush. The fd surgery lives here, not in cli.py,
+    because in-process callers (pytest capture) have no real stdout fd. A verb
+    that hit EPIPE before returning exits 1: fail-safe, never a silent 0.
+    """
+    code = 1
+    try:
+        code = verb(args)
+        sys.stdout.flush()
+    except BrokenPipeError:
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+    sys.exit(code)
 
 
 def _has_subcommand() -> bool:

@@ -238,8 +238,10 @@ def _run_batch(
     try:
         results = _windowed(pool, process, lines, 2 * concurrency) if pool else map(process, lines)
         for output_json, code in results:
+            worst = max(worst, code)  # before print: a row whose write fails still counts
             print(output_json)
-            worst = max(worst, code)
+    except BrokenPipeError:  # reader closed early (`| head`): stop pulling input
+        pass
     finally:
         if pool is not None:
             pool.shutdown()

@@ -61,7 +61,7 @@ SCHEMA_PREFIX = "data failed InvoiceData validation:"
 
 # --- HEAD constants (measured on a `git archive HEAD` copy, pre-iter-68) ---
 HEAD_EVAL_STDOUT_SHA256 = "9df9499d6aa3a9b96961beee122f3408e0c6477f485258e54d609030ac18a7f7"
-HEAD_CLI_LINES = 373  # iter 75: re-pinned 360 -> 373 for the bounded 2N batch window
+HEAD_CLI_LINES = 375  # iter 75: re-pinned 360 -> 373 for the bounded 2N batch window; iter 78: 373 -> 375 for the BrokenPipeError catch
 HEAD_RESULT_FIELDS = [
     "critic_summary", "data", "field_confidence", "field_provenance",
     "flagged_fields", "notes", "overall_confidence", "status", "trace_id",
