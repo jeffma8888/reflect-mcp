@@ -60,7 +60,7 @@ NEW_LINES = [
 ]
 # iter 72: the live 9-row dataset (inv-009 adds one flagged catch).
 LIVE_NEW_LINES = [
-    "catch rate        : 100.0%  (5/5)",
+    "catch rate        : 100.0%  (6/6)",  # iter 77: inv-010 added
     "silent-wrong      : 0",
     "false alarms      : 0",
 ]

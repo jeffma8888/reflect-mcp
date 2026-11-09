@@ -70,7 +70,7 @@ tool surface, small deps, MIT, publication-safe.
 | 50 | Pin `mcp>=1.x,<2` and raise the floor to a version that imports on Python 3.13 (mcp 2.x / 1.10.1 break server.py) | Med | Low | PARTIAL (iter 73: `mcp>=1.28,<2`; lower measured floor QUEUED) |
 | 51 | `validate` verb: verify-only mode on caller-supplied data (record backfilled iter 70) | High | Low | DONE (iter 18) |
 | 52 | Golden row inv-009 (due date as invoice date; pre-iter-71 heuristics silent-wrong 1) + pin paydown: HEAD-identity pins read a frozen inv-001..008 subset (`tests/_golden.py`) | High | Low | DONE (iter 72) |
-| 53 | NEXT: Identifier-role grounding: an `invoice_number` seen only on a PO/order-no/customer-id line is penalized (iter-72 A1: 5/5 silent ok caught; abstain unless an invoice-id label exists, else inv-002 false-alarms) | Med | Low | QUEUED |
+| 53 | Identifier-role grounding: an `invoice_number` seen only on a PO/order/customer/account line is penalized (0.3) when an invoice-number label exists; golden row inv-010 | Med | Low | DONE (iter 77) |
 | 54 | Token-boundary grounding for `invoice_number`/`currency`: "INV-100" in "INV-1001", "US" in "USD" stop grounding (iter-72 B2: 4/4 silent ok; ~15 lines) | High | Low | QUEUED |
 | 55 | Date-role label is colon-scoped: "Ship to: … Invoice date: X" stops false-alarming (iter-72 B3: 4/4 fixed, 6/6 catches kept; REV iter71 digit-split loses 2) | Med | Low | QUEUED |
 | 56 | Currency grounded by unambiguous symbol on a labelled amount ("€"→EUR, "£"→GBP; never "$") (iter-72 A2: removes a measured false alarm) | Med | Low | QUEUED |
@@ -126,3 +126,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 74 — MCP threshold args default to null: no fake 0.7/0.75 in inputSchema, no raise note unless asked
 - iter 75 — Concurrent `--batch` streams through a bounded 2N window: row 1 after ≤2N pulls, not stdin EOF
 - iter 76 — `ok` notes name heuristic-penalized fields that still cleared; all-null `ok` says nothing verified
+- iter 77 — Identifier-role grounding: invoice_number seen only on a PO/order/customer line is penalized; golden inv-010

@@ -17,6 +17,9 @@ combines both. Concretely we check:
   - date-role grounding: a grounded invoice_date must not appear *only* as a
                  due/payment/ship/delivery date ("Due date: ..."), which an invoice
                  states but which is not the invoice's own date.
+  - identifier-role grounding: a grounded invoice_number must not appear *only*
+                 on PO/order/customer/account lines when another line carries an
+                 invoice-number label ("Invoice No: ..."), so a copied PO number fails.
 
 Each check contributes a per-field factor in [0,1]; the gate multiplies the
 Critic confidence by this factor, so a structurally impossible value can never
@@ -96,6 +99,22 @@ _OTHER_DATE_LABEL_RE = re.compile(
 )
 
 
+# Identifier-role labels: a line that starts with another document's identifier
+# (PO, order, customer, account). Whole words only ("Orderly" is a name), and never
+# when "invoice" follows, because "Customer invoice no:" labels the invoice itself.
+_OTHER_ID_LINE_RE = re.compile(
+    r"^\s*(?:p\.?o\.?|purchase\s+order|order|customer|client|account|acct)(?![a-z])"
+    r"(?![^\w\n]*invoice(?![a-z]))",
+    re.IGNORECASE,
+)
+# An invoice-number label: "invoice", an optional No/Number/#/ID and colon, then a
+# token with a digit -- so "Invoice date: ..." and a bare "INVOICE" title don't count.
+_INVOICE_NUMBER_LABEL_RE = re.compile(
+    r"(?<![a-z])invoice(?:[^\S\n]*(?:no\.?|number|#|id))?[^\S\n]*:?[^\S\n]*#?(?=[\w-]*\d)\w",
+    re.IGNORECASE,
+)
+
+
 @dataclass
 class HeuristicReport:
     """Per-field deterministic factor [0,1] + human-readable reasons."""
@@ -161,6 +180,25 @@ def _check_party_role(value: str, text: str, report: HeuristicReport) -> None:
         report.penalize(
             "vendor_name", 0.3,
             f"vendor {value!r} appears only on a bill-to/ship-to/sold-to line (the buyer, not the seller)",
+        )
+
+
+def _check_identifier_role(value: str, text: str, report: HeuristicReport) -> None:
+    """Penalize an invoice_number the source shows only on PO/order/customer/account lines.
+
+    A copied PO number is grounded by substring, so presence can't catch it. The
+    check abstains unless some line carries an invoice-number label (an invoice
+    identified only by "Order 5567" has no better candidate), and when any line
+    containing the value is not an other-id line.
+    """
+    needle = value.lower()
+    lines = [ln for ln in text.split("\n") if needle in ln.lower()]
+    if not _INVOICE_NUMBER_LABEL_RE.search(text):
+        return
+    if lines and all(_OTHER_ID_LINE_RE.match(ln) for ln in lines):
+        report.penalize(
+            "invoice_number", 0.3,
+            f"invoice number {value!r} appears only on a PO/order/customer/account line, not the invoice-number line",
         )
 
 
@@ -291,6 +329,8 @@ def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
                 report.provenance[field] = [span]
                 if field == "vendor_name":
                     _check_party_role(str(value), text, report)
+                elif field == "invoice_number":
+                    _check_identifier_role(str(value), text, report)
             else:
                 report.provenance[field] = []
                 if _normalize(str(value)) not in norm_text:

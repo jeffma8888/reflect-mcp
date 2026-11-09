@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-77
+    lenses: narrative-and-docs
+    - Candidate A1 -- An `ok` on partial data stops saying "every field passed" / "All fields cleared" when only some fields were committed; the note counts what was checked
+    - Candidate A2 -- One README configuration table lists every environment variable the package reads, with its default, plus a two-way drift test against `src/`
+    - Candidate A3 -- The structured-log contract is written down and pinned: an event table per path, and the false "every stage emits generate/heuristics/critique/decide" docstring corrected
+    - Candidate B1 -- Identifier-role grounding: an `invoice_number` the source shows only on a PO / order / customer / account line is flagged (roadmap #53, marked NEXT)
+    - Candidate B2 -- `needs_review` hands the reviewer the value to check: each heuristic-flagged field carries deterministic `suggestions`, the value(s) the source labels for that role (roadmap #40)
+    - Candidate B3 -- Omission detection: a `null` amount the source plainly labels ("Total: 108.50") is flagged, not a silent `ok` that says "every field passed" (roadmap #39)
+    winner: B1
+    ship: pending (not yet decided)
   iter-76
     lenses: performance-and-throughput, narrative-and-docs
     - Candidate A1 -- `--batch` rows reach a piped consumer as each one finishes, not at EOF: the first row arrives after 0.12 s instead of 2.76 s (roadmap #63)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- README documents each heuristic's penalty factor and what a lowered threshold silences, pinned two ways to `heuristics.py`
     - Candidate B3 -- The MCP tool description stops calling `overall_confidence` "the critic's overall confidence" when no Critic ran; the advertised contract is pinned to measured behavior
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 0b7a53a
   iter-75
     lenses: simplification-and-deletion, performance-and-throughput
     - Candidate A1 -- One single-document CLI path: `run_extract_from_args` and `run_validate_from_args` become one-line wrappers over `_run_verb(args, validate)`, taking cli.py from 360 to 342 lines with byte-identical console behavior
@@ -410,4 +420,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-41 scouted iterations
+42 scouted iterations

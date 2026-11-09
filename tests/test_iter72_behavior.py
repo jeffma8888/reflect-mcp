@@ -73,16 +73,17 @@ INV9_EXPECTED = {
     "total": 432.0,
     "currency": "USD",
 }
+# iter 77: live counts re-pinned for the 10th golden row (inv-010).
 LIVE_LINES = (
-    "examples          : 9",
-    "field accuracy    : 92.1%  (58/63)",
-    "exact-match acc   : 44.4%  (4/9)",
-    "needs-review rate : 55.6%  (5/9)",
-    "catch rate        : 100.0%  (5/5)",
+    "examples          : 10",
+    "field accuracy    : 91.4%  (64/70)",
+    "exact-match acc   : 40.0%  (4/10)",
+    "needs-review rate : 60.0%  (6/10)",
+    "catch rate        : 100.0%  (6/6)",
     "silent-wrong      : 0",
     "false alarms      : 0",
     "  [inv-009] invoice_date: expected '2026-07-01' but got '2026-07-31'  (flagged)",
-    "PASS: field accuracy 92.1% >= required 90.0%",
+    "PASS: field accuracy 91.4% >= required 90.0%",
 )
 OLD_FAILURE_LINES = (
     "  [inv-004] total: expected 583.2 but got 683.2  (flagged)",
@@ -127,7 +128,7 @@ def _live_eval(*args: str) -> subprocess.CompletedProcess[str]:
 # ---------------------------------------------------------------- EB1 dataset
 def test_eb1_dataset_has_nine_rows_first_eight_unchanged():
     lines = _lines(DATASET)
-    assert len(lines) == 9
+    assert len(lines) == 10  # iter 77: inv-010 appended after inv-009
     assert _sha("\n".join(lines[:8]) + "\n") == HEAD_DATASET_SHA
 
 
@@ -142,7 +143,7 @@ def test_eb1_row_nine_is_inv009_due_date_case():
 def test_eb2_replay_keys_and_inv009_entry():
     replay = json.loads(REPLAY.read_text())
     assert isinstance(replay, dict)
-    assert sorted(replay) == [f"inv-00{i}" for i in range(1, 10)]
+    assert sorted(replay) == [f"inv-{i:03d}" for i in range(1, 11)]  # iter 77: + inv-010
     gen = json.loads(replay["inv-009"]["generator_raw"])
     assert gen == {**INV9_EXPECTED, "invoice_date": "2026-07-31"}
     assert replay["inv-009"]["critic_raw"] == replay["inv-008"]["critic_raw"]
@@ -179,8 +180,8 @@ def test_eb3_make_eval_exits_zero_with_nine_examples():
         pytest.skip("make or .venv unavailable")
     r = subprocess.run(["make", "eval"], cwd=REPO, capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "examples          : 9" in r.stdout.splitlines()
-    assert "catch rate        : 100.0%  (5/5)" in r.stdout.splitlines()
+    assert "examples          : 10" in r.stdout.splitlines()  # iter 77
+    assert "catch rate        : 100.0%  (6/6)" in r.stdout.splitlines()
 
 
 # ---------------------------------------------------------------- EB4 counterfactual
@@ -207,11 +208,13 @@ def test_eb4_inv009_is_silent_wrong_on_pre_date_role_heuristics(tmp_path):
     )
     out = r.stdout.splitlines()
     assert r.returncode == 1, r.stdout + r.stderr
-    assert "silent-wrong      : 1" in out
-    assert "catch rate        : 80.0%  (4/5)" in out
+    # iter 77: that tree also predates identifier-role grounding, so inv-010 is
+    # silent there too -> 2 silent-wrong, 4/6 caught.
+    assert "silent-wrong      : 2" in out
+    assert "catch rate        : 66.7%  (4/6)" in out
     inv9 = [ln for ln in out if ln.startswith("  [inv-009]")]
     assert len(inv9) == 1 and inv9[0].endswith("(SILENT)"), inv9
-    assert "FAIL: silent-wrong fields 1 > allowed 0" in out
+    assert "FAIL: silent-wrong fields 2 > allowed 0" in out
 
 
 # ---------------------------------------------------------------- EB5 constants
@@ -326,7 +329,7 @@ def test_eb9_patch_is_undone_after_test():
         sys.path.insert(0, str(EVAL_DIR))
     import run_eval
 
-    assert run_eval.evaluate(live=False).examples == 9
+    assert run_eval.evaluate(live=False).examples == 10  # iter 77
 
 
 # ---------------------------------------------------------------- EB10 migration
@@ -351,11 +354,11 @@ def test_eb12_readme_contains_live_stdout_block():
 
 def test_eb12_readme_intro_sentence_five_and_inv009():
     readme = README.read_text()
-    idx = readme.index("examples          : 9")
+    idx = readme.index("examples          : 10")  # iter 77
     intro = readme[:idx].rsplit("Offline run", 1)
     assert len(intro) == 2, "intro sentence above eval block not found"
     sentence = intro[1]
-    assert "five examples" in sentence
+    assert "six examples" in sentence  # iter 77: inv-010 is the sixth
     assert "inv-009" in sentence
     assert "due date" in sentence and "invoice date" in sentence
     assert "date-role" in sentence
