@@ -82,6 +82,7 @@ tool surface, small deps, MIT, publication-safe.
 | 62 | Concurrent `--batch` streams via a bounded 2N window (row 1 after 2N pulls, not EOF; 88.9→0.2 MB on 50k lines; iter-75 B1) | High | Low | DONE (iter 75) |
 | 63 | `--batch` flushes each row so a piped consumer sees it immediately (stdout is block-buffered on pipes) | Med | Low | QUEUED |
 | 64 | Critic emits `rationale` only for doubted fields (30% of critic_raw bytes are discarded on `ok`; iter-75 B3; needs live evidence) | Low | Med | QUEUED |
+| 65 | `ok` notes name heuristic-penalized fields that cleared a lowered threshold; all-null `ok` says nothing was verified (iter-76 B1) | High | Low | DONE (iter 76) |
 
 ## Done ledger
 
@@ -124,3 +125,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 73 — MCP outputSchema requires a `status` enum; results carry structuredContent; error sets isError
 - iter 74 — MCP threshold args default to null: no fake 0.7/0.75 in inputSchema, no raise note unless asked
 - iter 75 — Concurrent `--batch` streams through a bounded 2N window: row 1 after ≤2N pulls, not stdin EOF
+- iter 76 — `ok` notes name heuristic-penalized fields that still cleared; all-null `ok` says nothing verified

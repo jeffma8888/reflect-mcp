@@ -43,6 +43,13 @@ HEURISTICS_ONLY_OK_NOTE = (
     "No Critic ran: every field passed the deterministic heuristic checks only; "
     "field confidences are heuristic factors, not a Critic's judgement."
 )
+CRITIC_OK_NOTE = "All fields cleared the confidence thresholds."
+HEURISTICS_ONLY_PREFIX = (
+    "No Critic ran: field confidences are heuristic factors, not a Critic's judgement."
+)
+NOTHING_VERIFIED_NOTE = (
+    "No field was committed (every value is null), so nothing was verified."
+)
 
 
 class GateConfig(BaseModel):
@@ -74,6 +81,30 @@ def _critic_confidence(
     if value is not None and not verdict.grounded:
         return min(verdict.confidence, UNGROUNDED_CONFIDENCE_CAP), NOT_GROUNDED_REASON
     return verdict.confidence, None
+
+
+def _ok_notes(
+    data: InvoiceData, heuristics: HeuristicReport, threshold: float, critic_ran: bool
+) -> str:
+    """Word an ``ok`` so it never claims more than was checked.
+
+    A lowered threshold lets a heuristic-penalized field clear; naming it keeps
+    the rationale consistent with the factor in the same envelope. With nothing
+    committed, nothing was verified, so "cleared"/"passed" would be false.
+    """
+    committed = [f for f in EXTRACTION_FIELDS if getattr(data, f) is not None]
+    if not committed:
+        prefix = "" if critic_ran else "No Critic ran. "
+        return f"{prefix}{NOTHING_VERIFIED_NOTE}"
+    factors = [(f, heuristics.factor_for(f)) for f in committed]
+    items = ", ".join(f"{f} (factor {x:.0%})" for f, x in factors if x < 1.0)
+    if not items:
+        return CRITIC_OK_NOTE if critic_ran else HEURISTICS_ONLY_OK_NOTE
+    head = CRITIC_OK_NOTE if critic_ran else HEURISTICS_ONLY_PREFIX
+    return (
+        f"{head} Heuristics penalized {items}; each penalized field still "
+        f"cleared the {threshold:.0%} field threshold."
+    )
 
 
 def decide(
@@ -139,11 +170,7 @@ def decide(
                 f"{config.overall_threshold:.0%} threshold; escalating for review."
             )
     else:
-        notes = (
-            "All fields cleared the confidence thresholds."
-            if critic_ran
-            else HEURISTICS_ONLY_OK_NOTE
-        )
+        notes = _ok_notes(data, heuristics, config.field_threshold, critic_ran)
 
     return ExtractionResult(
         status=status,

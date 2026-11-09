@@ -168,6 +168,8 @@ The tools never raise: failures (empty input, out-of-range thresholds, `data` th
 
 **Operator threshold floor.** Over MCP, the threshold arguments are chosen by the calling agent, so they can only be raised above the operator's floor, never lowered below it. Set the floor in the server's `env` block with `REFLECT_FIELD_THRESHOLD` and `REFLECT_OVERALL_THRESHOLD` (defaults 0.70 / 0.75 when unset). An omitted (or `null`) threshold means 0.70 / 0.75, or the floor if higher, and adds no note. An explicit argument below the floor is raised to it, and `notes` records it (e.g. `field_threshold raised from 0.0 to 0.7.`). An agent may always ask for stricter thresholds; only the operator can lower them, e.g. `"REFLECT_FIELD_THRESHOLD": "0"`. (The agent-controlled `heuristics_only=True` argument still drops the Critic, so it is not covered by this floor.) A malformed value (not a number, including nan/inf, or outside [0, 1]) makes every call return `{ status: "error", error_message }` rather than falling back to a looser gate. The CLI does not read these variables: its `--field-threshold` / `--overall-threshold` flags stay authoritative.
 
+**Honest `ok` notes.** An `ok` result's `notes` never let a heuristic-penalized field pass silently: under a lowered threshold, they name each heuristic-penalized field that still cleared it, with its factor (e.g. `Heuristics penalized total (factor 30%); each penalized field still cleared the 30% field threshold.`), and when every value is null they say nothing was verified.
+
 ## 5. CLI
 
 For scripting, CI pipelines, or batch processing without an MCP client:

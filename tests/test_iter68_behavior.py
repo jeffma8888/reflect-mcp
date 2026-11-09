@@ -70,9 +70,9 @@ HEAD_RESULT_FIELDS = [
 # with trace_id popped.
 HEAD_NON_ENVELOPE_DIGESTS = {
     "bad": "eb22fab6b3b9b06d1393e2c2760112e3f4f853586526e1d698f330bae479215f",
-    "paid": "185893af931fb8b202cca5549d8573b797a0d2a987a1586cffeab90945379298",
+    "paid": "9bbd5b946615839afe3db3a47e536e1d656010ce769c7ca4d7fafe6236e6f468",  # iter 76: all-null notes now say nothing was verified
     "mixed": "f5d20f0b21a855d783931723ce04b5be562cd6055884692487ad8cce9af182d0",
-    "empty": "185893af931fb8b202cca5549d8573b797a0d2a987a1586cffeab90945379298",
+    "empty": "9bbd5b946615839afe3db3a47e536e1d656010ce769c7ca4d7fafe6236e6f468",  # iter 76: all-null notes now say nothing was verified
     "good": "0e4b12cbb757cd30906af85f91cc41a17d9c3f7ff05bd16575b5a356addb80b4",
 }
 # sha256 over {row_id:critic_on -> digest(extract result minus trace_id)} for

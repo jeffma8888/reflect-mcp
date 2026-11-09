@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-76
+    lenses: performance-and-throughput, narrative-and-docs
+    - Candidate A1 -- `--batch` rows reach a piped consumer as each one finishes, not at EOF: the first row arrives after 0.12 s instead of 2.76 s (roadmap #63)
+    - Candidate A2 -- Heuristics stop re-scanning long documents: 43 KB goes from 18.6 ms to 12.8 ms per `validate` (−31%) with identical reports, and `--batch-concurrency` can't hide this cost
+    - Candidate A3 -- The MCP tool path builds each provider client once per process: 20 `extract` calls build 2 SDK clients instead of 40 (roadmap #27, NEXT)
+    - Candidate B1 -- A heuristics-only `ok` stops claiming "every field passed the deterministic heuristic checks" when a check penalized a field, or when no field was checked at all
+    - Candidate B2 -- README documents each heuristic's penalty factor and what a lowered threshold silences, pinned two ways to `heuristics.py`
+    - Candidate B3 -- The MCP tool description stops calling `overall_confidence` "the critic's overall confidence" when no Critic ran; the advertised contract is pinned to measured behavior
+    winner: B1
+    ship: pending (not yet decided)
   iter-75
     lenses: simplification-and-deletion, performance-and-throughput
     - Candidate A1 -- One single-document CLI path: `run_extract_from_args` and `run_validate_from_args` become one-line wrappers over `_run_verb(args, validate)`, taking cli.py from 360 to 342 lines with byte-identical console behavior
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- MCP tool path builds each provider client once per process (locked per-role memo; roadmap #27, marked NEXT): 20 `extract` calls open 2 connections instead of 40, and parallel calls stop racing the SDK client build
     - Candidate B3 -- The Critic writes `rationale` only for fields it doubts: about 28% of every Critic reply's bytes are paid output tokens the product never shows
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED e490269
   iter-74
     lenses: integration-and-adoption
     - Candidate A1 -- MCP threshold args default to the operator floor: the published inputSchema stops advertising a `0.7`/`0.75` default the server never applies, and a call that omits them stops getting "field_threshold raised from 0.7" notes
@@ -400,4 +410,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-40 scouted iterations
+41 scouted iterations
