@@ -53,7 +53,7 @@ tool surface, small deps, MIT, publication-safe.
 | 33 | Amount-role labels attributed per line (first label wins, skip `N%` rates): "Total tax"/"Net total" stop vouching for a wrong total | High | Low | QUEUED |
 | 34 | MCP gate floor: `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD`; a tool arg can only raise the threshold | High | Low | DONE (iter 61) |
 | 35 | MCP `heuristics_only` needs operator opt-in (`REFLECT_ALLOW_HEURISTICS_ONLY`) (its inv-007 motivation closed by #41) | Med | Low | QUEUED |
-| 36 | One CLI flag set: delete `__main__`'s copy of `_add_common_args`/`_add_batch_args` (152→104 lines, 0 test edits; iter-74 B1) | Med | Low | QUEUED |
+| 36 | One CLI argparse tree: `cli.run_extract`/`run_validate` parse via `__main__._build_top_parser`; cli.py's duplicate parser builders deleted (375→306; iter-81 A1 flipped #36's direction) | Med | Low | DONE (iter 81) |
 | 37 | `validate --batch`: verify a `{text, data}` JSONL corpus in one process (≈129 ms/doc → <1 ms/doc heuristics-only) | High | Low | DONE (iter 64) |
 | 38 | Heuristics-only `ok` says no Critic ran (notes) and logs `critic.skipped` (reason), not a fabricated `critique.done` | High | Low | DONE (iter 65) |
 | 39 | Omission detection: a null amount the source labels is flagged (reverses the null-abstention contract; 14-test migration) | High | Med | QUEUED |
@@ -80,7 +80,7 @@ tool surface, small deps, MIT, publication-safe.
 | 60 | `validate --batch` grades rows carrying `expected` (caught/silent-wrong/false alarms) + `--max-silent-wrong` exit; grader moves to `grading.py` (iter-74 A3) | High | Med | QUEUED |
 | 61 | One single-document CLI tail: `run_extract/validate_from_args` share `_run_verb` (−18 cli.py lines, 18-probe byte-identical; iter-75 A1; repays #62's budget) | Med | Low | QUEUED |
 | 62 | Concurrent `--batch` streams via a bounded 2N window (row 1 after 2N pulls, not EOF; 88.9→0.2 MB on 50k lines; iter-75 B1) | High | Low | DONE (iter 75) |
-| 63 | `--batch` flushes each row so a piped consumer sees it immediately (stdout is block-buffered on pipes) | Med | Low | QUEUED |
+| 63 | `--batch` flushes each row so a piped consumer sees it immediately (stdout is block-buffered on pipes) | Med | Low | NEXT |
 | 64 | Critic emits `rationale` only for doubted fields (30% of critic_raw bytes are discarded on `ok`; iter-75 B3; needs live evidence) | Low | Med | QUEUED |
 | 65 | `ok` notes name heuristic-penalized fields that cleared a lowered threshold; all-null `ok` says nothing was verified (iter-76 B1) | High | Low | DONE (iter 76) |
 | 66 | CI: `.github/workflows/ci.yml` runs `uv run pytest` + `make eval` on Python 3.10 (floor) and 3.13; iter73 import sweep stops leaking package attrs (3.10: 47 red → 0) | High | Low | DONE (iter 80) |
@@ -131,3 +131,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 78 — `| head -1` keeps the exit contract: worst produced row's code, no traceback, input stops (was 120)
 - iter 79 — validate rejects unknown data keys (typo'd vendr_name was a silent ok); envelope keys exempt
 - iter 80 — CI runs the offline suite + `make eval` on 3.10 and 3.13; iter73 sweep restores package attrs
+- iter 81 — CLI test entry points parse via the console's argparse tree; cli.py's duplicate parsers deleted

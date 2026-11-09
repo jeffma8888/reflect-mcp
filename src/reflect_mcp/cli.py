@@ -11,80 +11,6 @@ import typing
 from concurrent.futures import Future, ThreadPoolExecutor
 
 
-def _add_common_args(parser: argparse.ArgumentParser) -> None:
-    """Add --file, threshold, and heuristics-only flags shared by extract and validate."""
-    parser.add_argument(
-        "--file",
-        dest="file",
-        default=None,
-        help="Path to a text file (default: read stdin).",
-    )
-    parser.add_argument(
-        "--field-threshold",
-        dest="field_threshold",
-        type=float,
-        default=None,
-        help="Per-field confidence threshold in [0.0, 1.0] (default: 0.70).",
-    )
-    parser.add_argument(
-        "--overall-threshold",
-        dest="overall_threshold",
-        type=float,
-        default=None,
-        help="Overall confidence threshold in [0.0, 1.0] (default: 0.75).",
-    )
-    parser.add_argument(
-        "--heuristics-only",
-        dest="heuristics_only",
-        action="store_true",
-        default=False,
-        help="Skip the Critic LLM call; use only deterministic heuristics for verification.",
-    )
-
-
-def _build_extract_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="reflect-mcp extract",
-        description="Extract structured data from text via the reflective pipeline.",
-    )
-    _add_common_args(parser)
-    _add_batch_args(parser, '{"text": "..."}')
-    return parser
-
-
-def _add_batch_args(parser: argparse.ArgumentParser, line_shape: str) -> None:
-    """Add --batch/--batch-concurrency; *line_shape* is the verb's JSONL record."""
-    parser.add_argument(
-        "--batch",
-        action="store_true",
-        default=False,
-        help=f"JSONL batch mode: each stdin/file line is {line_shape}; "
-        "emits one JSON result per line.",
-    )
-    parser.add_argument(
-        "--batch-concurrency",
-        dest="batch_concurrency",
-        type=int,
-        default=None,
-        help="Number of concurrent workers for batch mode (default: 1). Requires --batch.",
-    )
-
-
-def _build_validate_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="reflect-mcp validate",
-        description="Verify pre-extracted data against source text (Critic + heuristics + gate, no Generator).",
-    )
-    _add_common_args(parser)
-    parser.add_argument(
-        "--data",
-        dest="data",
-        help="JSON string of pre-extracted fields to verify (required unless --batch).",
-    )
-    _add_batch_args(parser, '{"text": "...", "data": {...}}')
-    return parser
-
-
 def _read_text(args: argparse.Namespace) -> str | None:
     """Read the whole input. Delegates to ``_read_input_stream`` so single, batch
     and validate share one set of input-error messages. Returns None on error."""
@@ -248,11 +174,18 @@ def _run_batch(
     return worst
 
 
+def _parse(verb: str, argv: list[str] | None) -> argparse.Namespace:
+    """Parse ``[verb, *argv]`` with the console's own parser, so in-process callers
+    (and the tests) exercise exactly the flags, help and errors users run. Imported
+    at call time so ``import cli`` never loads the console entry point."""
+    from reflect_mcp.__main__ import _build_top_parser  # noqa: PLC0415
+
+    return _build_top_parser().parse_args([verb, *(sys.argv[1:] if argv is None else argv)])
+
+
 def run_extract(argv: list[str] | None = None) -> int:
     """Parse args, run the pipeline, print JSON to stdout, return exit code."""
-    parser = _build_extract_parser()
-    args = parser.parse_args(argv)
-    return run_extract_from_args(args)
+    return run_extract_from_args(_parse("extract", argv))
 
 
 def run_extract_from_args(args: argparse.Namespace) -> int:
@@ -320,9 +253,7 @@ def _run_jsonl_batch(args: argparse.Namespace, validate: bool = False) -> int:
 
 def run_validate(argv: list[str] | None = None) -> int:
     """Parse args, validate pre-extracted data, print JSON to stdout, return exit code."""
-    parser = _build_validate_parser()
-    args = parser.parse_args(argv)
-    return run_validate_from_args(args)
+    return run_validate_from_args(_parse("validate", argv))
 
 
 def run_validate_from_args(args: argparse.Namespace) -> int:

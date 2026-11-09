@@ -470,7 +470,9 @@ class TestEB9NoProductChange:
     def test_no_src_eval_diff_vs_base(self):
         if not _base_reachable():
             pytest.skip(f"{BASE_SHA} not reachable")
-        r = subprocess.run(["git", "-C", str(ROOT), "diff", "--stat", BASE_SHA, "--", "src", "eval"],
+        # iter 81: compare base to iter 80's own commit, not the working tree, so later
+        # iterations' src changes do not trip iter 80's "no product change" claim.
+        r = subprocess.run(["git", "-C", str(ROOT), "diff", "--stat", BASE_SHA, "2bb26a1", "--", "src", "eval"],
                            capture_output=True, text=True, timeout=30)
         assert r.returncode == 0, r.stderr
         assert r.stdout.strip() == ""

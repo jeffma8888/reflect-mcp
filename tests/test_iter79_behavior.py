@@ -506,7 +506,7 @@ class TestEB9EvalAndPins:
 
     def test_cli_line_count_kept(self):
         lines = (REPO / "src" / "reflect_mcp" / "cli.py").read_text(encoding="utf-8").splitlines()
-        assert len(lines) == 375
+        assert len(lines) == 306  # iter 81: 375 -> 306, duplicate parser builders deleted
 
 
 # ---------------------------------------------------------------------------

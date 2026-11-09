@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-81
+    lenses: simplification-and-deletion
+    - Candidate A1 -- One argparse tree: `cli.run_extract`/`run_validate` parse through the console script's own `reflect-mcp <verb>` parser, and cli.py's duplicate parser builders are deleted (cli.py 375 → 304)
+    - Candidate A2 -- One provider-SDK import guard: the three copied try-import/`RuntimeError` blocks in providers.py become one `_require(module, extra, provider)` helper, and `build_client`'s if-chain becomes a dict (providers.py 140 → 129)
+    - Candidate A3 -- One MCP tool body: `extract_tool`/`validate_tool` share a `_run_tool(text, thresholds, run)` tail, and `tools._build_pipeline` with its "pass a kwarg only when opted out" rule is deleted (tools.py 217 → 213)
+    - Candidate B1 -- Date heuristics stop scanning a long document twice in full: a 43 KB `validate` goes from 18.2 to 12.8 ms (−30%), and a 200-row `--batch` from 3.77 to 2.55 s, with byte-identical reports
+    - Candidate B2 -- `--batch` rows reach a piped consumer as each one finishes: first row after 0.13 s instead of 2.21 s (roadmap #63)
+    - Candidate B3 -- The Critic writes `rationale` only for fields it doubts: 29% of every Critic reply's bytes are paid output tokens the product never shows
+    winner: A1
+    ship: pending (not yet decided)
   iter-80
     lenses: integration-and-adoption, simplification-and-deletion
     - Candidate A1 -- CI runs the gates the product already ships: a `.github/workflows/ci.yml` on Python 3.10 and 3.13 runs `uv run pytest` and `make eval`, and the suite goes green on the advertised 3.10 floor (today 47 red)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- One parse-and-retry loop: Generator and Critic share `parsing.complete_parsed`, so there is one retry loop and one `RETRY_DELAY_SECONDS`, not two copies
     - Candidate B3 -- One "Critic didn't speak" branch: `_verify` picks a `skip` reason once, instead of two copies of the neutral critique, `critic_ran=False` and `critic.skipped`
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 2bb26a1
   iter-79
     lenses: integration-and-adoption
     - Candidate A1 -- Unreadable input (non-UTF-8 byte, directory, no permission) exits 2 with one `Error:` line instead of a traceback whose exit 1 means `needs_review`
@@ -450,4 +460,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-45 scouted iterations
+46 scouted iterations

@@ -2,7 +2,21 @@
 
 from __future__ import annotations
 
-from reflect_mcp.cli import _build_extract_parser
+import argparse
+
+from reflect_mcp.__main__ import _build_top_parser
+
+
+class _ExtractParser:
+    """iter 81: cli.py's duplicate extract parser is gone; parse through the console's
+    own tree so these tests exercise the shipped flags."""
+
+    def parse_args(self, argv: list[str]) -> argparse.Namespace:
+        return _build_top_parser().parse_args(["extract", *argv])
+
+
+def _build_extract_parser() -> _ExtractParser:
+    return _ExtractParser()
 
 
 def test_parser_accepts_file_flag() -> None:
