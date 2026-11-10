@@ -40,6 +40,13 @@ _NUMERIC_FIELDS = {"subtotal", "tax", "total"}
 
 _ARITHMETIC_TOLERANCE = 0.02  # currency rounding slack
 
+
+def _lookahead(alternatives: list[str] | tuple[str, ...]) -> str:
+    """`(?=[...])` on the alternatives' first letters. `re` can't prefix-optimize a flat
+    case-insensitive alternation, so without this every char position tries every branch."""
+    return f"(?=[{''.join(sorted({alt[0] for alt in alternatives}))}])"
+
+
 # English month names, full and 3-letter, mapped to month numbers. Hard-coded
 # (not `calendar.month_name`) because that table is locale-dependent.
 _MONTH_NAMES = (
@@ -48,7 +55,11 @@ _MONTH_NAMES = (
 )
 _MONTHS = {name: i for i, name in enumerate(_MONTH_NAMES, 1)}
 _MONTHS.update({name[:3]: i for i, name in enumerate(_MONTH_NAMES, 1)})
-_MONTH_RE = "|".join(sorted(_MONTHS, key=len, reverse=True))  # longest first
+# Unique 3-letter prefix + optional rest ("jan(?:uary)?"): one branch per month, and
+# the greedy rest tries the long form first, as the old longest-first alternation did.
+_MONTH_RE = _lookahead(_MONTH_NAMES) + "(?:" + "|".join(
+    f"{n[:3]}(?:{n[3:]})?" if n[3:] else n for n in _MONTH_NAMES
+) + ")"
 
 # Supported written date forms. Digit-boundary lookarounds stop a date token
 # from matching inside a longer digit run (e.g. "12026-03-145").
@@ -74,8 +85,9 @@ _ROLE_LABELS = {
 # it, optionally currency-prefixed, written with exactly two decimals. The strict
 # money form keeps IDs and quantities ("Order 12", "Total: 15") from labelling.
 _LABELLED_AMOUNT_RES = {
-    role: re.compile(
-        rf"(?<![a-z])(?:{labels})(?![a-z])[^\d\n]{{0,25}}?(?:[$€£]\s*)?"
+    role: re.compile(  # lookahead letters read off the labels, so none can be excluded
+        _lookahead(re.sub(r"\(\?<!.*?\)|\(\?:|\)", "", labels).split("|"))
+        + rf"(?<![a-z])(?:{labels})(?![a-z])[^\d\n]{{0,25}}?(?:[$€£]\s*)?"
         r"((?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2})(?!\d)",
         re.IGNORECASE,
     )

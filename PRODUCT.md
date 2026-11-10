@@ -84,6 +84,7 @@ tool surface, small deps, MIT, publication-safe.
 | 64 | Critic emits `rationale` only for doubted fields (30% of critic_raw bytes are discarded on `ok`; iter-75 B3; needs live evidence) | Low | Med | QUEUED |
 | 65 | `ok` notes name heuristic-penalized fields that cleared a lowered threshold; all-null `ok` says nothing was verified (iter-76 B1) | High | Low | DONE (iter 76) |
 | 66 | CI: `.github/workflows/ci.yml` runs `uv run pytest` + `make eval` on Python 3.10 (floor) and 3.13; iter73 import sweep stops leaking package attrs (3.10: 47 red → 0) | High | Low | DONE (iter 80) |
+| 67 | Month/amount-label regexes get first-letter lookaheads + unique 3-letter month prefixes: `_MONTH_FIRST_RE` 3.9× faster, `run_heuristics` −36% on 297 KB, reports byte-identical (iter-82 A1) | Med | Low | DONE (iter 82) |
 
 ## Done ledger
 
@@ -132,3 +133,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 79 — validate rejects unknown data keys (typo'd vendr_name was a silent ok); envelope keys exempt
 - iter 80 — CI runs the offline suite + `make eval` on 3.10 and 3.13; iter73 sweep restores package attrs
 - iter 81 — CLI test entry points parse via the console's argparse tree; cli.py's duplicate parsers deleted
+- iter 82 — Month/label regexes get first-letter lookaheads: heuristics −36% on 297 KB, reports byte-identical

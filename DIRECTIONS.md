@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-82
+    lenses: unknown
+    - Candidate A1 -- Regexes that can only start on a month/label letter stop being tried at every character: 297 KB `validate` heuristics 152 → 98 ms (−36%), 200-row `--batch` 3.24 → 2.13 s, with byte-identical reports
+    - Candidate A2 -- `--batch` rows reach a piped consumer as each one finishes: first row after 0.08 s instead of 1.86 s (roadmap #63, marked NEXT by iter 81's PM)
+    - Candidate A3 -- Date tokens are found once per document, not twice: `_find_date_span` reads its earliest match from the per-line tokenization `_date_role_labels` already does, cutting the remaining date cost about in half
+    - Candidate B1 -- README's repository layout and architecture name every module the package ships: `tools.py`, the MCP tool bodies, has been missing since iter 55. A two-way layout↔`src/` test keeps them from drifting apart again
+    - Candidate B2 -- PRODUCT.md's roadmap stops sending three contradictory signals: one `NEXT` row instead of three, #39's stale "14-test migration" figure replaced with the measured 34, and #20's "all-null is needs_review" reconciled with the shipped iter-76 decision
+    - Candidate B3 -- README's "coverage ≥90%" badge becomes a checked claim: `fail_under = 90` in `[tool.coverage.report]`, CI's test step runs with `--cov`, and §9 says the figure excludes `server.py`/`providers.py`
+    winner: A1
+    ship: pending (not yet decided)
   iter-81
     lenses: simplification-and-deletion
     - Candidate A1 -- One argparse tree: `cli.run_extract`/`run_validate` parse through the console script's own `reflect-mcp <verb>` parser, and cli.py's duplicate parser builders are deleted (cli.py 375 → 304)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `--batch` rows reach a piped consumer as each one finishes: first row after 0.13 s instead of 2.21 s (roadmap #63)
     - Candidate B3 -- The Critic writes `rationale` only for fields it doubts: 29% of every Critic reply's bytes are paid output tokens the product never shows
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 26de4e7
   iter-80
     lenses: integration-and-adoption, simplification-and-deletion
     - Candidate A1 -- CI runs the gates the product already ships: a `.github/workflows/ci.yml` on Python 3.10 and 3.13 runs `uv run pytest` and `make eval`, and the suite goes green on the advertised 3.10 floor (today 47 red)
@@ -460,4 +470,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-46 scouted iterations
+47 scouted iterations
