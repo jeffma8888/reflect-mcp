@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-86
+    lenses: integration-and-adoption, simplification-and-deletion
+    - Candidate A1 -- Hosts learn the tools' nature and the `needs_review` contract before the first call: MCP tool `title` + `annotations` (readOnlyHint/destructiveHint/idempotentHint/openWorldHint) and a server `instructions` string in `initialize`
+    - Candidate A2 -- `--batch` error rows carry their 1-based input `line`, so a malformed row joins back to its input (roadmap #25 remainder)
+    - Candidate A3 -- `validate --data @PATH` (and `--data @-` with `--file`) reads the fields or a saved result envelope from a file, so `extract | validate` re-verification composes without shell substitution
+    - Candidate B1 -- One parse-and-retry loop: Generator and Critic share `parsing.complete_parsed`, deleting the second copy of the loop and of `_RETRY_DELAY_SECONDS`
+    - Candidate B2 -- One single-document CLI tail: `extract` and `validate` share `_read_document` + `_run_single`, deleting the duplicated read/empty-check/build/run/print/exit-code block
+    - Candidate B3 -- One "Critic didn't speak" branch: `_verify` picks a skip reason once, instead of two copies of `_neutral_critique` + `critic_ran=False` + `critic.skipped`
+    winner: B1
+    ship: pending (not yet decided)
   iter-85
     lenses: hardening/DX
     - Candidate A1 -- A truncated `invoice_number`/`currency` stops grounding as a silent `ok`: "INV-100" inside "INV-1001" and "USD" inside "USDT" get the 0.25 not-found penalty (roadmap #54)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `--batch` error rows carry their 1-based input `line`, so a malformed row can be joined back to its input (roadmap #25 remainder)
     - Candidate B3 -- `validate --data @result.json` reads the fields (or a saved result envelope) from a file
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED dcda81c
   iter-84
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Currency grounded by its written name: "US Dollars", "Pounds Sterling", "Japanese Yen" ground USD/GBP/JPY, so the correct answer on a spelled-out invoice stops being flagged
@@ -500,4 +510,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-50 scouted iterations
+51 scouted iterations

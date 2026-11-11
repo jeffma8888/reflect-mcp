@@ -90,6 +90,8 @@ tool surface, small deps, MIT, publication-safe.
 | 70 | Non-ASCII hardening: `APRİL 3, 2026`/`ſep` month tokens read by the matching regex rule (KeyError → validate exit 3 / `make eval` crash), provenance spans index the original text (`İ` shifted every later span); seeded property test; golden inv-012 (iter-84 B2) | High | Low | DONE (iter 84) |
 | 71 | Currency grounded by its written name, word-bounded (`US Dollars`→USD, `Pounds Sterling`→GBP; not `AUS Dollars`); clean golden row (iter-84 A1, lost to B2) | Med | Low | QUEUED |
 | 72 | MCP `initialize` reports reflect-mcp's own `serverInfo.version` (was the mcp SDK's 1.28.1); `__version__`↔pyproject pin (iter-85 B1) | Med | Low | DONE (iter 85) |
+| 73 | One parse-and-retry loop: Generator + Critic share `parsing.complete_parsed` and one `_RETRY_DELAY_SECONDS`; retries/logs/errors identical, eval byte-identical (iter-86 B1; makes #26/#30 one-place) | Med | Low | DONE (iter 86) |
+| 74 | MCP hosts see tool `title` + `annotations` (readOnly, non-destructive, idempotent, openWorld) and a server `instructions` naming the `needs_review`/`flagged_fields` contract (iter-86 A1: ~12 src lines, 0 test edits; pass annotations as a dict, stub `mcp.types` lacks `ToolAnnotations`) | High | Low | QUEUED |
 
 ## Done ledger
 
@@ -142,3 +144,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 83 — currency must be a 3-letter ISO 4217 code shape: `$`/`US Dollars` stop passing as ok; golden inv-011
 - iter 84 — `APRİL`/`ſep` month tokens stop crashing; provenance spans exact after `İ`; golden inv-012
 - iter 85 — MCP `initialize` reports `serverInfo.version` = `reflect-mcp --version`, not the mcp SDK's
+- iter 86 — Generator and Critic share one parse-and-retry loop + delay constant; retry behavior byte-identical

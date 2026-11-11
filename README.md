@@ -378,7 +378,7 @@ reflect-mcp/
 │   ├── gate.py            # confidence gate / HITL decision
 │   ├── pipeline.py        # orchestration (generate → heuristics → critique → decide)
 │   ├── logging_config.py  # structured JSON-line logging
-│   ├── parsing.py         # robust JSON extraction + prompt loader
+│   ├── parsing.py         # robust JSON extraction, prompt loader, shared retry loop
 │   ├── prompts/           # versioned generator.txt / critic.txt
 │   ├── server.py          # FastMCP server exposing `extract` and `validate` tools
 │   ├── cli.py             # CLI entry points: `reflect-mcp extract` / `validate`

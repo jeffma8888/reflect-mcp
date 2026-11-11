@@ -8,8 +8,19 @@ first balanced `{...}` object out of the text.
 from __future__ import annotations
 
 import json
+import time
+from collections.abc import Callable
 from importlib import resources
-from typing import Any
+from typing import Any, TypeVar
+
+from pydantic import ValidationError
+
+from reflect_mcp.logging_config import log_stage
+from reflect_mcp.providers import LLMClient
+
+T = TypeVar("T")
+
+_RETRY_DELAY_SECONDS = 0.5
 
 
 class ParseError(ValueError):
@@ -78,3 +89,41 @@ def parse_json_object(text: str) -> dict[str, Any]:
     if not isinstance(obj, dict):
         raise ParseError(f"Expected a JSON object, got {type(obj).__name__}")
     return obj
+
+
+def complete_parsed(
+    client: LLMClient,
+    *,
+    system: str,
+    user: str,
+    validate: Callable[[dict[str, Any]], T],
+    max_retries: int,
+    event: str,
+    trace_id: str,
+) -> T:
+    """Call `client`, parse its reply and validate it, retrying on bad output.
+
+    This is the one retry policy for every stage, so a change to backoff or
+    retry logging cannot land in the Generator but miss the Critic. It shares
+    plumbing only: each stage still passes its own client, prompts and schema
+    `validate`, which keeps the Critic a decorrelated grader. A provider error
+    from `complete` propagates unretried. Once retries run out, the last
+    `ParseError`/`ValidationError` is re-raised for the stage to wrap.
+    """
+    last_exc: ParseError | ValidationError | None = None
+    for attempt in range(1 + max_retries):
+        raw = client.complete(system=system, user=user)
+        try:
+            return validate(parse_json_object(raw))
+        except (ParseError, ValidationError) as exc:
+            last_exc = exc
+            if attempt < max_retries:
+                log_stage(
+                    event,
+                    trace_id,
+                    attempt=attempt + 1,
+                    max_retries=max_retries,
+                    error=str(exc),
+                )
+                time.sleep(_RETRY_DELAY_SECONDS)
+    raise last_exc  # type: ignore[misc]  # set: max_retries >= 0 runs the loop

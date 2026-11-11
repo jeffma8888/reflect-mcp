@@ -2,18 +2,13 @@
 
 from __future__ import annotations
 
-import time
-
 from pydantic import ValidationError
 
-from reflect_mcp.logging_config import log_stage
-from reflect_mcp.parsing import ParseError, load_prompt, parse_json_object
+from reflect_mcp.parsing import ParseError, complete_parsed, load_prompt
 from reflect_mcp.providers import LLMClient
 from reflect_mcp.schema import InvoiceData
 
 GENERATOR_SYSTEM = load_prompt("generator.txt")
-
-_RETRY_DELAY_SECONDS = 0.5
 
 
 class GeneratorError(RuntimeError):
@@ -30,23 +25,17 @@ class Generator:
     def generate(self, text: str, trace_id: str = "") -> InvoiceData:
         """Extract `text`; `trace_id` tags retry logs so one call stays greppable."""
         user = f"Extract the invoice fields from this document:\n\n{text}"
-        last_exc: ParseError | ValidationError | None = None
-        for attempt in range(1 + self.max_retries):
-            raw = self.client.complete(system=GENERATOR_SYSTEM, user=user)
-            try:
-                obj = parse_json_object(raw)
-                return InvoiceData.model_validate(obj)
-            except (ParseError, ValidationError) as exc:
-                last_exc = exc
-                if attempt < self.max_retries:
-                    log_stage(
-                        "generate.retry",
-                        trace_id,
-                        attempt=attempt + 1,
-                        max_retries=self.max_retries,
-                        error=str(exc),
-                    )
-                    time.sleep(_RETRY_DELAY_SECONDS)
-        raise GeneratorError(
-            f"Generator produced invalid extraction: {last_exc}"
-        ) from last_exc
+        try:
+            return complete_parsed(
+                self.client,
+                system=GENERATOR_SYSTEM,
+                user=user,
+                validate=InvoiceData.model_validate,
+                max_retries=self.max_retries,
+                event="generate.retry",
+                trace_id=trace_id,
+            )
+        except (ParseError, ValidationError) as exc:
+            raise GeneratorError(
+                f"Generator produced invalid extraction: {exc}"
+            ) from exc

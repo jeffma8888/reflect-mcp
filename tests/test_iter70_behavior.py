@@ -37,8 +37,7 @@ from pathlib import Path
 
 import pytest
 
-import reflect_mcp.critic as critic_mod
-import reflect_mcp.generator as generator_mod
+import reflect_mcp.parsing as parsing_mod
 from reflect_mcp import logging_config
 from reflect_mcp.critic import Critic
 from reflect_mcp.generator import Generator
@@ -96,8 +95,7 @@ def logcap():
 
 @pytest.fixture
 def nosleep(monkeypatch):
-    monkeypatch.setattr(generator_mod.time, "sleep", lambda *_a, **_k: None)
-    monkeypatch.setattr(critic_mod.time, "sleep", lambda *_a, **_k: None)
+    monkeypatch.setattr(parsing_mod.time, "sleep", lambda *_a, **_k: None)
 
 
 class _StubCallToolResult:
