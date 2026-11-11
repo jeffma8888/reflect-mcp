@@ -17,6 +17,10 @@ Each tool returns a `CallToolResult` annotated with `tools.ToolResult`, so
 `status:"error"` row reaches the host as `isError: true`. The structuredContent
 is built explicitly: annotating `-> ToolResult` alone would make FastMCP
 re-dump the dict with `None` defaults that fail the published schema.
+
+`FastMCP()` takes no version, so the low-level server's version is set to
+`__version__` explicitly; otherwise the `initialize` handshake's
+`serverInfo.version` reports the MCP SDK's version instead of this build's.
 """
 
 from __future__ import annotations
@@ -25,7 +29,7 @@ import asyncio
 import json
 from typing import Annotated, Any
 
-from reflect_mcp import tools
+from reflect_mcp import __version__, tools
 from reflect_mcp.logging_config import get_logger
 from reflect_mcp.tools import ToolResult
 
@@ -40,6 +44,8 @@ except ImportError as exc:  # pragma: no cover - only hit without the server ext
     ) from exc
 
 mcp = FastMCP("reflect-mcp")
+if hasattr(mcp, "_mcp_server"):  # not every FastMCP-compatible object exposes the low-level server
+    mcp._mcp_server.version = __version__
 
 
 def _structured(result: dict[str, Any]) -> CallToolResult:

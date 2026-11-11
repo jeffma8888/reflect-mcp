@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-85
+    lenses: hardening/DX
+    - Candidate A1 -- A truncated `invoice_number`/`currency` stops grounding as a silent `ok`: "INV-100" inside "INV-1001" and "USD" inside "USDT" get the 0.25 not-found penalty (roadmap #54)
+    - Candidate A2 -- Role checks run on whitespace-folded grounding too: a "Bill to" buyer or a PO number written with an NBSP/tab/double space is no longer a silent `ok` (roadmap #44)
+    - Candidate A3 -- The suite stays green when an operator has `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD` exported: one autouse conftest fixture replaces five per-file env-clearing copies (roadmap #59, marked NEXT)
+    - Candidate B1 -- The MCP host sees reflect-mcp's own version: `initialize` reports `serverInfo.version` 0.1.0, not the MCP SDK's 1.28.1
+    - Candidate B2 -- `--batch` error rows carry their 1-based input `line`, so a malformed row can be joined back to its input (roadmap #25 remainder)
+    - Candidate B3 -- `validate --data @result.json` reads the fields (or a saved result envelope) from a file
+    winner: B1
+    ship: pending (not yet decided)
   iter-84
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Currency grounded by its written name: "US Dollars", "Pounds Sterling", "Japanese Yen" ground USD/GBP/JPY, so the correct answer on a spelled-out invoice stops being flagged
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Provenance spans point at the value on non-ASCII invoices, and the heuristics never crash on case-folding: an `İ` stops shifting every later span, and `ſep 1, 2026` stops returning `status:error` (roadmap #70)
     - Candidate B3 -- `--batch` accepts the JSONL a Windows editor or Excel export writes: a UTF-8 BOM on line 1 stops being an error row + exit 3, and whitespace-only lines are skipped as the docstring already claims (roadmap #46)
     winner: B2
-    ship: pending (not yet decided)
+    ship: PUSHED 9decb18
   iter-83
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- `.env.example` lists every `REFLECT_*` variable the package reads, starting with the two operator-floor variables it has lacked since iter 61, pinned by a two-way drift test
@@ -490,4 +500,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-49 scouted iterations
+50 scouted iterations

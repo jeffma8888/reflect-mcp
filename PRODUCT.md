@@ -44,7 +44,7 @@ tool surface, small deps, MIT, publication-safe.
 | 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` (iter-74 A2: `{"totl":999}` → `ok`, all-null; MCP `data` schema names no fields) | High | Low | DONE (iter 68: own envelope unwrapped; iter 79: unknown keys rejected, naming them; `{}` still QUEUED) |
 | 25 | Batch output joinable: echo caller `id` + 1-based `line`; per-line empty-text pre-check | Med | Low | PARTIAL (iter 67: id echo; 1-based line QUEUED) |
 | 26 | Drop the fixed 0.5s sleep before a parse/schema retry (pure latency; transport retries live in SDKs) | Med | Low | QUEUED |
-| 27 | NEXT: locked per-role client memo on the MCP path (20 calls 40 → 0 TCP conns; closes iter-69 unlocked boto3 build race) | High | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
+| 27 | Locked per-role client memo on the MCP path (20 calls 40 → 0 TCP conns; closes iter-69 unlocked boto3 build race) | High | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
 | 28 | Delete the `heuristics_enabled` knob (Critic-less + heuristics-off returns `ok` on fabricated data) | High | Low | DONE (iter 62) |
 | 29 | README §3 demo is the real inv-004 replay output, pinned by a test that re-runs it | Med | Low | DONE (iter 58) |
 | 30 | Retry carries the parse/schema error to the model instead of a byte-identical re-request | Med | Low | QUEUED |
@@ -61,7 +61,7 @@ tool surface, small deps, MIT, publication-safe.
 | 41 | Party-role grounding: a `vendor_name` found only on "Bill to"/"Ship to"/"Sold to"/"Deliver to" lines is penalized (0.3) | High | Low | DONE (iter 66) |
 | 42 | Date-role grounding: an `invoice_date` the source shows only on a "Due"/"Ship date" line is penalized | Med | Low | DONE (iter 71) |
 | 43 | `make eval` adds a heuristics-only (Critic-off) trust readout line: catch / silent-wrong / false alarms | Med | Low | QUEUED |
-| 44 | Party-role check runs on normalized grounding too: NBSP/tab/double-space/CR "Bill to" buyer is no silent `ok` (4/6 bypass; ~8 lines, eval byte-identical; needs golden row) | High | Low | QUEUED |
+| 44 | Party-role check runs on normalized grounding too: NBSP/tab/double-space/CR "Bill to" buyer is no silent `ok` (iter-85 A2: 10/10 bypass over 5 whitespace kinds × 2 role checks; ~8 lines, 0 test edits; needs golden row) | High | Low | NEXT |
 | 45 | `--batch \| head -1` keeps the 0/1/2/3 contract: worst code of rows produced, no traceback, input stops (was exit 120) | Med | Low | DONE (iter 78) |
 | 46 | `--batch` tolerates a UTF-8 BOM and skips whitespace-only lines (today error rows + exit 3) | Med | Low | QUEUED |
 | 47 | `--batch --summary PATH` writes `{lines, ok, needs_review, error, flagged_fields, exit}` for CI gates | Med | Low | QUEUED |
@@ -76,11 +76,11 @@ tool surface, small deps, MIT, publication-safe.
 | 56 | Currency grounded by unambiguous symbol on a labelled amount ("€"→EUR, "£"→GBP; never "$") (iter-72 A2: removes a measured false alarm) | Med | Low | QUEUED |
 | 57 | MCP tools publish a typed outputSchema (`status` enum required) + `structuredContent`; `status:"error"` sets `isError` (iter-73 B1) | High | Low | DONE (iter 73) |
 | 58 | MCP threshold args default to `null`: inputSchema stops advertising 0.7/0.75; an omitted arg never gets a "raised from" note (iter-74 A1) | High | Low | DONE (iter 74) |
-| 59 | NEXT: one autouse conftest floor reset: suite green with `REFLECT_*_THRESHOLD` exported (HEAD: 5–7 fail; tests only, net −22; iter-74 B3) | Med | Low | QUEUED |
+| 59 | One autouse conftest floor reset: suite green with `REFLECT_*_THRESHOLD` exported (HEAD: 5–7 fail; tests only, net −22; iter-74 B3) | Med | Low | QUEUED |
 | 60 | `validate --batch` grades rows carrying `expected` (caught/silent-wrong/false alarms) + `--max-silent-wrong` exit; grader moves to `grading.py` (iter-74 A3) | High | Med | QUEUED |
 | 61 | One single-document CLI tail: `run_extract/validate_from_args` share `_run_verb` (−18 cli.py lines, 18-probe byte-identical; iter-75 A1; repays #62's budget) | Med | Low | QUEUED |
 | 62 | Concurrent `--batch` streams via a bounded 2N window (row 1 after 2N pulls, not EOF; 88.9→0.2 MB on 50k lines; iter-75 B1) | High | Low | DONE (iter 75) |
-| 63 | `--batch` flushes each row so a piped consumer sees it immediately (stdout is block-buffered on pipes) | Med | Low | NEXT |
+| 63 | `--batch` flushes each row so a piped consumer sees it immediately (stdout is block-buffered on pipes) | Med | Low | QUEUED |
 | 64 | Critic emits `rationale` only for doubted fields (30% of critic_raw bytes are discarded on `ok`; iter-75 B3; needs live evidence) | Low | Med | QUEUED |
 | 65 | `ok` notes name heuristic-penalized fields that cleared a lowered threshold; all-null `ok` says nothing was verified (iter-76 B1) | High | Low | DONE (iter 76) |
 | 66 | CI: `.github/workflows/ci.yml` runs `uv run pytest` + `make eval` on Python 3.10 (floor) and 3.13; iter73 import sweep stops leaking package attrs (3.10: 47 red → 0) | High | Low | DONE (iter 80) |
@@ -89,6 +89,7 @@ tool surface, small deps, MIT, publication-safe.
 | 69 | `.env.example` lists every `REFLECT_*` var src reads (missing both iter-61 floor vars) + two-way src↔template test (iter-83 A1) | Med | Low | QUEUED |
 | 70 | Non-ASCII hardening: `APRİL 3, 2026`/`ſep` month tokens read by the matching regex rule (KeyError → validate exit 3 / `make eval` crash), provenance spans index the original text (`İ` shifted every later span); seeded property test; golden inv-012 (iter-84 B2) | High | Low | DONE (iter 84) |
 | 71 | Currency grounded by its written name, word-bounded (`US Dollars`→USD, `Pounds Sterling`→GBP; not `AUS Dollars`); clean golden row (iter-84 A1, lost to B2) | Med | Low | QUEUED |
+| 72 | MCP `initialize` reports reflect-mcp's own `serverInfo.version` (was the mcp SDK's 1.28.1); `__version__`↔pyproject pin (iter-85 B1) | Med | Low | DONE (iter 85) |
 
 ## Done ledger
 
@@ -140,3 +141,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 82 — Month/label regexes get first-letter lookaheads: heuristics −36% on 297 KB, reports byte-identical
 - iter 83 — currency must be a 3-letter ISO 4217 code shape: `$`/`US Dollars` stop passing as ok; golden inv-011
 - iter 84 — `APRİL`/`ſep` month tokens stop crashing; provenance spans exact after `İ`; golden inv-012
+- iter 85 — MCP `initialize` reports `serverInfo.version` = `reflect-mcp --version`, not the mcp SDK's
