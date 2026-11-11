@@ -20,6 +20,8 @@ combines both. Concretely we check:
   - identifier-role grounding: a grounded invoice_number must not appear *only*
                  on PO/order/customer/account lines when another line carries an
                  invoice-number label ("Invoice No: ..."), so a copied PO number fails.
+  - currency-code shape: currency must be an ISO 4217-shaped code (3 uppercase
+                 letters), so "$" or "US Dollars" can't pass on presence alone.
 
 Each check contributes a per-field factor in [0,1]; the gate multiplies the
 Critic confidence by this factor, so a structurally impossible value can never
@@ -39,6 +41,9 @@ _TEXT_GROUNDED_FIELDS = {"vendor_name", "invoice_number", "currency"}
 _NUMERIC_FIELDS = {"subtotal", "tax", "total"}
 
 _ARITHMETIC_TOLERANCE = 0.02  # currency rounding slack
+
+# ISO 4217 shape only (no code list): `[A-Z]` is ASCII, used with `fullmatch`.
+_CURRENCY_CODE_RE = re.compile(r"[A-Z]{3}")
 
 
 def _lookahead(alternatives: list[str] | tuple[str, ...]) -> str:
@@ -333,6 +338,13 @@ def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
     for field in EXTRACTION_FIELDS:
         value = getattr(data, field)
         if value is None:
+            continue
+
+        if field == "currency" and not _CURRENCY_CODE_RE.fullmatch(str(value)):
+            # A malformed code is worse than an ungrounded one, so it gets one
+            # reason and no grounding: "$" being in the source proves nothing.
+            report.provenance[field] = []
+            report.penalize(field, 0.2, f"currency {value!r} is not an ISO 4217 code (3 uppercase letters)")
             continue
 
         if field in _TEXT_GROUNDED_FIELDS:

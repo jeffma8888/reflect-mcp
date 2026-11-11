@@ -15,24 +15,25 @@ def test_offline_eval_produces_expected_metrics():
     m = run_eval.evaluate(live=False)
     # Deliberately LIVE: follows the committed dataset (frozen-subset pins live
     # in tests/_golden.py), so it moves whenever a golden row is added.
-    assert m.examples == 10  # iter 77: inv-010 added
-    assert m.total_fields == 70  # 10 examples x 7 fields
+    assert m.examples == 11  # iter 77: inv-010 added; iter 83: inv-011
+    assert m.total_fields == 77  # 11 examples x 7 fields
     # inv-004 injects a wrong total, inv-006 an ungrounded date, inv-007 the
     # bill-to customer as vendor, inv-008 a stray item line as total, inv-009 the
-    # due date as the invoice date, inv-010 the PO number as the invoice number
-    # -> six misses.
-    assert m.correct_fields == 64
+    # due date as the invoice date, inv-010 the PO number as the invoice number,
+    # inv-011 a written-out currency name -> seven misses.
+    assert m.correct_fields == 70
     assert 0.90 <= m.field_accuracy < 1.0
-    assert m.exact_matches == 4  # 4/10 exact
+    assert m.exact_matches == 4  # 4/11 exact
     # Every injected-error example must be routed to human review.
-    assert m.reviewed == 6
-    assert (m.caught, m.silent_wrong, m.false_alarms) == (6, 0, 0)
+    assert m.reviewed == 7
+    assert (m.caught, m.silent_wrong, m.false_alarms) == (7, 0, 0)
     assert ("inv-004", "total", 583.2, 683.2) in m.failures
     assert ("inv-006", "invoice_date", "2026-03-14", "2026-04-14") in m.failures
     assert ("inv-007", "vendor_name", "NORTHWIND TRADERS", "Contoso Ltd") in m.failures
     assert ("inv-008", "total", 75.0, 45.0) in m.failures
     assert ("inv-009", "invoice_date", "2026-07-01", "2026-07-31") in m.failures
     assert ("inv-010", "invoice_number", "TH-5120", "PO-88213") in m.failures
+    assert ("inv-011", "currency", "USD", "US Dollars") in m.failures
 
 
 def test_eval_run_gate_passes_offline():

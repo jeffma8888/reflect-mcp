@@ -61,12 +61,13 @@ EB1_EXPECTED = {
     "currency": "USD",
 }
 
+# iter 83: re-pinned for the 11th golden row (inv-011).
 EVAL_LINES = (
-    "examples          : 10",
-    "field accuracy    : 91.4%  (64/70)",
-    "exact-match acc   : 40.0%  (4/10)",
-    "needs-review rate : 60.0%  (6/10)",
-    "catch rate        : 100.0%  (6/6)",
+    "examples          : 11",
+    "field accuracy    : 90.9%  (70/77)",
+    "exact-match acc   : 36.4%  (4/11)",
+    "needs-review rate : 63.6%  (7/11)",
+    "catch rate        : 100.0%  (7/7)",
     "silent-wrong      : 0",
     "false alarms      : 0",
 )
@@ -292,7 +293,8 @@ def test_eb5_other_fields_unchanged_vs_head():
 def test_eb5_existing_golden_rows_identical_to_head():
     head = _head_heuristics()
     replay = json.loads(REPLAY.read_text())
-    rows = [r for r in _rows() if r["id"] != "inv-010"]
+    # iter 83: inv-011 postdates this HEAD and is caught by a newer check, so it is excluded too.
+    rows = [r for r in _rows() if r["id"] not in ("inv-010", "inv-011")]
     assert len(rows) == 9
     for row in rows:
         for data in (row["expected"], json.loads(replay[row["id"]]["generator_raw"])):
@@ -310,8 +312,8 @@ def test_eb5_heuristics_only_lower():
 # ---------------------------------------------------------------- EB6
 def test_eb6_inv010_golden_row():
     rows = _rows()
-    assert len(rows) == 10
-    row = rows[-1]
+    assert len(rows) == 11  # iter 83: inv-011 appended after inv-010
+    row = rows[9]
     assert row["id"] == "inv-010"
     assert row["text"] == EB1_TEXT
     assert row["expected"] == EB1_EXPECTED
@@ -369,8 +371,9 @@ def test_eb8_head_heuristics_make_inv010_silent(tmp_path):
     out = [ln.strip() for ln in r.stdout.splitlines()]
     inv10 = [ln for ln in out if ln.startswith("[inv-010]")]
     assert inv10 == ["[inv-010] invoice_number: expected 'TH-5120' but got 'PO-88213'  (SILENT)"]
-    assert "silent-wrong      : 1" in out
-    assert "FAIL: silent-wrong fields 1 > allowed 0" in out
+    # iter 83: that HEAD also predates the currency-code shape check, so inv-011 is silent too.
+    assert "silent-wrong      : 2" in out
+    assert "FAIL: silent-wrong fields 2 > allowed 0" in out
 
 
 # ---------------------------------------------------------------- EB9
@@ -419,7 +422,7 @@ def test_eb10_readme_eval_block_byte_equal_and_inv010_sentence():
     readme = README.read_text()
     out = _run_eval(REPO).stdout.strip("\n")
     assert out in readme
-    idx = readme.index("examples          : 10")
+    idx = readme.index("examples          : 11")  # iter 83
     intro = readme[:idx].rsplit("Offline run", 1)[1]
     assert "inv-010" in intro and "identifier-role grounding" in intro
     assert "PO number" in intro

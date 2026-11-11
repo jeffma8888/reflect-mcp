@@ -85,6 +85,9 @@ tool surface, small deps, MIT, publication-safe.
 | 65 | `ok` notes name heuristic-penalized fields that cleared a lowered threshold; all-null `ok` says nothing was verified (iter-76 B1) | High | Low | DONE (iter 76) |
 | 66 | CI: `.github/workflows/ci.yml` runs `uv run pytest` + `make eval` on Python 3.10 (floor) and 3.13; iter73 import sweep stops leaking package attrs (3.10: 47 red → 0) | High | Low | DONE (iter 80) |
 | 67 | Month/amount-label regexes get first-letter lookaheads + unique 3-letter month prefixes: `_MONTH_FIRST_RE` 3.9× faster, `run_heuristics` −36% on 297 KB, reports byte-identical (iter-82 A1) | Med | Low | DONE (iter 82) |
+| 68 | Currency-code shape check: a `currency` not matching `[A-Z]{3}` (`$`, `US Dollars`, `usd`) gets factor 0.2, not a silent grounded ok; golden inv-011 (iter-83 B1) | High | Low | DONE (iter 83) |
+| 69 | `.env.example` lists every `REFLECT_*` var src reads (missing both iter-61 floor vars) + two-way src↔template test (iter-83 A1) | Med | Low | QUEUED |
+| 70 | Month-name lookup uses `casefold()`: `ſep 1, 2026` raises KeyError → validate exit 3 (iter-82 REV NIT) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -134,3 +137,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 80 — CI runs the offline suite + `make eval` on 3.10 and 3.13; iter73 sweep restores package attrs
 - iter 81 — CLI test entry points parse via the console's argparse tree; cli.py's duplicate parsers deleted
 - iter 82 — Month/label regexes get first-letter lookaheads: heuristics −36% on 297 KB, reports byte-identical
+- iter 83 — currency must be a 3-letter ISO 4217 code shape: `$`/`US Dollars` stop passing as ok; golden inv-011

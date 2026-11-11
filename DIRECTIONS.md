@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-83
+    lenses: narrative-and-docs, new-capability
+    - Candidate A1 -- `.env.example` lists every `REFLECT_*` variable the package reads, starting with the two operator-floor variables it has lacked since iter 61, pinned by a two-way drift test
+    - Candidate A2 -- The MCP tool descriptions an agent reads match the shipped contract: `validate` names its 7 data keys and the iter-79 unknown-key error, and `overall_confidence` stops being "the critic's" when no Critic ran
+    - Candidate A3 -- "Prompts live in versioned files" becomes a true statement: README §10, the layout line and `load_prompt`'s docstring stop claiming a versioning that doesn't exist, and the Generator prompt's hand-copied key list is pinned to `InvoiceData`
+    - Candidate B1 -- Currency-code shape check: a `currency` that is not a 3-letter ISO 4217 code ("$", "US Dollars", "usd", "US") stops being a silent grounded `ok`
+    - Candidate B2 -- The arithmetic check counts labelled shipping/discount/fee lines, so correct invoices that have them stop going to `needs_review`
+    - Candidate B3 -- Currency symbol contradiction: a `currency` that conflicts with the source's unambiguous money symbols (€→EUR, £→GBP, never `$`) is flagged, and a symbol-only EUR/GBP invoice stops false-alarming
+    winner: B1
+    ship: pending (not yet decided)
   iter-82
     lenses: unknown
     - Candidate A1 -- Regexes that can only start on a month/label letter stop being tried at every character: 297 KB `validate` heuristics 152 → 98 ms (−36%), 200-row `--batch` 3.24 → 2.13 s, with byte-identical reports
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- PRODUCT.md's roadmap stops sending three contradictory signals: one `NEXT` row instead of three, #39's stale "14-test migration" figure replaced with the measured 34, and #20's "all-null is needs_review" reconciled with the shipped iter-76 decision
     - Candidate B3 -- README's "coverage ≥90%" badge becomes a checked claim: `fail_under = 90` in `[tool.coverage.report]`, CI's test step runs with `--cov`, and §9 says the figure excludes `server.py`/`providers.py`
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED f3de092
   iter-81
     lenses: simplification-and-deletion
     - Candidate A1 -- One argparse tree: `cli.run_extract`/`run_validate` parse through the console script's own `reflect-mcp <verb>` parser, and cli.py's duplicate parser builders are deleted (cli.py 375 → 304)
@@ -470,4 +480,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-47 scouted iterations
+48 scouted iterations

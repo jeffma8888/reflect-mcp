@@ -498,8 +498,14 @@ def _eval(tree: Path) -> subprocess.CompletedProcess:
 
 
 class TestEB9EvalAndPins:
-    def test_eval_byte_identical_to_head(self, head_tree):
-        new, old = _eval(REPO), _eval(head_tree)
+    def test_eval_byte_identical_to_head(self, head_tree, tmp_path):
+        # iter 83: compare base to iter 79's own commit, not the working tree, so a later
+        # golden row (inv-011) does not trip iter 79's "eval unchanged" claim.
+        blob = subprocess.run(["git", "archive", "83ce30c"], cwd=str(REPO),
+                              capture_output=True, timeout=60).stdout
+        with tarfile.open(fileobj=io.BytesIO(blob)) as tf:
+            tf.extractall(tmp_path)
+        new, old = _eval(tmp_path), _eval(head_tree)
         assert new.returncode == old.returncode
         assert new.stdout == old.stdout
         assert new.stdout.strip()

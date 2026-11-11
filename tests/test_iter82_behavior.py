@@ -391,7 +391,7 @@ class TestEB6Eval:
         r = subprocess.run(["make", "eval"], cwd=REPO, capture_output=True, text=True,
                            timeout=300)
         assert r.returncode == 0, r.stdout + r.stderr
-        assert "field accuracy    : 91.4%  (64/70)" in r.stdout
+        assert "field accuracy    : 90.9%  (70/77)" in r.stdout  # iter 83: inv-011 added
         assert "silent-wrong      : 0" in r.stdout
 
 

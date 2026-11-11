@@ -333,16 +333,22 @@ class TestEB10ShippedSurface:
     def test_eval_dir_unchanged(self):
         if not _base_reachable():
             pytest.skip(f"{BASE_SHA} not reachable")
-        r = subprocess.run(["git", "-C", str(REPO_ROOT), "diff", "--quiet", BASE_SHA, "--", "eval"],
-                           capture_output=True, timeout=30)
+        # iter 83: compare base to iter 81's own commit, not the working tree (a later
+        # golden row, inv-011, edits eval/), so the claim stays exact and history-pinned.
+        r = subprocess.run(["git", "-C", str(REPO_ROOT), "diff", "--quiet", BASE_SHA, "26de4e7",
+                            "--", "eval"], capture_output=True, timeout=30)
         assert r.returncode == 0
-        r = subprocess.run(["git", "-C", str(REPO_ROOT), "status", "--porcelain", "--", "eval"],
-                           capture_output=True, text=True, timeout=30)
-        assert r.stdout.strip() == ""
 
-    def test_eval_stdout_byte_identical_to_base(self, head_tree):
+    def test_eval_stdout_byte_identical_to_base(self, head_tree, tmp_path):
+        # iter 83: iter 81's own commit stands in for the working tree (see above).
+        r = subprocess.run(["git", "-C", str(REPO_ROOT), "archive", "26de4e7"],
+                           capture_output=True, timeout=60)
+        assert r.returncode == 0, r.stderr
+        with tarfile.open(fileobj=io.BytesIO(r.stdout)) as tf:
+            tf.extractall(tmp_path)
         wt = subprocess.run([sys.executable, "eval/run_eval.py"], capture_output=True, text=True,
-                            timeout=120, cwd=str(REPO_ROOT), env=_env())
+                            timeout=120, cwd=str(tmp_path),
+                            env=_env(PYTHONPATH=str(tmp_path / "src")))
         base = subprocess.run([sys.executable, "eval/run_eval.py"], capture_output=True, text=True,
                               timeout=120, cwd=str(head_tree),
                               env=_env(PYTHONPATH=str(head_tree / "src")))
@@ -399,8 +405,10 @@ class TestEB11Migrations:
     def test_no_existing_test_deleted_and_edits_scoped(self):
         if not _base_reachable():
             pytest.skip(f"{BASE_SHA} not reachable")
-        r = subprocess.run(["git", "-C", str(REPO_ROOT), "diff", "--name-status", BASE_SHA, "--", "tests"],
-                           capture_output=True, text=True, timeout=30)
+        # iter 83: diff base against iter 81's own commit, not the working tree, so later
+        # iterations' pin migrations do not trip iter 81's "edits scoped" claim.
+        r = subprocess.run(["git", "-C", str(REPO_ROOT), "diff", "--name-status", BASE_SHA, "26de4e7",
+                            "--", "tests"], capture_output=True, text=True, timeout=30)
         assert r.returncode == 0, r.stderr
         rows = [ln.split("\t") for ln in r.stdout.splitlines() if ln.strip()]
         assert not [p for s, *p in rows if s.startswith("D")]
@@ -412,5 +420,6 @@ class TestEB11Migrations:
         assert modified <= allowed, modified - allowed
         for path in modified:
             base = _git_show(path).decode("utf-8")
-            wt = (REPO_ROOT / path).read_text(encoding="utf-8")
+            wt = subprocess.run(["git", "-C", str(REPO_ROOT), "show", f"26de4e7:{path}"],
+                                capture_output=True, text=True, timeout=30).stdout
             assert _test_names(base) <= _test_names(wt), path
