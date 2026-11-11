@@ -15,15 +15,15 @@ def test_offline_eval_produces_expected_metrics():
     m = run_eval.evaluate(live=False)
     # Deliberately LIVE: follows the committed dataset (frozen-subset pins live
     # in tests/_golden.py), so it moves whenever a golden row is added.
-    assert m.examples == 11  # iter 77: inv-010 added; iter 83: inv-011
-    assert m.total_fields == 77  # 11 examples x 7 fields
+    assert m.examples == 12  # iter 77: inv-010 added; iter 83: inv-011; iter 84: inv-012 (clean)
+    assert m.total_fields == 84  # 12 examples x 7 fields
     # inv-004 injects a wrong total, inv-006 an ungrounded date, inv-007 the
     # bill-to customer as vendor, inv-008 a stray item line as total, inv-009 the
     # due date as the invoice date, inv-010 the PO number as the invoice number,
     # inv-011 a written-out currency name -> seven misses.
-    assert m.correct_fields == 70
+    assert m.correct_fields == 77
     assert 0.90 <= m.field_accuracy < 1.0
-    assert m.exact_matches == 4  # 4/11 exact
+    assert m.exact_matches == 5  # 5/12 exact
     # Every injected-error example must be routed to human review.
     assert m.reviewed == 7
     assert (m.caught, m.silent_wrong, m.false_alarms) == (7, 0, 0)

@@ -73,17 +73,18 @@ INV9_EXPECTED = {
     "total": 432.0,
     "currency": "USD",
 }
-# iter 77: live counts re-pinned for the 10th golden row (inv-010); iter 83: 11th (inv-011).
+# iter 77: live counts re-pinned for the 10th golden row (inv-010); iter 83: 11th (inv-011);
+# iter 84: 12th (inv-012, clean).
 LIVE_LINES = (
-    "examples          : 11",
-    "field accuracy    : 90.9%  (70/77)",
-    "exact-match acc   : 36.4%  (4/11)",
-    "needs-review rate : 63.6%  (7/11)",
+    "examples          : 12",
+    "field accuracy    : 91.7%  (77/84)",
+    "exact-match acc   : 41.7%  (5/12)",
+    "needs-review rate : 58.3%  (7/12)",
     "catch rate        : 100.0%  (7/7)",
     "silent-wrong      : 0",
     "false alarms      : 0",
     "  [inv-009] invoice_date: expected '2026-07-01' but got '2026-07-31'  (flagged)",
-    "PASS: field accuracy 90.9% >= required 90.0%",
+    "PASS: field accuracy 91.7% >= required 90.0%",
 )
 OLD_FAILURE_LINES = (
     "  [inv-004] total: expected 583.2 but got 683.2  (flagged)",
@@ -128,7 +129,7 @@ def _live_eval(*args: str) -> subprocess.CompletedProcess[str]:
 # ---------------------------------------------------------------- EB1 dataset
 def test_eb1_dataset_has_nine_rows_first_eight_unchanged():
     lines = _lines(DATASET)
-    assert len(lines) == 11  # iter 77: inv-010 appended after inv-009; iter 83: inv-011
+    assert len(lines) == 12  # iter 77: inv-010 appended after inv-009; iter 83: inv-011; iter 84: inv-012
     assert _sha("\n".join(lines[:8]) + "\n") == HEAD_DATASET_SHA
 
 
@@ -143,7 +144,7 @@ def test_eb1_row_nine_is_inv009_due_date_case():
 def test_eb2_replay_keys_and_inv009_entry():
     replay = json.loads(REPLAY.read_text())
     assert isinstance(replay, dict)
-    assert sorted(replay) == [f"inv-{i:03d}" for i in range(1, 12)]  # iter 77: + inv-010; iter 83: + inv-011
+    assert sorted(replay) == [f"inv-{i:03d}" for i in range(1, 13)]  # iter 77: + inv-010; iter 83: + inv-011; iter 84: + inv-012
     gen = json.loads(replay["inv-009"]["generator_raw"])
     assert gen == {**INV9_EXPECTED, "invoice_date": "2026-07-31"}
     assert replay["inv-009"]["critic_raw"] == replay["inv-008"]["critic_raw"]
@@ -180,7 +181,7 @@ def test_eb3_make_eval_exits_zero_with_nine_examples():
         pytest.skip("make or .venv unavailable")
     r = subprocess.run(["make", "eval"], cwd=REPO, capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "examples          : 11" in r.stdout.splitlines()  # iter 77, iter 83
+    assert "examples          : 12" in r.stdout.splitlines()  # iter 77, iter 83, iter 84
     assert "catch rate        : 100.0%  (7/7)" in r.stdout.splitlines()
 
 
@@ -195,6 +196,10 @@ def test_eb4_inv009_is_silent_wrong_on_pre_date_role_heuristics(tmp_path):
         ignore=shutil.ignore_patterns(".venv", ".git", "__pycache__", "*.pyc", ".pytest_cache"),
     )
     (copy / "src" / "reflect_mcp" / "heuristics.py").write_text(old)
+    # iter 84: pre-iter-84 heuristics crash on inv-012's "APRİL", so the
+    # counterfactual runs on the 11 rows its counts were measured on.
+    dataset = copy / "eval" / "golden" / "dataset.jsonl"
+    dataset.write_text("".join(dataset.read_text().splitlines(keepends=True)[:11]))
     env = {k: v for k, v in os.environ.items() if not k.startswith("REFLECT_")}
     env["PYTHONPATH"] = str(copy / "src")
     probe = subprocess.run(
@@ -330,7 +335,7 @@ def test_eb9_patch_is_undone_after_test():
         sys.path.insert(0, str(EVAL_DIR))
     import run_eval
 
-    assert run_eval.evaluate(live=False).examples == 11  # iter 77, iter 83
+    assert run_eval.evaluate(live=False).examples == 12  # iter 77, iter 83, iter 84
 
 
 # ---------------------------------------------------------------- EB10 migration
@@ -355,7 +360,7 @@ def test_eb12_readme_contains_live_stdout_block():
 
 def test_eb12_readme_intro_sentence_five_and_inv009():
     readme = README.read_text()
-    idx = readme.index("examples          : 11")  # iter 77, iter 83
+    idx = readme.index("examples          : 12")  # iter 77, iter 83, iter 84
     intro = readme[:idx].rsplit("Offline run", 1)
     assert len(intro) == 2, "intro sentence above eval block not found"
     sentence = intro[1]

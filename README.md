@@ -306,10 +306,10 @@ Offline run (recorded fixtures; seven examples carry an injected hallucination â
 ==============================================================
 reflect-mcp eval  |  mode: OFFLINE (replay fixtures)
 ==============================================================
-examples          : 11
-field accuracy    : 90.9%  (70/77)
-exact-match acc   : 36.4%  (4/11)
-needs-review rate : 63.6%  (7/11)
+examples          : 12
+field accuracy    : 91.7%  (77/84)
+exact-match acc   : 41.7%  (5/12)
+needs-review rate : 58.3%  (7/12)
 catch rate        : 100.0%  (7/7)
 silent-wrong      : 0
 false alarms      : 0
@@ -323,7 +323,7 @@ field-level failures (where it breaks):
   [inv-010] invoice_number: expected 'TH-5120' but got 'PO-88213'  (flagged)
   [inv-011] currency: expected 'USD' but got 'US Dollars'  (flagged)
 ==============================================================
-PASS: field accuracy 90.9% >= required 90.0%
+PASS: field accuracy 91.7% >= required 90.0%
 PASS: silent-wrong fields 0 <= allowed 0
 ```
 

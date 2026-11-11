@@ -61,12 +61,12 @@ EB1_EXPECTED = {
     "currency": "USD",
 }
 
-# iter 83: re-pinned for the 11th golden row (inv-011).
+# iter 83: re-pinned for the 11th golden row (inv-011); iter 84: 12th (inv-012, clean).
 EVAL_LINES = (
-    "examples          : 11",
-    "field accuracy    : 90.9%  (70/77)",
-    "exact-match acc   : 36.4%  (4/11)",
-    "needs-review rate : 63.6%  (7/11)",
+    "examples          : 12",
+    "field accuracy    : 91.7%  (77/84)",
+    "exact-match acc   : 41.7%  (5/12)",
+    "needs-review rate : 58.3%  (7/12)",
     "catch rate        : 100.0%  (7/7)",
     "silent-wrong      : 0",
     "false alarms      : 0",
@@ -293,8 +293,9 @@ def test_eb5_other_fields_unchanged_vs_head():
 def test_eb5_existing_golden_rows_identical_to_head():
     head = _head_heuristics()
     replay = json.loads(REPLAY.read_text())
-    # iter 83: inv-011 postdates this HEAD and is caught by a newer check, so it is excluded too.
-    rows = [r for r in _rows() if r["id"] not in ("inv-010", "inv-011")]
+    # iter 83: inv-011 postdates this HEAD and is caught by a newer check, so it is excluded too;
+    # iter 84: so does inv-012, whose "APRİL" date crashes this HEAD's month reader.
+    rows = [r for r in _rows() if r["id"] not in ("inv-010", "inv-011", "inv-012")]
     assert len(rows) == 9
     for row in rows:
         for data in (row["expected"], json.loads(replay[row["id"]]["generator_raw"])):
@@ -312,7 +313,7 @@ def test_eb5_heuristics_only_lower():
 # ---------------------------------------------------------------- EB6
 def test_eb6_inv010_golden_row():
     rows = _rows()
-    assert len(rows) == 11  # iter 83: inv-011 appended after inv-010
+    assert len(rows) == 12  # iter 83: inv-011 appended after inv-010; iter 84: inv-012
     row = rows[9]
     assert row["id"] == "inv-010"
     assert row["text"] == EB1_TEXT
@@ -359,6 +360,9 @@ def test_eb8_head_heuristics_make_inv010_silent(tmp_path):
         ignore=shutil.ignore_patterns(".venv", ".git", "__pycache__", "*.pyc", ".pytest_cache"),
     )
     (copy / "src" / "reflect_mcp" / "heuristics.py").write_text(old)
+    # iter 84: this HEAD crashes on inv-012's "APRİL", so run the 11 rows it was measured on.
+    dataset = copy / "eval" / "golden" / "dataset.jsonl"
+    dataset.write_text("".join(dataset.read_text().splitlines(keepends=True)[:11]))
     env = {k: v for k, v in os.environ.items() if not k.startswith("REFLECT_")}
     env["PYTHONPATH"] = str(copy / "src")
     probe = subprocess.run(
@@ -422,7 +426,7 @@ def test_eb10_readme_eval_block_byte_equal_and_inv010_sentence():
     readme = README.read_text()
     out = _run_eval(REPO).stdout.strip("\n")
     assert out in readme
-    idx = readme.index("examples          : 11")  # iter 83
+    idx = readme.index("examples          : 12")  # iter 83, iter 84
     intro = readme[:idx].rsplit("Offline run", 1)[1]
     assert "inv-010" in intro and "identifier-role grounding" in intro
     assert "PO number" in intro

@@ -58,13 +58,13 @@ _MONTH_NAMES = (
     "january", "february", "march", "april", "may", "june",
     "july", "august", "september", "october", "november", "december",
 )
-_MONTHS = {name: i for i, name in enumerate(_MONTH_NAMES, 1)}
-_MONTHS.update({name[:3]: i for i, name in enumerate(_MONTH_NAMES, 1)})
 # Unique 3-letter prefix + optional rest ("jan(?:uary)?"): one branch per month, and
 # the greedy rest tries the long form first, as the old longest-first alternation did.
-_MONTH_RE = _lookahead(_MONTH_NAMES) + "(?:" + "|".join(
-    f"{n[:3]}(?:{n[3:]})?" if n[3:] else n for n in _MONTH_NAMES
-) + ")"
+_MONTH_BRANCHES = tuple(f"{n[:3]}(?:{n[3:]})?" if n[3:] else n for n in _MONTH_NAMES)
+_MONTH_RE = _lookahead(_MONTH_NAMES) + "(?:" + "|".join(_MONTH_BRANCHES) + ")"
+# Per-month readers built from the same branches and flag as the date patterns, so
+# any token `_MONTH_RE` matches ("APRİL", "ſep") reads back; a `lower()` dict key can't.
+_MONTH_READERS = tuple(re.compile(b, re.IGNORECASE) for b in _MONTH_BRANCHES)
 
 # Supported written date forms. Digit-boundary lookarounds stop a date token
 # from matching inside a longer digit run (e.g. "12026-03-145").
@@ -157,11 +157,24 @@ def _normalize(s: str) -> str:
 
 
 def _find_text_span(value: str, original_text: str) -> ProvenanceSpan | None:
-    """Case-insensitive search for *value* in the original (un-normalized) text."""
-    pos = original_text.lower().find(value.lower())
-    if pos == -1:
+    """Case-insensitive search for *value* in the original (un-normalized) text.
+
+    Searches the original text itself rather than `text.lower()`: lowering can change
+    length ("İ" becomes two chars), which would shift every later span off its value.
+    """
+    match = re.search(re.escape(value), original_text, re.IGNORECASE)
+    if match is None:
         return None
-    return ProvenanceSpan(start=pos, end=pos + len(value))
+    return ProvenanceSpan(start=match.start(), end=match.end())
+
+
+def _contains_ci(value: str, line: str) -> bool:
+    """True when *line* contains *value* under the same rule `_find_text_span` grounds with.
+
+    A `lower()` substring test would miss case variants across "İ" (lowering it adds
+    a combining dot), so a value grounded by `re.I` would see no lines and abstain.
+    """
+    return re.search(re.escape(value), line, re.IGNORECASE) is not None
 
 
 def _find_number_span(value: float, text: str) -> ProvenanceSpan | None:
@@ -191,8 +204,7 @@ def _check_party_role(value: str, text: str, report: HeuristicReport) -> None:
     Abstains when any line containing the value is not a counterparty line, so a
     vendor named in both the header and a "Bill to" line still passes.
     """
-    needle = value.lower()
-    lines = [ln for ln in text.split("\n") if needle in ln.lower()]
+    lines = [ln for ln in text.split("\n") if _contains_ci(value, ln)]
     if lines and all(_COUNTERPARTY_LINE_RE.match(ln) for ln in lines):
         report.penalize(
             "vendor_name", 0.3,
@@ -208,8 +220,7 @@ def _check_identifier_role(value: str, text: str, report: HeuristicReport) -> No
     identified only by "Order 5567" has no better candidate), and when any line
     containing the value is not an other-id line.
     """
-    needle = value.lower()
-    lines = [ln for ln in text.split("\n") if needle in ln.lower()]
+    lines = [ln for ln in text.split("\n") if _contains_ci(value, ln)]
     if not _INVOICE_NUMBER_LABEL_RE.search(text):
         return
     if lines and all(_OTHER_ID_LINE_RE.match(ln) for ln in lines):
@@ -252,7 +263,15 @@ def _date_readings(match: re.Match[str]) -> set[tuple[int, int, int]]:
         d, mon, y = match.group(1, 2, 3)
     else:  # a new pattern was added without a reader here
         raise AssertionError(f"unhandled date pattern: {match.re.pattern}")
-    return {(int(y), _MONTHS[mon.lower()], int(d))}
+    return {(int(y), _month_number(mon), int(d))}
+
+
+def _month_number(token: str) -> int:
+    """Month number of a token `_MONTH_RE` matched, read by the rule that matched it."""
+    for number, reader in enumerate(_MONTH_READERS, 1):
+        if reader.fullmatch(token):
+            return number
+    raise AssertionError(f"unreadable month token: {token!r}")
 
 
 def _find_date_span(iso_value: date, text: str) -> ProvenanceSpan | None:

@@ -87,7 +87,8 @@ tool surface, small deps, MIT, publication-safe.
 | 67 | Month/amount-label regexes get first-letter lookaheads + unique 3-letter month prefixes: `_MONTH_FIRST_RE` 3.9× faster, `run_heuristics` −36% on 297 KB, reports byte-identical (iter-82 A1) | Med | Low | DONE (iter 82) |
 | 68 | Currency-code shape check: a `currency` not matching `[A-Z]{3}` (`$`, `US Dollars`, `usd`) gets factor 0.2, not a silent grounded ok; golden inv-011 (iter-83 B1) | High | Low | DONE (iter 83) |
 | 69 | `.env.example` lists every `REFLECT_*` var src reads (missing both iter-61 floor vars) + two-way src↔template test (iter-83 A1) | Med | Low | QUEUED |
-| 70 | Month-name lookup uses `casefold()`: `ſep 1, 2026` raises KeyError → validate exit 3 (iter-82 REV NIT) | Med | Low | QUEUED |
+| 70 | Non-ASCII hardening: `APRİL 3, 2026`/`ſep` month tokens read by the matching regex rule (KeyError → validate exit 3 / `make eval` crash), provenance spans index the original text (`İ` shifted every later span); seeded property test; golden inv-012 (iter-84 B2) | High | Low | DONE (iter 84) |
+| 71 | Currency grounded by its written name, word-bounded (`US Dollars`→USD, `Pounds Sterling`→GBP; not `AUS Dollars`); clean golden row (iter-84 A1, lost to B2) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -138,3 +139,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 81 — CLI test entry points parse via the console's argparse tree; cli.py's duplicate parsers deleted
 - iter 82 — Month/label regexes get first-letter lookaheads: heuristics −36% on 297 KB, reports byte-identical
 - iter 83 — currency must be a 3-letter ISO 4217 code shape: `$`/`US Dollars` stop passing as ok; golden inv-011
+- iter 84 — `APRİL`/`ſep` month tokens stop crashing; provenance spans exact after `İ`; golden inv-012

@@ -63,16 +63,17 @@ INV11_EXPECTED = {
     "currency": "USD",
 }
 
+# iter 84: live counts re-pinned for the clean 12th golden row (inv-012).
 EVAL_LINES = [
-    "examples          : 11",
-    "field accuracy    : 90.9%  (70/77)",
-    "exact-match acc   : 36.4%  (4/11)",
-    "needs-review rate : 63.6%  (7/11)",
+    "examples          : 12",
+    "field accuracy    : 91.7%  (77/84)",
+    "exact-match acc   : 41.7%  (5/12)",
+    "needs-review rate : 58.3%  (7/12)",
     "catch rate        : 100.0%  (7/7)",
     "silent-wrong      : 0",
     "false alarms      : 0",
     "  [inv-011] currency: expected 'USD' but got 'US Dollars'  (flagged)",
-    "PASS: field accuracy 90.9% >= required 90.0%",
+    "PASS: field accuracy 91.7% >= required 90.0%",
 ]
 
 
@@ -304,7 +305,7 @@ def test_eb5_cli_usd_ok(tmp_path):
 # ---------------------------------------------------------------- EB6
 def test_eb6_inv011_golden_row_is_11th_line():
     rows = _rows()
-    assert len(rows) == 11
+    assert len(rows) == 12  # iter 84: inv-012 appended after inv-011
     row = rows[10]
     assert row["id"] == "inv-011"
     assert row["text"] == INV11_TEXT
@@ -336,7 +337,7 @@ def test_eb6_rows_1_to_10_byte_identical_to_base():
     assert len(old_lines) == 10
     assert new_lines[:10] == old_lines
     old_r, new_r = json.loads(old_rp), json.loads(REPLAY.read_text())
-    assert set(new_r) == set(old_r) | {"inv-011"}
+    assert set(old_r) | {"inv-011"} <= set(new_r)  # iter 84: later rows (inv-012) may follow
     for k, v in old_r.items():
         assert new_r[k] == v, k
 
@@ -368,7 +369,7 @@ def test_eb7_make_eval_exit_zero():
         pytest.skip("make unavailable")
     r = subprocess.run(["make", "eval"], cwd=REPO, capture_output=True, text=True, timeout=180)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "PASS: field accuracy 90.9% >= required 90.0%" in r.stdout
+    assert "PASS: field accuracy 91.7% >= required 90.0%" in r.stdout  # iter 84: inv-012
 
 
 # ---------------------------------------------------------------- EB8
@@ -390,6 +391,9 @@ def test_eb8_base_heuristics_eval_is_silent_and_fails(tmp_path):
         ignore=shutil.ignore_patterns(".venv", ".git", "__pycache__", "*.pyc", ".pytest_cache"),
     )
     (copy / "src" / "reflect_mcp" / "heuristics.py").write_text(old)
+    # iter 84: base heuristics crash on inv-012's "APRİL", so run the 11 rows measured here.
+    dataset = copy / "eval" / "golden" / "dataset.jsonl"
+    dataset.write_text("".join(dataset.read_text().splitlines(keepends=True)[:11]))
     env = {k: v for k, v in os.environ.items() if not k.startswith("REFLECT_")}
     env["PYTHONPATH"] = str(copy / "src")
     probe = subprocess.run(
@@ -408,7 +412,8 @@ def test_eb8_base_heuristics_eval_is_silent_and_fails(tmp_path):
 def test_eb9_existing_rows_reports_identical_to_base():
     base = _base_heuristics()
     replay = json.loads(REPLAY.read_text())
-    rows = [r for r in _rows() if r["id"] != "inv-011"]
+    # iter 84: inv-012 postdates base, whose month reader crashes on its "APRİL".
+    rows = [r for r in _rows() if r["id"] not in ("inv-011", "inv-012")]
     assert [r["id"] for r in rows] == [f"inv-{i:03d}" for i in range(1, 11)]
     for row in rows:
         for data in (row["expected"], json.loads(replay[row["id"]]["generator_raw"])):

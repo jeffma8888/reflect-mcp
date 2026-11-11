@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-84
+    lenses: new-capability, hardening/DX
+    - Candidate A1 -- Currency grounded by its written name: "US Dollars", "Pounds Sterling", "Japanese Yen" ground USD/GBP/JPY, so the correct answer on a spelled-out invoice stops being flagged
+    - Candidate A2 -- Results say who verified them: a machine-readable `critic` field (`ran` / `heuristics_only` / `all_fields_doomed`) so a consumer can require a Critic-verified `ok` (roadmap #48, reframed)
+    - Candidate A3 -- A `currency` that fails the ISO shape check names the code to confirm: `'US Dollars' is not an ISO 4217 code; did you mean 'USD'?` (a single-field, table-driven slice of #40)
+    - Candidate B1 -- A blank answer stops grounding as a confident `ok`: `vendor_name: ""` / `invoice_number: "  "` is flagged "blank; use null to abstain" instead of scoring 1.0 with a zero-length provenance span
+    - Candidate B2 -- Provenance spans point at the value on non-ASCII invoices, and the heuristics never crash on case-folding: an `İ` stops shifting every later span, and `ſep 1, 2026` stops returning `status:error` (roadmap #70)
+    - Candidate B3 -- `--batch` accepts the JSONL a Windows editor or Excel export writes: a UTF-8 BOM on line 1 stops being an error row + exit 3, and whitespace-only lines are skipped as the docstring already claims (roadmap #46)
+    winner: B2
+    ship: pending (not yet decided)
   iter-83
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- `.env.example` lists every `REFLECT_*` variable the package reads, starting with the two operator-floor variables it has lacked since iter 61, pinned by a two-way drift test
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- The arithmetic check counts labelled shipping/discount/fee lines, so correct invoices that have them stop going to `needs_review`
     - Candidate B3 -- Currency symbol contradiction: a `currency` that conflicts with the source's unambiguous money symbols (€→EUR, £→GBP, never `$`) is flagged, and a symbol-only EUR/GBP invoice stops false-alarming
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 40b82c2
   iter-82
     lenses: unknown
     - Candidate A1 -- Regexes that can only start on a month/label letter stop being tried at every character: 297 KB `validate` heuristics 152 → 98 ms (−36%), 200-row `--batch` 3.24 → 2.13 s, with byte-identical reports
@@ -480,4 +490,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-48 scouted iterations
+49 scouted iterations
