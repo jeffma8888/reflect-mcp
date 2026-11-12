@@ -91,12 +91,12 @@ tool surface, small deps, MIT, publication-safe.
 | 71 | Currency grounded by its written name, word-bounded (`US Dollars`→USD, `Pounds Sterling`→GBP; not `AUS Dollars`); clean golden row (iter-84 A1, lost to B2) | Med | Low | QUEUED |
 | 72 | MCP `initialize` reports reflect-mcp's own `serverInfo.version` (was the mcp SDK's 1.28.1); `__version__`↔pyproject pin (iter-85 B1) | Med | Low | DONE (iter 85) |
 | 73 | One parse-and-retry loop: Generator + Critic share `parsing.complete_parsed` and one `_RETRY_DELAY_SECONDS`; retries/logs/errors identical, eval byte-identical (iter-86 B1; makes #26/#30 one-place) | Med | Low | DONE (iter 86) |
-| 74 | MCP hosts see tool `title` + `annotations` (readOnly, non-destructive, idempotent, openWorld) and a server `instructions` naming the `needs_review`/`flagged_fields` contract (iter-86 A1: ~12 src lines, 0 test edits; pass annotations as a dict, stub `mcp.types` lacks `ToolAnnotations`) | High | Low | QUEUED |
+| 74 | MCP hosts see tool `title` + `annotations` (readOnly, non-destructive, idempotent, openWorld) and a server `instructions` naming the `needs_review`/`flagged_fields` contract (iter-86 A1: ~12 src lines, 0 test edits; pass annotations as a dict, stub `mcp.types` lacks `ToolAnnotations`; iter-91 B1, instructions tied two-way to the status enum) | High | Low | DONE (iter 91) |
 | 75 | One role-penalty rule: party/identifier/date checks share `_penalize_if_only`; `_contains_ci` folds into `_find_text_span` (iter-87 A1; 2236-row differential byte-identical) | Med | Low | QUEUED |
 | 76 | One source-size budget test (`cli.py <= 306`, `gate.py <= 185`) replaces 9 scattered line-count pins + 4 test-about-test pins (iter-87 A2) | Low | Low | QUEUED |
 | 77 | No-Critic results stop calling the placeholder `overall_confidence: 1.0` "the critic's": heuristics-only and `all_fields_doomed` docs say it is a placeholder and `--overall-threshold` is inert there (iter-88 B1; re-hash the iter-69 extract-docstring sha pin; #48 is the behavior fix) | High | Low | QUEUED |
 | 78 | Omission detection for `subtotal`/`tax`: an explicit null the source labels is flagged (#39 follow-up; measured 29 red for all amounts vs 13 total-only) | Med | Med | QUEUED |
-| 79 | Suite-wide AST guard: no test passes `HEAD`/`@` as a git archive/diff/show rev or runs a single-rev `git diff` (iter-90 B2: red on both iter-87/89 bombs, 0 hits on 65 modules) | Med | Low | QUEUED |
+| 79 | Suite-wide AST guard: no test passes `HEAD`/`@` as a git archive/diff/show rev or runs a single-rev `git diff` (iter-90 B2: red on both iter-87/89 bombs, 0 hits on 65 modules; iter 90 shipped it over a frozen 12-module list -- remainder: glob `tests/test_*.py`, iter-91 A3 red on both bombs) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -154,3 +154,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 88 — `--batch` flushes each row (pipe sees row 1 in 0.12 s, was never pre-EOF); iter-86 pins diff a fixed range
 - iter 89 — REVERTED at PRESHIP: new test's `git archive HEAD src` baseline became the ship once committed
 - iter 90 — Explicit `"total": null` on a labelled total is needs_review, not a silent ok; golden inv-013
+- iter 91 — MCP `initialize` gives `instructions` (needs_review contract); tools get title + read-only annotations

@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-91
+    lenses: hardening/DX, integration-and-adoption
+    - Candidate A1 -- Role checks run on whitespace-folded grounding too: an NBSP/tab/double-space "Bill to" buyer or "PO Number" copy stops being a silent `ok` (roadmap #44, NEXT)
+    - Candidate A2 -- `--batch` accepts a UTF-8 BOM on line 1 and skips whitespace-only lines, as its docstring already promises (roadmap #46)
+    - Candidate A3 -- The iter-90 floating-`HEAD` guard scans every test module, not a frozen list of 12, so the next ship's own new test module is covered (roadmap #79 remainder)
+    - Candidate B1 -- MCP hosts learn the tools' nature and the `needs_review` contract before the first call: tool `title` + `annotations` and a server `instructions` string in `initialize` (roadmap #74)
+    - Candidate B2 -- MCP `validate`'s published `data` schema names the 7 InvoiceData fields (or the stored-envelope form) and stops advertising `additionalProperties: true`, which iter 79's unknown-key rejection makes false
+    - Candidate B3 -- `--batch --summary PATH` writes one machine-readable tally `{lines, ok, needs_review, error, flagged_fields, exit}` so a CI gate reads one file instead of re-parsing every JSONL row (roadmap #47)
+    winner: B1
+    ship: pending (not yet decided)
   iter-90
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Re-ship #39: an explicit `"total": null` on a source that labels a total stops being a silent `ok`, with the time-bomb fixture pinned to a fixed base sha
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- A suite-wide guard fails any test that names `HEAD` or the worktree as a git counterfactual base, so the iter-87/iter-89 PRESHIP time bomb cannot ship a third time
     - Candidate B3 -- Annotations in src resolve: `typing.get_type_hints` stops raising `NameError` on 3 cli.py functions, and mypy --strict over `src/` goes from 9 errors to 0 (roadmap #4, `make typecheck`, slice 1)
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 73f6d49
   iter-89
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- When no Critic ran, results stop calling the placeholder `overall_confidence: 1.0` "the critic's" (roadmap #77; its blocker shipped in iter 88)
@@ -550,4 +560,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-55 scouted iterations
+56 scouted iterations

@@ -21,6 +21,10 @@ re-dump the dict with `None` defaults that fail the published schema.
 `FastMCP()` takes no version, so the low-level server's version is set to
 `__version__` explicitly; otherwise the `initialize` handshake's
 `serverInfo.version` reports the MCP SDK's version instead of this build's.
+
+The `instructions` string and per-tool `title`/`annotations` exist because hosts
+act on them mechanically (system context, auto-approval), unlike docstring prose.
+Annotations are a plain dict: stub SDKs in the tests lack `ToolAnnotations`.
 """
 
 from __future__ import annotations
@@ -43,7 +47,22 @@ except ImportError as exc:  # pragma: no cover - only hit without the server ext
         "and a provider extra, e.g. 'reflect-mcp[anthropic]'."
     ) from exc
 
-mcp = FastMCP("reflect-mcp")
+_INSTRUCTIONS = (
+    "reflect-mcp extracts invoice/receipt data and verifies it with a second-model critic. "
+    "Every result has a status: ok, needs_review or error. On needs_review, do not use data "
+    "blindly: a human must confirm the fields in flagged_fields first. On error, nothing was "
+    "extracted; read error_message. validate checks data you already have and does not "
+    "re-extract (it never runs the Generator)."
+)
+# Both tools only read their input; extract calls an external model, hence open-world.
+_HINTS = {
+    "readOnlyHint": True,
+    "destructiveHint": False,
+    "idempotentHint": True,
+    "openWorldHint": True,
+}
+
+mcp = FastMCP("reflect-mcp", instructions=_INSTRUCTIONS)
 if hasattr(mcp, "_mcp_server"):  # not every FastMCP-compatible object exposes the low-level server
     mcp._mcp_server.version = __version__
 
@@ -61,7 +80,7 @@ def _structured(result: dict[str, Any]) -> CallToolResult:
     )
 
 
-@mcp.tool()
+@mcp.tool(title="Extract and verify invoice data", annotations=_HINTS)
 async def extract(
     text: str,
     field_threshold: float | None = None,
@@ -103,7 +122,7 @@ async def extract(
     )
 
 
-@mcp.tool()
+@mcp.tool(title="Verify pre-extracted invoice data", annotations=_HINTS)
 async def validate(
     text: str,
     data: dict[str, Any],
