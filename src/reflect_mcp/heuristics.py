@@ -22,6 +22,8 @@ combines both. Concretely we check:
                  invoice-number label ("Invoice No: ..."), so a copied PO number fails.
   - currency-code shape: currency must be an ISO 4217-shaped code (3 uppercase
                  letters), so "$" or "US Dollars" can't pass on presence alone.
+  - omitted total: an explicit null total on a source that labels a total is
+                 penalized, so a dropped total can't pass as an abstention.
 
 Each check contributes a per-field factor in [0,1]; the gate multiplies the
 Critic confidence by this factor, so a structurally impossible value can never
@@ -357,6 +359,12 @@ def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
     for field in EXTRACTION_FIELDS:
         value = getattr(data, field)
         if value is None:
+            # An explicit null total beside a labelled one is an omission, not an
+            # abstention; an omitted key (partial-data validate) stays unchecked.
+            if field == "total" and field in data.model_fields_set:
+                if labelled := _labelled_amounts(text, field):
+                    shown = ", ".join(f"{v:.2f}" for v in labelled)
+                    report.penalize(field, 0.3, f"source labels total as {shown}, extraction left it null")
             continue
 
         if field == "currency" and not _CURRENCY_CODE_RE.fullmatch(str(value)):

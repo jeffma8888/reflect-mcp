@@ -61,11 +61,11 @@ T_FULL = {
 }
 TEXT_FIELDS = ("vendor_name", "invoice_number", "currency")
 
-EVAL_LINES = [
-    "examples          : 12",
-    "field accuracy    : 91.7%  (77/84)",
+EVAL_LINES = [  # iter 89: re-pinned for the 13th golden row (inv-013, a caught null total)
+    "examples          : 13",
+    "field accuracy    : 91.2%  (83/91)",
     "silent-wrong      : 0",
-    "PASS: field accuracy 91.7% >= required 90.0%",
+    "PASS: field accuracy 91.2% >= required 90.0%",
 ]
 
 
@@ -386,7 +386,7 @@ def test_eb7_ascii_fuzz_identical_to_base():
 # ---------------------------------------------------------------- EB8
 def test_eb8_inv012_is_12th_line_with_t_style_text():
     rows = _rows()
-    assert len(rows) == 12
+    assert len(rows) == 13  # iter 89: inv-013 appended after inv-012
     row = rows[11]
     assert row["id"] == "inv-012"
     text = row["text"]
@@ -419,10 +419,10 @@ def test_eb8_lines_1_to_11_and_replay_byte_identical_to_base():
     old_lines = old_ds.splitlines()
     new_lines = DATASET.read_text(encoding="utf-8").splitlines()
     assert len(old_lines) == 11
-    assert len(new_lines) == 12
+    assert len(new_lines) == 13  # iter 89: inv-013
     assert new_lines[:11] == old_lines
     old_r, new_r = json.loads(old_rp), json.loads(REPLAY.read_text(encoding="utf-8"))
-    assert set(new_r) == set(old_r) | {"inv-012"}
+    assert set(new_r) == set(old_r) | {"inv-012", "inv-013"}  # iter 89: inv-013
     for k, v in old_r.items():
         assert new_r[k] == v, k
 
@@ -500,4 +500,4 @@ def test_eb10_readme_eval_block_equals_stdout():
     r = _run_eval(REPO)
     assert r.returncode == 0, r.stdout + r.stderr
     assert _readme_eval_block() == r.stdout
-    assert "field accuracy    : 91.7%  (77/84)" in _readme_eval_block()
+    assert "field accuracy    : 91.2%  (83/91)" in _readme_eval_block()  # iter 89: inv-013

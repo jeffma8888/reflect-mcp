@@ -76,7 +76,8 @@ CASES = {
 # Captured from the HEAD tree (see module docstring).
 # iter 79: re-pinned over the matrix minus ho/totl/* (was a1b7f221... over all rows);
 # the subset digest is identical on the iter-78 HEAD tree and the iter-79 tree.
-HEAD_MINUS_NOTES_SHA256 = "b82058ac872b2f6efd211fd4e74af3c7ea18daaf95c65f11bf175a2b53fa822c"
+# iter 89: re-pinned minus */allnull/* (was b82058ac...); identical on the iter-88 HEAD tree.
+HEAD_MINUS_NOTES_SHA256 = "2a889287e14327e5b17206e57a1bbd51553edc5e10c49d918d4bacef064b51b3"
 HEAD_NR_NOTES_SHA256 = "bd9e9b5b0b4df28e07239d8e018a09a330f6a3cef3afff9c04854def11330184"
 HEAD_DEFAULT_NOTES = {
     "inv-001": OK_NOTE, "inv-002": OK_NOTE, "inv-003": OK_NOTE, "inv-005": OK_NOTE,
@@ -292,6 +293,9 @@ def test_eb5_heuristics_only_nothing_committed(name, thr):
     if name == "totl":  # iter 79: an unknown caller key is a schema error, not an all-null ok
         assert _status(r) == "error" and "unknown field(s): totl" in r["error_message"]
         return
+    if name == "allnull" and thr == 0.70:  # iter 89: SRC labels a total, so the null total is flagged
+        assert _status(r) == "needs_review" and [f["field"] for f in r["flagged_fields"]] == ["total"]
+        return
     assert _status(r) == "ok"
     assert r["notes"] == NV_HO
     assert "cleared" not in r["notes"] and "passed" not in r["notes"]
@@ -301,6 +305,9 @@ def test_eb5_heuristics_only_nothing_committed(name, thr):
 @pytest.mark.parametrize("thr", [0.25, 0.70])
 def test_eb5_critic_nothing_committed(name, thr):
     r = _critic_validate(CASES[name], thr)
+    if name == "allnull" and thr == 0.70:  # iter 89: SRC labels a total, so the null total is flagged
+        assert _status(r) == "needs_review" and [f["field"] for f in r["flagged_fields"]] == ["total"]
+        return
     assert _status(r) == "ok"
     assert r["notes"] == NV_CRITIC
     assert "cleared" not in r["notes"] and "passed" not in r["notes"]
@@ -340,11 +347,12 @@ def test_eb6_two_fields_literal():
 def test_eb7_everything_but_notes_identical_to_head(matrix):
     # iter 79: the ho/totl rows are now schema errors (asserted in EB5); pin the rest.
     rest = {k: v for k, v in matrix.items() if not k.startswith("ho/totl/")}
+    rest = {k: v for k, v in rest.items() if "/allnull/" not in k}  # iter 89: null total flagged (EB5)
     assert _sha(_minus_notes(rest)) == HEAD_MINUS_NOTES_SHA256
 
 
 def test_eb7_needs_review_notes_identical_to_head(matrix):
-    nr = _nr_notes(matrix)
+    nr = _nr_notes({k: v for k, v in matrix.items() if "/allnull/" not in k})  # iter 89: see EB5
     assert nr, "matrix must contain needs_review results"
     assert _sha(nr) == HEAD_NR_NOTES_SHA256
 

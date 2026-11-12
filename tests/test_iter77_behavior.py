@@ -62,12 +62,13 @@ EB1_EXPECTED = {
 }
 
 # iter 83: re-pinned for the 11th golden row (inv-011); iter 84: 12th (inv-012, clean).
+# iter 89: 13th (inv-013, a caught null total).
 EVAL_LINES = (
-    "examples          : 12",
-    "field accuracy    : 91.7%  (77/84)",
-    "exact-match acc   : 41.7%  (5/12)",
-    "needs-review rate : 58.3%  (7/12)",
-    "catch rate        : 100.0%  (7/7)",
+    "examples          : 13",
+    "field accuracy    : 91.2%  (83/91)",
+    "exact-match acc   : 38.5%  (5/13)",
+    "needs-review rate : 61.5%  (8/13)",
+    "catch rate        : 100.0%  (8/8)",
     "silent-wrong      : 0",
     "false alarms      : 0",
 )
@@ -295,7 +296,8 @@ def test_eb5_existing_golden_rows_identical_to_head():
     replay = json.loads(REPLAY.read_text())
     # iter 83: inv-011 postdates this HEAD and is caught by a newer check, so it is excluded too;
     # iter 84: so does inv-012, whose "APRİL" date crashes this HEAD's month reader.
-    rows = [r for r in _rows() if r["id"] not in ("inv-010", "inv-011", "inv-012")]
+    # iter 89: inv-013's null total is caught by the newer omitted-total check, so it is excluded too.
+    rows = [r for r in _rows() if r["id"] not in ("inv-010", "inv-011", "inv-012", "inv-013")]
     assert len(rows) == 9
     for row in rows:
         for data in (row["expected"], json.loads(replay[row["id"]]["generator_raw"])):
@@ -313,7 +315,7 @@ def test_eb5_heuristics_only_lower():
 # ---------------------------------------------------------------- EB6
 def test_eb6_inv010_golden_row():
     rows = _rows()
-    assert len(rows) == 12  # iter 83: inv-011 appended after inv-010; iter 84: inv-012
+    assert len(rows) == 13  # iter 83: inv-011 appended after inv-010; iter 84: inv-012; iter 89: inv-013
     row = rows[9]
     assert row["id"] == "inv-010"
     assert row["text"] == EB1_TEXT
@@ -426,7 +428,7 @@ def test_eb10_readme_eval_block_byte_equal_and_inv010_sentence():
     readme = README.read_text()
     out = _run_eval(REPO).stdout.strip("\n")
     assert out in readme
-    idx = readme.index("examples          : 12")  # iter 83, iter 84
+    idx = readme.index("examples          : 13")  # iter 83, iter 84, iter 89
     intro = readme[:idx].rsplit("Offline run", 1)[1]
     assert "inv-010" in intro and "identifier-role grounding" in intro
     assert "PO number" in intro

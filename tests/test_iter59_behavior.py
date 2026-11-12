@@ -60,7 +60,7 @@ NEW_LINES = [
 ]
 # iter 72: the live 9-row dataset (inv-009 adds one flagged catch).
 LIVE_NEW_LINES = [
-    "catch rate        : 100.0%  (7/7)",  # iter 77: inv-010 added; iter 83: inv-011
+    "catch rate        : 100.0%  (8/8)",  # iter 77: inv-010 added; iter 83: inv-011; iter 89: inv-013
     "silent-wrong      : 0",
     "false alarms      : 0",
 ]
@@ -91,10 +91,11 @@ def _install(monkeypatch, tmp_path, data: dict) -> Path:
     return p
 
 
-def _null_total(monkeypatch, tmp_path) -> None:
+def _null_tax(monkeypatch, tmp_path) -> None:
+    # iter 89: was a null total, which the omitted-total check now catches; tax stays out of scope.
     data = _replay()
     gen = json.loads(data["inv-001"]["generator_raw"])
-    gen["total"] = None
+    gen["tax"] = None
     data["inv-001"]["generator_raw"] = json.dumps(gen)
     _install(monkeypatch, tmp_path, data)
 
@@ -272,10 +273,10 @@ def test_eb4_process_exit_and_stdout_tail():
 # ---------------------------------------------------------------------------
 
 def test_eb5_mutation_metrics(monkeypatch, tmp_path):
-    _null_total(monkeypatch, tmp_path)
+    _null_tax(monkeypatch, tmp_path)
     m = run_eval.evaluate(live=False)
     assert m.silent_wrong == 1
-    assert m.silent_failures == [("inv-001", "total", 108.5, None)]
+    assert m.silent_failures == [("inv-001", "tax", 8.5, None)]  # iter 89: tax, not total
     assert m.caught == 4
     assert m.correct_fields == 51
     assert m.catch_rate == pytest.approx(0.80)
@@ -284,7 +285,7 @@ def test_eb5_mutation_metrics(monkeypatch, tmp_path):
 
 
 def test_eb5_mutation_run_returns_1_and_reports(monkeypatch, tmp_path, capsys):
-    _null_total(monkeypatch, tmp_path)
+    _null_tax(monkeypatch, tmp_path)
     assert run_eval.run(live=False, min_accuracy=0.90) == 1
     lines = _stdout_lines(capsys)
     for want in (
@@ -292,7 +293,7 @@ def test_eb5_mutation_run_returns_1_and_reports(monkeypatch, tmp_path, capsys):
         "FAIL: silent-wrong fields 1 > allowed 0",
         "silent-wrong      : 1",
         "catch rate        : 80.0%  (4/5)",
-        "  [inv-001] total: expected 108.5 but got None  (SILENT)",
+        "  [inv-001] tax: expected 8.5 but got None  (SILENT)",  # iter 89: tax, not total
     ):
         assert want in lines, want
     assert lines[-2:] == [
@@ -304,7 +305,7 @@ def test_eb5_mutation_run_returns_1_and_reports(monkeypatch, tmp_path, capsys):
 def test_eb5_replay_read_at_call_time(monkeypatch, tmp_path):
     # Same process: base, then mutated, then base again -> no caching.
     assert run_eval.evaluate(live=False).silent_wrong == 0
-    _null_total(monkeypatch, tmp_path)
+    _null_tax(monkeypatch, tmp_path)
     assert run_eval.evaluate(live=False).silent_wrong == 1
     monkeypatch.setattr(run_eval, "REPLAY", SHIPPED_REPLAY)
     assert run_eval.evaluate(live=False).silent_wrong == 0
@@ -312,7 +313,7 @@ def test_eb5_replay_read_at_call_time(monkeypatch, tmp_path):
 
 def test_eb5_shipped_fixture_untouched_by_mutation(monkeypatch, tmp_path):
     before = SHIPPED_REPLAY.read_bytes()
-    _null_total(monkeypatch, tmp_path)
+    _null_tax(monkeypatch, tmp_path)
     run_eval.evaluate(live=False)
     assert SHIPPED_REPLAY.read_bytes() == before
 
@@ -322,7 +323,7 @@ def test_eb5_shipped_fixture_untouched_by_mutation(monkeypatch, tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_eb6_allowance_passes(monkeypatch, tmp_path, capsys):
-    _null_total(monkeypatch, tmp_path)
+    _null_tax(monkeypatch, tmp_path)
     assert run_eval.run(live=False, min_accuracy=0.90, max_silent_wrong=1) == 0
     lines = _stdout_lines(capsys)
     assert "PASS: silent-wrong fields 1 <= allowed 1" in lines
@@ -330,7 +331,7 @@ def test_eb6_allowance_passes(monkeypatch, tmp_path, capsys):
 
 
 def test_eb6_default_is_zero(monkeypatch, tmp_path):
-    _null_total(monkeypatch, tmp_path)
+    _null_tax(monkeypatch, tmp_path)
     assert run_eval.run(live=False, min_accuracy=0.90) == 1
     assert run_eval.run(live=False, min_accuracy=0.90, max_silent_wrong=0) == 1
 
@@ -340,14 +341,14 @@ def test_eb6_default_is_zero(monkeypatch, tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_eb7_main_forwards_flag(monkeypatch, tmp_path, capsys):
-    _null_total(monkeypatch, tmp_path)
+    _null_tax(monkeypatch, tmp_path)
     monkeypatch.setattr(sys, "argv", ["run_eval.py", "--max-silent-wrong", "1"])
     assert run_eval.main() == 0
     assert "PASS: silent-wrong fields 1 <= allowed 1" in _stdout_lines(capsys)
 
 
 def test_eb7_main_default_fails_mutation(monkeypatch, tmp_path, capsys):
-    _null_total(monkeypatch, tmp_path)
+    _null_tax(monkeypatch, tmp_path)
     monkeypatch.setattr(sys, "argv", ["run_eval.py"])
     assert run_eval.main() == 1
     assert "FAIL: silent-wrong fields 1 > allowed 0" in _stdout_lines(capsys)
@@ -414,7 +415,7 @@ def test_eb9_accuracy_gate_still_fails(capsys):
 
 
 def test_eb9_both_failing_prints_both_reasons(monkeypatch, tmp_path, capsys):
-    _null_total(monkeypatch, tmp_path)
+    _null_tax(monkeypatch, tmp_path)
     assert run_eval.run(live=False, min_accuracy=0.99) == 1
     lines = _stdout_lines(capsys)
     assert "FAIL: field accuracy 91.1% < required 99.0%" in lines
@@ -466,7 +467,7 @@ def test_eb10_module_docstring_states_both_exit_conditions():
 
 def test_final_failure_flagged_is_parallel_to_failures(monkeypatch, tmp_path):
     """The readout tag is recorded where it is classified, not re-derived by set membership."""
-    _null_total(monkeypatch, tmp_path)
+    _null_tax(monkeypatch, tmp_path)
     m = run_eval.evaluate(live=False)
     assert len(m.failure_flagged) == len(m.failures)
     silent = [f for f, flagged in zip(m.failures, m.failure_flagged) if not flagged]

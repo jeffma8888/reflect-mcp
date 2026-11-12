@@ -56,7 +56,7 @@ tool surface, small deps, MIT, publication-safe.
 | 36 | One CLI argparse tree: `cli.run_extract`/`run_validate` parse via `__main__._build_top_parser`; cli.py's duplicate parser builders deleted (375→306; iter-81 A1 flipped #36's direction) | Med | Low | DONE (iter 81) |
 | 37 | `validate --batch`: verify a `{text, data}` JSONL corpus in one process (≈129 ms/doc → <1 ms/doc heuristics-only) | High | Low | DONE (iter 64) |
 | 38 | Heuristics-only `ok` says no Critic ran (notes) and logs `critic.skipped` (reason), not a fabricated `critique.done` | High | Low | DONE (iter 65) |
-| 39 | Omission detection: a null amount the source labels is flagged (reverses the null-abstention contract; 14-test migration) | High | Med | QUEUED |
+| 39 | Omission detection: an explicit `"total": null` the source labels is flagged needs_review (`model_fields_set` guard: omitted key unchanged; 13-pin migration + golden inv-013; iter 89 reverted at PRESHIP by a `git archive HEAD` fixture, re-landed pinned to a fixed base) | High | Med | DONE (iter 90) |
 | 40 | `needs_review` flagged fields carry deterministic `suggestions` (source-labelled value + span) | Med | Low | QUEUED |
 | 41 | Party-role grounding: a `vendor_name` found only on "Bill to"/"Ship to"/"Sold to"/"Deliver to" lines is penalized (0.3) | High | Low | DONE (iter 66) |
 | 42 | Date-role grounding: an `invoice_date` the source shows only on a "Due"/"Ship date" line is penalized | Med | Low | DONE (iter 71) |
@@ -95,6 +95,8 @@ tool surface, small deps, MIT, publication-safe.
 | 75 | One role-penalty rule: party/identifier/date checks share `_penalize_if_only`; `_contains_ci` folds into `_find_text_span` (iter-87 A1; 2236-row differential byte-identical) | Med | Low | QUEUED |
 | 76 | One source-size budget test (`cli.py <= 306`, `gate.py <= 185`) replaces 9 scattered line-count pins + 4 test-about-test pins (iter-87 A2) | Low | Low | QUEUED |
 | 77 | No-Critic results stop calling the placeholder `overall_confidence: 1.0` "the critic's": heuristics-only and `all_fields_doomed` docs say it is a placeholder and `--overall-threshold` is inert there (iter-88 B1; re-hash the iter-69 extract-docstring sha pin; #48 is the behavior fix) | High | Low | QUEUED |
+| 78 | Omission detection for `subtotal`/`tax`: an explicit null the source labels is flagged (#39 follow-up; measured 29 red for all amounts vs 13 total-only) | Med | Med | QUEUED |
+| 79 | Suite-wide AST guard: no test passes `HEAD`/`@` as a git archive/diff/show rev or runs a single-rev `git diff` (iter-90 B2: red on both iter-87/89 bombs, 0 hits on 65 modules) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -150,3 +152,5 @@ tool surface, small deps, MIT, publication-safe.
 - iter 86 — Generator and Critic share one parse-and-retry loop + delay constant; retry behavior byte-identical
 - iter 87 — REVERTED at PRESHIP: iter-86 `git diff BASE..worktree` scope pin went red once a new test was committed
 - iter 88 — `--batch` flushes each row (pipe sees row 1 in 0.12 s, was never pre-EOF); iter-86 pins diff a fixed range
+- iter 89 — REVERTED at PRESHIP: new test's `git archive HEAD src` baseline became the ship once committed
+- iter 90 — Explicit `"total": null` on a labelled total is needs_review, not a silent ok; golden inv-013

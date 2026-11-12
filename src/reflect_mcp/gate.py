@@ -136,8 +136,8 @@ def decide(
         combined = _combine(critic_conf, factor)
         field_confidence[field] = combined
 
-        # Only fields the model committed to (non-null) can be "wrong" and flagged.
-        if value is not None and combined < config.field_threshold:
+        # Flag committed fields, plus a null one only heuristics showed is an omission.
+        if (value is not None or heuristics.reason_for(field)) and combined < config.field_threshold:
             reasons = []
             if verdict is not None and verdict.rationale:
                 reasons.append(verdict.rationale)

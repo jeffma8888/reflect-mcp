@@ -1,6 +1,26 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-90
+    lenses: new-capability, hardening/DX
+    - Candidate A1 -- Re-ship #39: an explicit `"total": null` on a source that labels a total stops being a silent `ok`, with the time-bomb fixture pinned to a fixed base sha
+    - Candidate A2 -- `needs_review` gives the reviewer the value to check: a flagged amount carries a machine-readable `suggested_value`, the one number the source labels for that role (roadmap #40, amounts-first)
+    - Candidate A3 -- `--batch --summary PATH` writes `{lines, ok, needs_review, error, flagged_fields, exit}` so a CI gate reads one file instead of re-parsing every JSONL row (roadmap #47)
+    - Candidate B1 -- Role checks run on whitespace-folded grounding too: an NBSP/tab/double-space "Bill to" buyer or "PO Number" copy stops being a silent `ok` (roadmap #44, marked NEXT)
+    - Candidate B2 -- A suite-wide guard fails any test that names `HEAD` or the worktree as a git counterfactual base, so the iter-87/iter-89 PRESHIP time bomb cannot ship a third time
+    - Candidate B3 -- Annotations in src resolve: `typing.get_type_hints` stops raising `NameError` on 3 cli.py functions, and mypy --strict over `src/` goes from 9 errors to 0 (roadmap #4, `make typecheck`, slice 1)
+    winner: A1
+    ship: pending (not yet decided)
+  iter-89
+    lenses: narrative-and-docs, new-capability
+    - Candidate A1 -- When no Critic ran, results stop calling the placeholder `overall_confidence: 1.0` "the critic's" (roadmap #77; its blocker shipped in iter 88)
+    - Candidate A2 -- The structured log explains itself: README documents that logs go to stderr, `REFLECT_LOG_LEVEL`, and all 10 `stage` events with their keys, pinned two-way to the `log_stage` calls in src
+    - Candidate A3 -- `extract --help` / `validate --help` stop being stale about the contract: an exit-code epilog (0/1/2/3, `--batch` = worst row), and `--data` help names its 7 keys from `EXTRACTION_FIELDS` and the envelope form
+    - Candidate B1 -- `needs_review` gives the reviewer the value to check: a flagged amount carries `suggested_value`, the single number the source labels for that role (roadmap #40, amounts-first slice)
+    - Candidate B2 -- A labelled total the model left `null` stops being a silent `ok`: an explicit `"total": null` on a source that labels a total is flagged, naming the labelled value (roadmap #39, scoped to `total`)
+    - Candidate B3 -- Your own labelled corpus gets the trust readout: `validate --batch` rows that carry `expected` are graded per field (caught / silent-wrong / false alarm), with a `--max-silent-wrong N` exit (roadmap #60)
+    winner: B2
+    ship: REVERTED
   iter-88
     lenses: performance-and-throughput, narrative-and-docs
     - Candidate A1 -- `--batch` rows reach a pipe consumer as each one finishes (roadmap #63), re-shipped together with a fixed-range defuse of the iter-86 scope pins that reverted it
@@ -10,7 +30,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- The README layout and architecture name `tools.py`, the module holding both MCP tool bodies, pinned by a two-way layout↔`src/` test
     - Candidate B3 -- README §8's golden-set prose becomes a per-row table checked against the dataset and the eval, so a new golden row stops editing old tests
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 7237e5a
   iter-87
     lenses: simplification-and-deletion, performance-and-throughput
     - Candidate A1 -- One "appears only on another role's lines" rule: the party, identifier and date role checks share `_penalize_if_only`, and `_contains_ci` is deleted in favour of `_find_text_span`
@@ -530,4 +550,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-53 scouted iterations
+55 scouted iterations

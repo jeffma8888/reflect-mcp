@@ -483,7 +483,8 @@ class TestEB9NoProductChange:
         # pm.md quotes "PASS: field accuracy 91.4% >= 90.0%"; the real line reads
         # ">= required 90.0%", so match the numbers, not the paraphrase.
         # iter 83: inv-011 moved the live accuracy to 90.9%; iter 84: inv-012 to 91.7%.
-        assert re.search(r"^PASS: field accuracy 91\.7% >= (required )?90\.0%$", r.stdout, re.M), r.stdout[-600:]
+        # iter 89: inv-013 to 91.2%.
+        assert re.search(r"^PASS: field accuracy 91\.2% >= (required )?90\.0%$", r.stdout, re.M), r.stdout[-600:]
         assert re.search(r"^PASS: silent-wrong fields 0\b", r.stdout, re.M), r.stdout[-600:]
 
     def test_eval_stdout_identical_to_base(self, tmp_path):

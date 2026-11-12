@@ -242,7 +242,8 @@ def test_eb4_labels_case_insensitive(text, field, good, bad, label):
     ("Paid 50.00 and 7.00", {"total": 7.0}),
     ("Order 12\nTotal: 15", {"total": 12.0}),
     ("Order 12.00\nTotal:\n15.00", {"total": 12.0}),
-    ("Internet 9.00\nTotal: 9.00", {"subtotal": 9.0}),
+    # iter 89: total set to its label, since an explicit null labelled total is now flagged.
+    ("Internet 9.00\nTotal: 9.00", {"subtotal": 9.0, "total": 9.0}),
 ])
 def test_eb5_abstains(text, kw):
     report = run_heuristics(text, _data(**kw))

@@ -75,16 +75,17 @@ INV9_EXPECTED = {
 }
 # iter 77: live counts re-pinned for the 10th golden row (inv-010); iter 83: 11th (inv-011);
 # iter 84: 12th (inv-012, clean).
+# iter 89: 13th (inv-013, a caught null total).
 LIVE_LINES = (
-    "examples          : 12",
-    "field accuracy    : 91.7%  (77/84)",
-    "exact-match acc   : 41.7%  (5/12)",
-    "needs-review rate : 58.3%  (7/12)",
-    "catch rate        : 100.0%  (7/7)",
+    "examples          : 13",
+    "field accuracy    : 91.2%  (83/91)",
+    "exact-match acc   : 38.5%  (5/13)",
+    "needs-review rate : 61.5%  (8/13)",
+    "catch rate        : 100.0%  (8/8)",
     "silent-wrong      : 0",
     "false alarms      : 0",
     "  [inv-009] invoice_date: expected '2026-07-01' but got '2026-07-31'  (flagged)",
-    "PASS: field accuracy 91.7% >= required 90.0%",
+    "PASS: field accuracy 91.2% >= required 90.0%",
 )
 OLD_FAILURE_LINES = (
     "  [inv-004] total: expected 583.2 but got 683.2  (flagged)",
@@ -129,7 +130,7 @@ def _live_eval(*args: str) -> subprocess.CompletedProcess[str]:
 # ---------------------------------------------------------------- EB1 dataset
 def test_eb1_dataset_has_nine_rows_first_eight_unchanged():
     lines = _lines(DATASET)
-    assert len(lines) == 12  # iter 77: inv-010 appended after inv-009; iter 83: inv-011; iter 84: inv-012
+    assert len(lines) == 13  # iter 77: inv-010 appended after inv-009; iter 83: inv-011; iter 84: inv-012; iter 89: inv-013
     assert _sha("\n".join(lines[:8]) + "\n") == HEAD_DATASET_SHA
 
 
@@ -144,7 +145,7 @@ def test_eb1_row_nine_is_inv009_due_date_case():
 def test_eb2_replay_keys_and_inv009_entry():
     replay = json.loads(REPLAY.read_text())
     assert isinstance(replay, dict)
-    assert sorted(replay) == [f"inv-{i:03d}" for i in range(1, 13)]  # iter 77: + inv-010; iter 83: + inv-011; iter 84: + inv-012
+    assert sorted(replay) == [f"inv-{i:03d}" for i in range(1, 14)]  # iter 77: + inv-010; iter 83: + inv-011; iter 84: + inv-012; iter 89: + inv-013
     gen = json.loads(replay["inv-009"]["generator_raw"])
     assert gen == {**INV9_EXPECTED, "invoice_date": "2026-07-31"}
     assert replay["inv-009"]["critic_raw"] == replay["inv-008"]["critic_raw"]
@@ -181,8 +182,8 @@ def test_eb3_make_eval_exits_zero_with_nine_examples():
         pytest.skip("make or .venv unavailable")
     r = subprocess.run(["make", "eval"], cwd=REPO, capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "examples          : 12" in r.stdout.splitlines()  # iter 77, iter 83, iter 84
-    assert "catch rate        : 100.0%  (7/7)" in r.stdout.splitlines()
+    assert "examples          : 13" in r.stdout.splitlines()  # iter 77, iter 83, iter 84, iter 89
+    assert "catch rate        : 100.0%  (8/8)" in r.stdout.splitlines()  # iter 89: inv-013
 
 
 # ---------------------------------------------------------------- EB4 counterfactual
@@ -335,7 +336,7 @@ def test_eb9_patch_is_undone_after_test():
         sys.path.insert(0, str(EVAL_DIR))
     import run_eval
 
-    assert run_eval.evaluate(live=False).examples == 12  # iter 77, iter 83, iter 84
+    assert run_eval.evaluate(live=False).examples == 13  # iter 77, iter 83, iter 84, iter 89
 
 
 # ---------------------------------------------------------------- EB10 migration
@@ -360,11 +361,11 @@ def test_eb12_readme_contains_live_stdout_block():
 
 def test_eb12_readme_intro_sentence_five_and_inv009():
     readme = README.read_text()
-    idx = readme.index("examples          : 12")  # iter 77, iter 83, iter 84
+    idx = readme.index("examples          : 13")  # iter 77, iter 83, iter 84, iter 89
     intro = readme[:idx].rsplit("Offline run", 1)
     assert len(intro) == 2, "intro sentence above eval block not found"
     sentence = intro[1]
-    assert "seven examples" in sentence  # iter 77: inv-010 is the sixth; iter 83: inv-011 the seventh
+    assert "eight examples" in sentence  # iter 77: inv-010 is the sixth; iter 83: inv-011 the seventh; iter 89: inv-013 the eighth
     assert "inv-009" in sentence
     assert "due date" in sentence and "invoice date" in sentence
     assert "date-role" in sentence
