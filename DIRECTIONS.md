@@ -1,6 +1,26 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-88
+    lenses: performance-and-throughput, narrative-and-docs
+    - Candidate A1 -- `--batch` rows reach a pipe consumer as each one finishes (roadmap #63), re-shipped together with a fixed-range defuse of the iter-86 scope pins that reverted it
+    - Candidate A2 -- A parse/schema retry stops idling 0.5 s before it re-asks the model (roadmap #26, perf framing)
+    - Candidate A3 -- The MCP server stops building a fresh provider SDK client for every model call: a per-thread, env-keyed client memo in `build_client` (roadmap #27)
+    - Candidate B1 -- When no Critic ran, results stop calling the made-up `overall_confidence: 1.0` "the critic's", and the docs say `--overall-threshold` does nothing then
+    - Candidate B2 -- The README layout and architecture name `tools.py`, the module holding both MCP tool bodies, pinned by a two-way layout↔`src/` test
+    - Candidate B3 -- README §8's golden-set prose becomes a per-row table checked against the dataset and the eval, so a new golden row stops editing old tests
+    winner: A1
+    ship: pending (not yet decided)
+  iter-87
+    lenses: simplification-and-deletion, performance-and-throughput
+    - Candidate A1 -- One "appears only on another role's lines" rule: the party, identifier and date role checks share `_penalize_if_only`, and `_contains_ci` is deleted in favour of `_find_text_span`
+    - Candidate A2 -- One source-size budget: a single `tests/test_source_budget.py` (`cli.py <= 306`, `gate.py <= 185`) replaces 9 scattered line-count assertions and the tests that pin other test files' text
+    - Candidate A3 -- Delete the fixed 0.5 s parse-retry sleep (roadmap #26): `_RETRY_DELAY_SECONDS`, `time.sleep` and `import time` go from parsing.py, and so do the test fixtures that exist only to neutralize them
+    - Candidate B1 -- `--batch` rows reach a pipe consumer as each one is finished, and a killed batch stops discarding rows that were already paid for (roadmap #63)
+    - Candidate B2 -- The MCP server stops opening a new provider connection for every model call: per-thread client memo in `build_client` (roadmap #27, reframed to keep the no-sharing promise)
+    - Candidate B3 -- Numeric grounding tokenizes the document once instead of once per amount field: `_find_number_span` reads a precomputed token list
+    winner: B1
+    ship: REVERTED
   iter-86
     lenses: integration-and-adoption, simplification-and-deletion
     - Candidate A1 -- Hosts learn the tools' nature and the `needs_review` contract before the first call: MCP tool `title` + `annotations` (readOnlyHint/destructiveHint/idempotentHint/openWorldHint) and a server `instructions` string in `initialize`
@@ -10,7 +30,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- One single-document CLI tail: `extract` and `validate` share `_read_document` + `_run_single`, deleting the duplicated read/empty-check/build/run/print/exit-code block
     - Candidate B3 -- One "Critic didn't speak" branch: `_verify` picks a skip reason once, instead of two copies of `_neutral_critique` + `critic_ran=False` + `critic.skipped`
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 0f27eeb
   iter-85
     lenses: hardening/DX
     - Candidate A1 -- A truncated `invoice_number`/`currency` stops grounding as a silent `ok`: "INV-100" inside "INV-1001" and "USD" inside "USDT" get the 0.25 not-found penalty (roadmap #54)
@@ -510,4 +530,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-51 scouted iterations
+53 scouted iterations

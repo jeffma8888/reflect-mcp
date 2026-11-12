@@ -80,7 +80,7 @@ tool surface, small deps, MIT, publication-safe.
 | 60 | `validate --batch` grades rows carrying `expected` (caught/silent-wrong/false alarms) + `--max-silent-wrong` exit; grader moves to `grading.py` (iter-74 A3) | High | Med | QUEUED |
 | 61 | One single-document CLI tail: `run_extract/validate_from_args` share `_run_verb` (−18 cli.py lines, 18-probe byte-identical; iter-75 A1; repays #62's budget) | Med | Low | QUEUED |
 | 62 | Concurrent `--batch` streams via a bounded 2N window (row 1 after 2N pulls, not EOF; 88.9→0.2 MB on 50k lines; iter-75 B1) | High | Low | DONE (iter 75) |
-| 63 | `--batch` flushes each row so a piped consumer sees it immediately (stdout is block-buffered on pipes) | Med | Low | QUEUED |
+| 63 | `--batch` flushes each row so a piped consumer sees it immediately (stdout is block-buffered on pipes; iter 87 reverted at PRESHIP by iter-86's open-ended diff pin, re-landed with the fixed-range defuse) | Med | Low | DONE (iter 88) |
 | 64 | Critic emits `rationale` only for doubted fields (30% of critic_raw bytes are discarded on `ok`; iter-75 B3; needs live evidence) | Low | Med | QUEUED |
 | 65 | `ok` notes name heuristic-penalized fields that cleared a lowered threshold; all-null `ok` says nothing was verified (iter-76 B1) | High | Low | DONE (iter 76) |
 | 66 | CI: `.github/workflows/ci.yml` runs `uv run pytest` + `make eval` on Python 3.10 (floor) and 3.13; iter73 import sweep stops leaking package attrs (3.10: 47 red → 0) | High | Low | DONE (iter 80) |
@@ -92,6 +92,9 @@ tool surface, small deps, MIT, publication-safe.
 | 72 | MCP `initialize` reports reflect-mcp's own `serverInfo.version` (was the mcp SDK's 1.28.1); `__version__`↔pyproject pin (iter-85 B1) | Med | Low | DONE (iter 85) |
 | 73 | One parse-and-retry loop: Generator + Critic share `parsing.complete_parsed` and one `_RETRY_DELAY_SECONDS`; retries/logs/errors identical, eval byte-identical (iter-86 B1; makes #26/#30 one-place) | Med | Low | DONE (iter 86) |
 | 74 | MCP hosts see tool `title` + `annotations` (readOnly, non-destructive, idempotent, openWorld) and a server `instructions` naming the `needs_review`/`flagged_fields` contract (iter-86 A1: ~12 src lines, 0 test edits; pass annotations as a dict, stub `mcp.types` lacks `ToolAnnotations`) | High | Low | QUEUED |
+| 75 | One role-penalty rule: party/identifier/date checks share `_penalize_if_only`; `_contains_ci` folds into `_find_text_span` (iter-87 A1; 2236-row differential byte-identical) | Med | Low | QUEUED |
+| 76 | One source-size budget test (`cli.py <= 306`, `gate.py <= 185`) replaces 9 scattered line-count pins + 4 test-about-test pins (iter-87 A2) | Low | Low | QUEUED |
+| 77 | No-Critic results stop calling the placeholder `overall_confidence: 1.0` "the critic's": heuristics-only and `all_fields_doomed` docs say it is a placeholder and `--overall-threshold` is inert there (iter-88 B1; re-hash the iter-69 extract-docstring sha pin; #48 is the behavior fix) | High | Low | QUEUED |
 
 ## Done ledger
 
@@ -145,3 +148,5 @@ tool surface, small deps, MIT, publication-safe.
 - iter 84 — `APRİL`/`ſep` month tokens stop crashing; provenance spans exact after `İ`; golden inv-012
 - iter 85 — MCP `initialize` reports `serverInfo.version` = `reflect-mcp --version`, not the mcp SDK's
 - iter 86 — Generator and Critic share one parse-and-retry loop + delay constant; retry behavior byte-identical
+- iter 87 — REVERTED at PRESHIP: iter-86 `git diff BASE..worktree` scope pin went red once a new test was committed
+- iter 88 — `--batch` flushes each row (pipe sees row 1 in 0.12 s, was never pre-EOF); iter-86 pins diff a fixed range

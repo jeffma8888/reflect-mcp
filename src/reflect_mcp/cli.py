@@ -155,8 +155,8 @@ def _run_batch(
 
     Serial uses builtin ``map`` so the stream is consumed lazily (line N is
     printed before line N+1 is read); concurrent keeps at most ``2 * concurrency``
-    lines pending, so output streams in input order with bounded memory. Exit
-    codes rank ok 0 < needs_review 1 < error 3, so the worst is simply the max.
+    lines pending; each row is flushed as printed, since a piped stdout would buffer
+    it from streaming readers. Exit codes: ok 0 < needs_review 1 < error 3, worst = max.
     """
     lines = (raw for raw in stream if raw.rstrip("\n\r"))
     pool = ThreadPoolExecutor(max_workers=concurrency) if concurrency > 1 else None
@@ -165,7 +165,7 @@ def _run_batch(
         results = _windowed(pool, process, lines, 2 * concurrency) if pool else map(process, lines)
         for output_json, code in results:
             worst = max(worst, code)  # before print: a row whose write fails still counts
-            print(output_json)
+            print(output_json, flush=True)
     except BrokenPipeError:  # reader closed early (`| head`): stop pulling input
         pass
     finally:

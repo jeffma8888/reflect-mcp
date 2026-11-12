@@ -51,6 +51,7 @@ from tests.conftest import CORRECT_EXTRACTION, SOURCE, critique_all
 REPO = Path(__file__).resolve().parent.parent
 SRC = Path(reflect_mcp.__file__).resolve().parent
 BASE_SHA = "dcda81c"
+SHIP_SHA = "0f27eeb"  # fixed range: a later commit must not move these pins
 
 BAD = "not json"
 VALID_INV = json.dumps(CORRECT_EXTRACTION)
@@ -445,21 +446,21 @@ def test_eb6_only_server_imports_mcp():
 
 def test_eb6_no_new_dependency():
     _require_base_commit()
-    r = _git("diff", "--name-only", BASE_SHA, "--", "pyproject.toml", "uv.lock")
+    r = _git("diff", "--name-only", BASE_SHA, SHIP_SHA, "--", "pyproject.toml", "uv.lock")
     assert r.returncode == 0, r.stderr
     assert r.stdout.strip() == ""
 
 
 def test_eb6_existing_test_edits_scoped():
     _require_base_commit()
-    r = _git("diff", "--name-only", BASE_SHA, "--", "tests/")
+    r = _git("diff", "--name-only", BASE_SHA, SHIP_SHA, "--", "tests/")
     assert r.returncode == 0, r.stderr
     changed = {line for line in r.stdout.splitlines() if line}
     assert changed <= {"tests/test_iter70_behavior.py", "tests/test_iter86_behavior.py"}, changed
     # The nosleep migration also swaps the two now-unused stage-module imports
     # for one `parsing` import (the spec counted only the fixture lines), so
     # pin the exact changed-line sets rather than a raw line count.
-    d = _git("diff", "-U0", BASE_SHA, "--", "tests/test_iter70_behavior.py")
+    d = _git("diff", "-U0", BASE_SHA, SHIP_SHA, "--", "tests/test_iter70_behavior.py")
     assert d.returncode == 0, d.stderr
     added, removed = [], []
     for line in d.stdout.splitlines():
