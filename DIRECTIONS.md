@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-94
+    lenses: performance-and-throughput, narrative-and-docs
+    - Candidate A1 -- The Critic writes `rationale` only for fields it doubts: 28% fewer paid Critic output bytes, gate decisions unchanged (roadmap #64)
+    - Candidate A2 -- Role checks compile the value's pattern once instead of re-escaping and re-looking it up for every source line
+    - Candidate A3 -- `--batch` pays once per distinct document: repeated rows reuse the verified result instead of re-calling Generator and Critic
+    - Candidate B1 -- README's three heuristic-check lists name the iter-90 omitted-total check, and one test pins every list to heuristics.py's documented checks
+    - Candidate B2 -- The "coverage ≥90%" badge becomes an enforced figure, and the stale coverage `omit` for server.py/providers.py is retired
+    - Candidate B3 -- README layout and §7 name `tools.py` (both MCP tool bodies since iter 55) and `py.typed`, pinned two-way to `src/reflect_mcp/`
+    winner: B1
+    ship: pending (not yet decided)
   iter-93
     lenses: unknown
     - Candidate A1: One MCP tool tail. `extract_tool`/`validate_tool` share `_run_tool`, and `tools._build_pipeline` is deleted
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- The paid Critic call is skipped once heuristics alone have already decided `needs_review`: 8 of 13 golden Critic calls (62%) disappear, `make eval` stays byte-identical
     - Candidate B3 -- `--batch` defaults to 4 workers instead of serial: 40 model-bound rows 4.59 → 1.16 s (3.96×), heuristics-only unchanged (0.375 vs 0.387 s / 2000 rows)
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 208c91f
   iter-92
     lenses: integration-and-adoption
     - Candidate A1 -- MCP `validate`'s published `data` schema names the 7 InvoiceData fields (plus the stored-envelope form) instead of `additionalProperties: true`, which iter 79's unknown-key rejection makes false
@@ -580,4 +590,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-58 scouted iterations
+59 scouted iterations

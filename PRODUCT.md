@@ -106,6 +106,11 @@ tool surface, small deps, MIT, publication-safe.
 | 86 | One MCP tool tail: `extract_tool`/`validate_tool` share `_run_tool`; `_build_pipeline` deleted (iter-93 A1; 0 red) | Med | Low | QUEUED |
 | 87 | One wrong-role-lines predicate `_only_on` shared by party- and identifier-role checks (iter-93 A3; 0 red, heuristics −3 lines) | Low | Low | QUEUED |
 | 88 | `--batch` default concurrency 4 when a model is configured (heuristics-only stays 1) (iter-93 B3 variant; 8 serial pins; 429 risk) | Med | Med | QUEUED |
+| 89 | README §2/§5 name the omitted-total check; one test pins every `heuristics.__doc__` check to all three README lists (iter-94 B1) | Med | Low | DONE (iter 94) |
+| 90 | Rationale only for doubted fields: Critic output −28% on replay, gate decisions unchanged (iter-94 A1; = #64; live effect unprovable offline) | Med | Med | QUEUED |
+| 91 | Role checks compile each value's pattern once (`_lines_containing`): golden −19..28%, byte-identical (iter-94 A2; 0 red) | Low | Low | QUEUED |
+| 92 | Coverage badge enforced: `fail_under = 90`, stale server/providers `omit` retired (iter-94 B2; 97% either way) | Low | Low | QUEUED |
+| 93 | README layout + §7 name `tools.py` and `py.typed`, two-way pinned to `src/reflect_mcp/` (iter-94 B3; 0 red) | Low | Low | QUEUED |
 
 ## Done ledger
 
@@ -166,3 +171,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 91 — MCP `initialize` gives `instructions` (needs_review contract); tools get title + read-only annotations
 - iter 92 — Provider SDK guard is one `_require` helper + `_CLIENTS` dict; same clients, same install hints
 - iter 93 — Heuristics skip redundant date scans + lazy fold: same reports, 200 KB doc −8% (same-year) / −42%
+- iter 94 — README §2/§5 name the omitted-total check; docstring-driven pin covers all three check lists
