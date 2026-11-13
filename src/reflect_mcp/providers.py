@@ -14,9 +14,11 @@ never need `anthropic` / `openai` / `boto3` installed.
 
 from __future__ import annotations
 
+import importlib
 import json
 import os
-from typing import Protocol, runtime_checkable
+from types import ModuleType
+from typing import Callable, Protocol, runtime_checkable
 
 # Sensible defaults; a reviewer can override any of these via env.
 _DEFAULTS = {
@@ -49,18 +51,22 @@ def _model_for(role: str, provider: str) -> str:
     return _DEFAULTS[provider][role]
 
 
+def _require(module: str, provider: str, extra: str) -> ModuleType:
+    """Lazy SDK import: one guard keeps every install hint alike; honours sys.modules stubs."""
+    try:
+        return importlib.import_module(module)
+    except ImportError as exc:  # pragma: no cover - only hit without SDK
+        raise RuntimeError(
+            f"{provider} provider selected but the `{module}` package is not "
+            f"installed. Run: pip install 'reflect-mcp[{extra}]'"
+        ) from exc
+
+
 class AnthropicClient:
     def __init__(self, model: str, max_tokens: int = 1024) -> None:
         self.model = model
         self.max_tokens = max_tokens
-        try:
-            import anthropic  # noqa: PLC0415
-        except ImportError as exc:  # pragma: no cover - only hit without SDK
-            raise RuntimeError(
-                "Anthropic provider selected but the `anthropic` package is not "
-                "installed. Run: pip install 'reflect-mcp[anthropic]'"
-            ) from exc
-        self._client = anthropic.Anthropic()
+        self._client = _require("anthropic", "Anthropic", "anthropic").Anthropic()
 
     def complete(self, *, system: str, user: str) -> str:
         resp = self._client.messages.create(
@@ -76,14 +82,7 @@ class OpenAIClient:
     def __init__(self, model: str, max_tokens: int = 1024) -> None:
         self.model = model
         self.max_tokens = max_tokens
-        try:
-            from openai import OpenAI  # noqa: PLC0415
-        except ImportError as exc:  # pragma: no cover - only hit without SDK
-            raise RuntimeError(
-                "OpenAI provider selected but the `openai` package is not "
-                "installed. Run: pip install 'reflect-mcp[openai]'"
-            ) from exc
-        self._client = OpenAI()
+        self._client = _require("openai", "OpenAI", "openai").OpenAI()
 
     def complete(self, *, system: str, user: str) -> str:
         resp = self._client.chat.completions.create(
@@ -104,13 +103,7 @@ class BedrockClient:
     def __init__(self, model: str, max_tokens: int = 1024) -> None:
         self.model = model
         self.max_tokens = max_tokens
-        try:
-            import boto3  # noqa: PLC0415
-        except ImportError as exc:  # pragma: no cover - only hit without SDK
-            raise RuntimeError(
-                "Bedrock provider selected but `boto3` is not installed. "
-                "Run: pip install 'reflect-mcp[bedrock]'"
-            ) from exc
+        boto3 = _require("boto3", "Bedrock", "bedrock")
         self._client = boto3.client("bedrock-runtime", region_name=os.getenv("AWS_REGION", "us-east-1"))
 
     def complete(self, *, system: str, user: str) -> str:
@@ -125,16 +118,14 @@ class BedrockClient:
         return "".join(b.get("text", "") for b in payload.get("content", []))
 
 
+# Keyed exactly like `_DEFAULTS`, so adding a provider is one class + one entry.
+_CLIENTS: dict[str, Callable[[str], LLMClient]] = {"anthropic": AnthropicClient, "openai": OpenAIClient,
+                                                  "bedrock": BedrockClient}
+
+
 def build_client(role: str) -> LLMClient:
     """Build a real provider client for `role` in {"generator", "critic"}."""
     provider = os.getenv("REFLECT_PROVIDER", "anthropic").lower()
     if provider not in _DEFAULTS:
-        raise ValueError(
-            f"Unknown REFLECT_PROVIDER={provider!r}. Choose one of: {', '.join(_DEFAULTS)}."
-        )
-    model = _model_for(role, provider)
-    if provider == "anthropic":
-        return AnthropicClient(model)
-    if provider == "openai":
-        return OpenAIClient(model)
-    return BedrockClient(model)
+        raise ValueError(f"Unknown REFLECT_PROVIDER={provider!r}. Choose one of: {', '.join(_DEFAULTS)}.")
+    return _CLIENTS[provider](_model_for(role, provider))

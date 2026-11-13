@@ -97,6 +97,11 @@ tool surface, small deps, MIT, publication-safe.
 | 77 | No-Critic results stop calling the placeholder `overall_confidence: 1.0` "the critic's": heuristics-only and `all_fields_doomed` docs say it is a placeholder and `--overall-threshold` is inert there (iter-88 B1; re-hash the iter-69 extract-docstring sha pin; #48 is the behavior fix) | High | Low | QUEUED |
 | 78 | Omission detection for `subtotal`/`tax`: an explicit null the source labels is flagged (#39 follow-up; measured 29 red for all amounts vs 13 total-only) | Med | Med | QUEUED |
 | 79 | Suite-wide AST guard: no test passes `HEAD`/`@` as a git archive/diff/show rev or runs a single-rev `git diff` (iter-90 B2: red on both iter-87/89 bombs, 0 hits on 65 modules; iter 90 shipped it over a frozen 12-module list -- remainder: glob `tests/test_*.py`, iter-91 A3 red on both bombs) | Med | Low | QUEUED |
+| 80 | One provider-SDK import guard: `_require(module, provider, extra)` replaces 3 copied try-import blocks; `build_client` dispatches via a `_CLIENTS` dict keyed like `_DEFAULTS` (iter-92 B3; 0 red, providers.py 140→131) | Med | Low | DONE (iter 92) |
+| 81 | MCP `validate.data` inputSchema names the 7 InvoiceData fields (+ stored-envelope branch) instead of `additionalProperties: true` (iter-92 A1; 1 iter-85 digest re-hash) | High | Low | QUEUED |
+| 82 | MCP tool arguments publish `description`s; thresholds advertise `minimum 0`/`maximum 1` via `json_schema_extra` (not `ge`/`le`) (iter-92 A3; pairs with #81) | Med | Low | QUEUED |
+| 83 | One single-document CLI tail: `extract`/`validate` share `_run_verb` (cli.py 306→279; 2 pin literals: iter68 `HEAD_CLI_LINES`, iter79 `== N`) (iter-92 B1) | Med | Med | QUEUED |
+| 84 | One "Critic didn't speak" branch in `_verify`: one `_neutral_critique` site, `skip_reason` picked once (iter-92 B2; 0 red) | Low | Low | QUEUED |
 
 ## Done ledger
 
@@ -155,3 +160,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 89 — REVERTED at PRESHIP: new test's `git archive HEAD src` baseline became the ship once committed
 - iter 90 — Explicit `"total": null` on a labelled total is needs_review, not a silent ok; golden inv-013
 - iter 91 — MCP `initialize` gives `instructions` (needs_review contract); tools get title + read-only annotations
+- iter 92 — Provider SDK guard is one `_require` helper + `_CLIENTS` dict; same clients, same install hints

@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-92
+    lenses: integration-and-adoption
+    - Candidate A1 -- MCP `validate`'s published `data` schema names the 7 InvoiceData fields (plus the stored-envelope form) instead of `additionalProperties: true`, which iter 79's unknown-key rejection makes false
+    - Candidate A2 -- `--batch --summary PATH` writes one machine-readable tally `{lines, ok, needs_review, error, flagged_fields, exit}` so a CI gate reads one file instead of re-parsing every JSONL row (roadmap #47)
+    - Candidate A3 -- MCP tool arguments publish their meaning and bounds: every argument gets a `description`, and `field_threshold`/`overall_threshold` advertise `minimum: 0, maximum: 1`
+    - Candidate B1 -- One single-document CLI tail: `extract` and `validate` share `_run_verb`, deleting the duplicated read/empty-check/build/run/print/exit block (cli.py 306 -> 279)
+    - Candidate B2 -- One "Critic didn't speak" branch: `_verify` picks a skip reason once, deleting the second `_neutral_critique` + `critic_ran=False` + `critic.skipped` copy
+    - Candidate B3 -- One provider-SDK import guard: three copied try-import/`RuntimeError` blocks become `_require(module, provider, extra)`, and `build_client`'s if-chain becomes a dict (providers.py 140 -> 130)
+    winner: B3
+    ship: pending (not yet decided)
   iter-91
     lenses: hardening/DX, integration-and-adoption
     - Candidate A1 -- Role checks run on whitespace-folded grounding too: an NBSP/tab/double-space "Bill to" buyer or "PO Number" copy stops being a silent `ok` (roadmap #44, NEXT)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- MCP `validate`'s published `data` schema names the 7 InvoiceData fields (or the stored-envelope form) and stops advertising `additionalProperties: true`, which iter 79's unknown-key rejection makes false
     - Candidate B3 -- `--batch --summary PATH` writes one machine-readable tally `{lines, ok, needs_review, error, flagged_fields, exit}` so a CI gate reads one file instead of re-parsing every JSONL row (roadmap #47)
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 4adb409
   iter-90
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Re-ship #39: an explicit `"total": null` on a source that labels a total stops being a silent `ok`, with the time-bomb fixture pinned to a fixed base sha
@@ -560,4 +570,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-56 scouted iterations
+57 scouted iterations
