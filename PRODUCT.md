@@ -34,7 +34,7 @@ tool surface, small deps, MIT, publication-safe.
 | 14 | Collapse `_run_batch` serial path into `_process_one_line` | Low | Low | DONE (iter 38) |
 | 15 | README "Use as a Python library" section + API-completeness drift test | Med | Low | DONE (iter 40) |
 | 16 | Heuristic-only verification mode (`--heuristics-only` flag) | Med | Low | DONE (iter 41) |
-| 17 | Short-circuit Critic when heuristics already doom all fields | Med | Low | DONE (iter 52) |
+| 17 | Short-circuit Critic when heuristics already doom all fields (iter-93 B2 `any`-doomed skip declined: drops secondary-field Critic flags) | Med | Low | DONE (iter 52) |
 | 18 | Date-grounding heuristic: penalize an ISO-valid `invoice_date` absent from the source | High | Low | DONE (iter 53) |
 | 19 | Gate honors Critic contract: `grounded:false` / missing verdict caps at 0.5; duplicates use min | High | Low | DONE (iter 54) |
 | 20 | All-null extraction is `needs_review`; dropped unknown Generator keys surfaced in notes | Med | Low | QUEUED |
@@ -102,6 +102,10 @@ tool surface, small deps, MIT, publication-safe.
 | 82 | MCP tool arguments publish `description`s; thresholds advertise `minimum 0`/`maximum 1` via `json_schema_extra` (not `ge`/`le`) (iter-92 A3; pairs with #81) | Med | Low | QUEUED |
 | 83 | One single-document CLI tail: `extract`/`validate` share `_run_verb` (cli.py 306→279; 2 pin literals: iter68 `HEAD_CLI_LINES`, iter79 `== N`) (iter-92 B1) | Med | Med | QUEUED |
 | 84 | One "Critic didn't speak" branch in `_verify`: one `_neutral_critique` site, `skip_reason` picked once (iter-92 B2; 0 red) | Low | Low | QUEUED |
+| 85 | Heuristics stop re-scanning: first-match date span, date-role pass skips lines without the target year, lazy whitespace fold (iter-93 B1 narrowed; byte-identical, same-year doc −8%, other-year −42%) | Med | Low | DONE (iter 93) |
+| 86 | One MCP tool tail: `extract_tool`/`validate_tool` share `_run_tool`; `_build_pipeline` deleted (iter-93 A1; 0 red) | Med | Low | QUEUED |
+| 87 | One wrong-role-lines predicate `_only_on` shared by party- and identifier-role checks (iter-93 A3; 0 red, heuristics −3 lines) | Low | Low | QUEUED |
+| 88 | `--batch` default concurrency 4 when a model is configured (heuristics-only stays 1) (iter-93 B3 variant; 8 serial pins; 429 risk) | Med | Med | QUEUED |
 
 ## Done ledger
 
@@ -161,3 +165,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 90 — Explicit `"total": null` on a labelled total is needs_review, not a silent ok; golden inv-013
 - iter 91 — MCP `initialize` gives `instructions` (needs_review contract); tools get title + read-only annotations
 - iter 92 — Provider SDK guard is one `_require` helper + `_CLIENTS` dict; same clients, same install hints
+- iter 93 — Heuristics skip redundant date scans + lazy fold: same reports, 200 KB doc −8% (same-year) / −42%

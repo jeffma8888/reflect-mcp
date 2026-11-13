@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-93
+    lenses: unknown
+    - Candidate A1: One MCP tool tail. `extract_tool`/`validate_tool` share `_run_tool`, and `tools._build_pipeline` is deleted
+    - Candidate A2: One "Critic didn't speak" branch in `_verify` (roadmap #84). `skip_reason` is picked once, and the `critic_ran` flag and the second `_neutral_critique` site are deleted
+    - Candidate A3: One "value appears only on wrong-role lines" predicate. The party-role and identifier-role checks share `_only_on`, deleting the second line-scan and abstain copy in heuristics.py
+    - Candidate B1 -- Heuristics stop re-scanning the document: 282 KB `run_heuristics` 96 → 80 ms (−17%), golden docs 61 → 47 µs (−23%), byte-identical on a 2080-row differential
+    - Candidate B2 -- The paid Critic call is skipped once heuristics alone have already decided `needs_review`: 8 of 13 golden Critic calls (62%) disappear, `make eval` stays byte-identical
+    - Candidate B3 -- `--batch` defaults to 4 workers instead of serial: 40 model-bound rows 4.59 → 1.16 s (3.96×), heuristics-only unchanged (0.375 vs 0.387 s / 2000 rows)
+    winner: B1
+    ship: pending (not yet decided)
   iter-92
     lenses: integration-and-adoption
     - Candidate A1 -- MCP `validate`'s published `data` schema names the 7 InvoiceData fields (plus the stored-envelope form) instead of `additionalProperties: true`, which iter 79's unknown-key rejection makes false
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- One "Critic didn't speak" branch: `_verify` picks a skip reason once, deleting the second `_neutral_critique` + `critic_ran=False` + `critic.skipped` copy
     - Candidate B3 -- One provider-SDK import guard: three copied try-import/`RuntimeError` blocks become `_require(module, provider, extra)`, and `build_client`'s if-chain becomes a dict (providers.py 140 -> 130)
     winner: B3
-    ship: pending (not yet decided)
+    ship: PUSHED 1462fe6
   iter-91
     lenses: hardening/DX, integration-and-adoption
     - Candidate A1 -- Role checks run on whitespace-folded grounding too: an NBSP/tab/double-space "Bill to" buyer or "PO Number" copy stops being a silent `ok` (roadmap #44, NEXT)
@@ -570,4 +580,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-57 scouted iterations
+58 scouted iterations

@@ -279,12 +279,9 @@ def _month_number(token: str) -> int:
 def _find_date_span(iso_value: date, text: str) -> ProvenanceSpan | None:
     """Find the first token in *text* that writes *iso_value* in a supported form."""
     target = (iso_value.year, iso_value.month, iso_value.day)
-    matches = [
-        m
-        for pattern in _DATE_PATTERNS
-        for m in pattern.finditer(text)
-        if target in _date_readings(m)
-    ]
+    # finditer yields in text order, so each pattern's first hit is its earliest.
+    firsts = (next((m for m in p.finditer(text) if target in _date_readings(m)), None) for p in _DATE_PATTERNS)
+    matches = [m for m in firsts if m is not None]
     if not matches:
         return None
     first = min(matches, key=lambda m: m.start())
@@ -299,7 +296,10 @@ def _date_role_labels(target: tuple[int, int, int], text: str) -> list[bool]:
     the "Due" label belongs to Y alone and X stays neutral.
     """
     labelled: list[bool] = []
+    year = str(target[0])
     for line in text.split("\n"):
+        if year not in line:  # every date pattern writes the year as 4 digits
+            continue
         tokens = sorted(
             (m for pattern in _DATE_PATTERNS for m in pattern.finditer(line)),
             key=lambda m: m.start(),
@@ -354,7 +354,7 @@ def _check_date(value: str, text: str, report: HeuristicReport) -> None:
 def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
     """Compute deterministic per-field verification factors."""
     report = HeuristicReport()
-    norm_text = _normalize(text)
+    norm_text: str | None = None  # folded on first need: most docs never need it
 
     for field in EXTRACTION_FIELDS:
         value = getattr(data, field)
@@ -384,6 +384,7 @@ def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
                     _check_identifier_role(str(value), text, report)
             else:
                 report.provenance[field] = []
+                norm_text = _normalize(text) if norm_text is None else norm_text
                 if _normalize(str(value)) not in norm_text:
                     report.penalize(field, 0.25, f"value {value!r} not found in source text")
 
