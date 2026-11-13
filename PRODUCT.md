@@ -63,7 +63,7 @@ tool surface, small deps, MIT, publication-safe.
 | 43 | `make eval` adds a heuristics-only (Critic-off) trust readout line: catch / silent-wrong / false alarms | Med | Low | QUEUED |
 | 44 | Party-role check runs on normalized grounding too: NBSP/tab/double-space/CR "Bill to" buyer is no silent `ok` (iter-85 A2: 10/10 bypass over 5 whitespace kinds × 2 role checks; ~8 lines, 0 test edits; needs golden row) | High | Low | NEXT |
 | 45 | `--batch \| head -1` keeps the 0/1/2/3 contract: worst code of rows produced, no traceback, input stops (was exit 120) | Med | Low | DONE (iter 78) |
-| 46 | `--batch` tolerates a UTF-8 BOM and skips whitespace-only lines (today error rows + exit 3) | Med | Low | QUEUED |
+| 46 | `--batch` tolerates a UTF-8 BOM and skips whitespace-only lines (today error rows + exit 3; iter-96 B3: 1 src line, cli.py stays 306, 4 reds = one iter67 tuple) | Med | Low | DONE (iter 96) |
 | 47 | `--batch --summary PATH` writes `{lines, ok, needs_review, error, flagged_fields, exit}` for CI gates | Med | Low | QUEUED |
 | 48 | Result carries `critic_ran: bool` so a consumer can require a Critic-verified `ok` (2 src lines, 30-pin digest migration) | Med | Med | QUEUED |
 | 49 | MCP tools run on a worker thread (`async` + `asyncio.to_thread`): parallel agent calls overlap (4 calls 1.67s → 0.42s) | High | Low | DONE (iter 69) |
@@ -176,3 +176,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 93 — Heuristics skip redundant date scans + lazy fold: same reports, 200 KB doc −8% (same-year) / −42%
 - iter 94 — README §2/§5 name the omitted-total check; docstring-driven pin covers all three check lists
 - iter 95 — Currency written by name (`US Dollars`, `pounds sterling`) grounds its ISO code; golden expected all clean
+- iter 96 — `--batch` ignores a line-1 UTF-8 BOM and skips whitespace-only lines: valid corpus exits 0, not 3

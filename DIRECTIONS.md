@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-96
+    lenses: new-capability, hardening/DX
+    - Candidate A1 -- A currency the source writes only as an unambiguous symbol on an amount ("€1,190.00", "£", "₹", "₩") grounds its ISO code, so the correct EUR/GBP answer on a symbol-only invoice stops being escalated (roadmap #56)
+    - Candidate A2 -- A flagged `total` or `currency` carries a machine-readable `suggested_value`: the one number the source labels as total, or the ISO code its written currency name maps to (roadmap #40, the deterministic slice)
+    - Candidate A3 -- A total the source labels as a *different* amount ("Net total: 500.00", "Total tax: 50.00") and a tax that is really the rate ("Tax 10%" → 10.0) stop being a silent `ok`: amount-role labels are attributed per line and `N%` rates never ground (roadmap #33)
+    - Candidate B1 -- `invoice_number` and `currency` grounding is token-bounded: "EUR" inside "Euro Parts Ltd", "CAD" inside "CADENCE LLC", "USD" inside "USDT", and "INV-100" inside "INV-1001" stop grounding as a silent `ok` (roadmap #54 + #96)
+    - Candidate B2 -- The suite stays green when an operator has the MCP gate floor exported: one autouse conftest fixture clears `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD`, replacing 5 per-file copies (roadmap #59)
+    - Candidate B3 -- `--batch` accepts a UTF-8 BOM on line 1 and skips whitespace-only lines, as its docstring ("one result per non-blank line") already promises (roadmap #46)
+    winner: B3
+    ship: pending (not yet decided)
   iter-95
     lenses: new-capability
     - Candidate A1 -- Every `REFLECT_*` variable the package reads is listed in `.env.example` and named in the README, pinned two-way to the literals in `src/`
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- A currency the source writes by name grounds its ISO code: "Amounts in US Dollars" vouches for `USD`, so a correct answer stops being escalated (roadmap #71)
     - Candidate B3 -- `validate --batch` grades rows that carry `expected`: each row gets `grade: {caught, silent_wrong, false_alarm}`, and `--max-silent-wrong N` gives a CI exit, so the trust readout works on the user's own corpus (roadmap #60)
     winner: B2
-    ship: pending (not yet decided)
+    ship: PUSHED 6cbaf7d
   iter-94
     lenses: performance-and-throughput, narrative-and-docs
     - Candidate A1 -- The Critic writes `rationale` only for fields it doubts: 28% fewer paid Critic output bytes, gate decisions unchanged (roadmap #64)
@@ -600,4 +610,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-60 scouted iterations
+61 scouted iterations

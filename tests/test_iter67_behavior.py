@@ -278,8 +278,7 @@ NO_ID_LINES = [
     ("not_object_null", "null", MISSING_TEXT_LINE),
     ("invalid_json", "not json",
      '{"status": "error", "error_message": "invalid JSON: Expecting value: line 1 column 1 (char 0)"}'),
-    ("whitespace_only", "   ",
-     '{"status": "error", "error_message": "invalid JSON: Expecting value: line 1 column 4 (char 3)"}'),
+    # whitespace_only dropped in iter 96: such lines now emit no row (tests/test_iter96_behavior.py EB5/EB6)
 ]
 
 

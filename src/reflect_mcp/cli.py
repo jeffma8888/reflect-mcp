@@ -158,7 +158,7 @@ def _run_batch(
     lines pending; each row is flushed as printed, since a piped stdout would buffer
     it from streaming readers. Exit codes: ok 0 < needs_review 1 < error 3, worst = max.
     """
-    lines = (raw for raw in stream if raw.rstrip("\n\r"))
+    lines = (raw for raw in (r.removeprefix("\ufeff") if n == 0 else r for n, r in enumerate(stream)) if raw.strip())
     pool = ThreadPoolExecutor(max_workers=concurrency) if concurrency > 1 else None
     worst = 0
     try:
