@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-95
+    lenses: new-capability
+    - Candidate A1 -- Every `REFLECT_*` variable the package reads is listed in `.env.example` and named in the README, pinned two-way to the literals in `src/`
+    - Candidate A2 -- The structured log explains itself: README says logs go to stderr and lists all 10 `stage` events, pinned two-way to the events in `src/`
+    - Candidate A3 -- "Prompts live in versioned files" becomes true prose, and the hand-copied key lists in both prompts are pinned to the schema the parser validates against
+    - Candidate B1 -- An explicit `"subtotal": null` / `"tax": null` on a source that labels that amount escalates to needs_review, like the iter-90 total (roadmap #78)
+    - Candidate B2 -- A currency the source writes by name grounds its ISO code: "Amounts in US Dollars" vouches for `USD`, so a correct answer stops being escalated (roadmap #71)
+    - Candidate B3 -- `validate --batch` grades rows that carry `expected`: each row gets `grade: {caught, silent_wrong, false_alarm}`, and `--max-silent-wrong N` gives a CI exit, so the trust readout works on the user's own corpus (roadmap #60)
+    winner: B2
+    ship: pending (not yet decided)
   iter-94
     lenses: performance-and-throughput, narrative-and-docs
     - Candidate A1 -- The Critic writes `rationale` only for fields it doubts: 28% fewer paid Critic output bytes, gate decisions unchanged (roadmap #64)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- The "coverage ≥90%" badge becomes an enforced figure, and the stale coverage `omit` for server.py/providers.py is retired
     - Candidate B3 -- README layout and §7 name `tools.py` (both MCP tool bodies since iter 55) and `py.typed`, pinned two-way to `src/reflect_mcp/`
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 7ca4ed0
   iter-93
     lenses: unknown
     - Candidate A1: One MCP tool tail. `extract_tool`/`validate_tool` share `_run_tool`, and `tools._build_pipeline` is deleted
@@ -590,4 +600,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-59 scouted iterations
+60 scouted iterations

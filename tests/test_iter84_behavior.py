@@ -363,8 +363,14 @@ def test_eb7_existing_golden_rows_identical_to_base():
     for row in rows:
         for data in (row["expected"], json.loads(replay[row["id"]]["generator_raw"])):
             m = InvoiceData(**data)
-            assert _report(_h().run_heuristics(row["text"], m)) == \
-                _report(base.run_heuristics(row["text"], m)), row["id"]
+            got = _report(_h().run_heuristics(row["text"], m))
+            want = _report(base.run_heuristics(row["text"], m))
+            if row["id"] == "inv-011" and data is row["expected"]:
+                # iter 95 (#71): "Amounts in US Dollars" now grounds the correct USD,
+                # so only this answer's currency may move; every other field stays pinned.
+                got, want = (tuple({k: v for k, v in d.items() if k != "currency"} for d in r)
+                             for r in (got, want))
+            assert got == want, row["id"]
 
 
 def test_eb7_ascii_fuzz_identical_to_base():

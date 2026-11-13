@@ -47,7 +47,9 @@ GOLDEN_IDS = tuple(f"inv-{i:03d}" for i in range(1, 14))
 
 # ---- frozen literals, measured on base 1462fe6 ------------------------------
 BASE_CORPUS_ROWS = 1496
-BASE_CORPUS_SHA = "a42365f224d7ca6d83eefc57542ab0f4b7da9765ed0647b32df188fafdd75278"
+# Re-pinned iter 95 (#71): a written currency name ("US Dollars") now grounds its code,
+# which moves only inv-011's correct-answer report (and so this corpus digest).
+BASE_CORPUS_SHA = "7fe61d125da0a5f23d52a5b9998d6060bd6d3de1430981ee74a14c4e43d7afeb"
 BASE_GOLDEN_DIGESTS: dict[str, dict[str, str]] = {
     "inv-001": {
         "expected": "9d219a5bb700e73c62909e3f4d85de6147fd21b91f49502a7de16702520bf33a",
@@ -90,7 +92,8 @@ BASE_GOLDEN_DIGESTS: dict[str, dict[str, str]] = {
         "replay": "ba64760c8ac4c55e145286ecbf7624bbf8b4af284311030b1a7763db60a0bd8a",
     },
     "inv-011": {
-        "expected": "4c0cc0279dc780bb3d5b998377301e8f9acf4c02c4543207171542bb84edbf39",
+        # Re-pinned iter 95 (#71): "Amounts in US Dollars" now grounds the correct USD.
+        "expected": "d855b29b21105b946aead7c7eb610808f51384d56d595b0f7aae1a102a988946",
         "replay": "cca680d32af19e3aed83334901ebc0cea0323a5f6c74b13068b55c9c2b0ae538",
     },
     "inv-012": {

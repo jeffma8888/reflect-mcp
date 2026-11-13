@@ -88,7 +88,7 @@ tool surface, small deps, MIT, publication-safe.
 | 68 | Currency-code shape check: a `currency` not matching `[A-Z]{3}` (`$`, `US Dollars`, `usd`) gets factor 0.2, not a silent grounded ok; golden inv-011 (iter-83 B1) | High | Low | DONE (iter 83) |
 | 69 | `.env.example` lists every `REFLECT_*` var src reads (missing both iter-61 floor vars) + two-way src↔template test (iter-83 A1) | Med | Low | QUEUED |
 | 70 | Non-ASCII hardening: `APRİL 3, 2026`/`ſep` month tokens read by the matching regex rule (KeyError → validate exit 3 / `make eval` crash), provenance spans index the original text (`İ` shifted every later span); seeded property test; golden inv-012 (iter-84 B2) | High | Low | DONE (iter 84) |
-| 71 | Currency grounded by its written name, word-bounded (`US Dollars`→USD, `Pounds Sterling`→GBP; not `AUS Dollars`); clean golden row (iter-84 A1, lost to B2) | Med | Low | QUEUED |
+| 71 | Currency grounded by its written name, word-bounded (`US Dollars`→USD, `Pounds Sterling`→GBP; not `AUS Dollars`, not bare `dollars`); golden coverage = every golden `expected` passes heuristics clean (iter-95 B2; new row priced at 22 count-pin reds) | Med | Low | DONE (iter 95) |
 | 72 | MCP `initialize` reports reflect-mcp's own `serverInfo.version` (was the mcp SDK's 1.28.1); `__version__`↔pyproject pin (iter-85 B1) | Med | Low | DONE (iter 85) |
 | 73 | One parse-and-retry loop: Generator + Critic share `parsing.complete_parsed` and one `_RETRY_DELAY_SECONDS`; retries/logs/errors identical, eval byte-identical (iter-86 B1; makes #26/#30 one-place) | Med | Low | DONE (iter 86) |
 | 74 | MCP hosts see tool `title` + `annotations` (readOnly, non-destructive, idempotent, openWorld) and a server `instructions` naming the `needs_review`/`flagged_fields` contract (iter-86 A1: ~12 src lines, 0 test edits; pass annotations as a dict, stub `mcp.types` lacks `ToolAnnotations`; iter-91 B1, instructions tied two-way to the status enum) | High | Low | DONE (iter 91) |
@@ -111,6 +111,9 @@ tool surface, small deps, MIT, publication-safe.
 | 91 | Role checks compile each value's pattern once (`_lines_containing`): golden −19..28%, byte-identical (iter-94 A2; 0 red) | Low | Low | QUEUED |
 | 92 | Coverage badge enforced: `fail_under = 90`, stale server/providers `omit` retired (iter-94 B2; 97% either way) | Low | Low | QUEUED |
 | 93 | README layout + §7 name `tools.py` and `py.typed`, two-way pinned to `src/reflect_mcp/` (iter-94 B3; 0 red) | Low | Low | QUEUED |
+| 94 | README §10 says logs go to stderr and lists all 10 `stage` events, AST-pinned two-way to src (iter-95 A2; 8/10 undocumented) | Med | Low | QUEUED |
+| 95 | Prompt key lists pinned to `EXTRACTION_FIELDS` / `CritiqueResult`+`FieldVerdict`; "versioned" prose made true (iter-95 A3; green on HEAD) | Med | Low | QUEUED |
+| 96 | Literal currency grounding is a case-insensitive substring: `Euro Parts` grounds EUR, `USDollars` grounds USD; word-bound it (iter-95 PM probe) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -172,3 +175,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 92 — Provider SDK guard is one `_require` helper + `_CLIENTS` dict; same clients, same install hints
 - iter 93 — Heuristics skip redundant date scans + lazy fold: same reports, 200 KB doc −8% (same-year) / −42%
 - iter 94 — README §2/§5 name the omitted-total check; docstring-driven pin covers all three check lists
+- iter 95 — Currency written by name (`US Dollars`, `pounds sterling`) grounds its ISO code; golden expected all clean

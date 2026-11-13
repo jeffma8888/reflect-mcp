@@ -5,6 +5,8 @@ give a *structural* signal that costs nothing and can't hallucinate. The gate
 combines both. Concretely we check:
 
   - grounding:   is a committed value actually present in the source text?
+                 A currency code also grounds on an unambiguous written name
+                 ("US Dollars" for USD); a bare "dollars" names no currency.
   - arithmetic:  does subtotal + tax reconcile to total?
   - date format: does invoice_date parse as ISO 8601?
   - date grounding: does that ISO date appear in the source in some supported
@@ -46,6 +48,21 @@ _ARITHMETIC_TOLERANCE = 0.02  # currency rounding slack
 
 # ISO 4217 shape only (no code list): `[A-Z]` is ASCII, used with `fullmatch`.
 _CURRENCY_CODE_RE = re.compile(r"[A-Z]{3}")
+
+# Unambiguous written names that vouch for a code the source never spells out (the
+# prompt asks for "USD", so "Amounts in US Dollars" must not flag the obedient answer).
+# A name only vouches for its own code; a bare "dollars"/"pounds"/"yen" names none.
+# EUR is absent because a case-insensitive "EUR" already matches "euros".
+_CURRENCY_NAMES = {
+    code: re.compile(rf"(?<!\w)(?:{pattern})(?!\w)", re.IGNORECASE)
+    for code, pattern in {
+        "USD": r"(?:US|U\.S\.|United\s+States)\s+dollars?",
+        "GBP": r"pounds?\s+sterling|British\s+pounds?",
+        "JPY": r"Japanese\s+yen",
+        "CAD": r"Canadian\s+dollars?",
+        "AUD": r"Australian\s+dollars?",
+    }.items()
+}
 
 
 def _lookahead(alternatives: list[str] | tuple[str, ...]) -> str:
@@ -168,6 +185,13 @@ def _find_text_span(value: str, original_text: str) -> ProvenanceSpan | None:
     if match is None:
         return None
     return ProvenanceSpan(start=match.start(), end=match.end())
+
+
+def _find_currency_name_span(code: str, text: str) -> ProvenanceSpan | None:
+    """Span of a written name for *code*, so a code grounded by its name still has provenance."""
+    pattern = _CURRENCY_NAMES.get(code)
+    match = pattern.search(text) if pattern is not None else None
+    return ProvenanceSpan(start=match.start(), end=match.end()) if match else None
 
 
 def _contains_ci(value: str, line: str) -> bool:
@@ -376,6 +400,8 @@ def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
 
         if field in _TEXT_GROUNDED_FIELDS:
             span = _find_text_span(str(value), text)
+            if span is None and field == "currency":
+                span = _find_currency_name_span(str(value), text)
             if span is not None:
                 report.provenance[field] = [span]
                 if field == "vendor_name":
