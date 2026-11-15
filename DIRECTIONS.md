@@ -1,6 +1,26 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-98
+    lenses: integration-and-adoption
+    - Candidate A1 -- Re-land `reflect-mcp --mcp-config` (iter-97 B1, which won but was reverted at preship) with a one-line test guard, so it passes on a plain `uv sync`
+    - Candidate A2 -- MCP `validate.data` inputSchema names the 7 InvoiceData fields (plus a stored-envelope branch) instead of advertising a bare `additionalProperties: true` object (roadmap #81)
+    - Candidate A3 -- `--batch --summary PATH` writes one `{lines, ok, needs_review, error, flagged_fields, exit}` JSON tally for CI gates (roadmap #47)
+    - Candidate B1 -- `InvoiceData` gets one model validator instead of two: the `before` envelope-unwrapper and the `wrap` caller-key check (which re-calls the unwrapper by hand) become one `wrap` hook
+    - Candidate B2 -- README keeps one list of heuristic checks (§7), and §5 (plus optionally §2) links to it instead of hand-copying it
+    - Candidate B3 -- Delete `heuristics._contains_ci`: the role checks call `_find_text_span(value, line)`, so the grounding rule lives in exactly one function before #54 token-bounds it
+    winner: A1
+    ship: pending (not yet decided)
+  iter-97
+    lenses: hardening/DX
+    - A1 -- Hermetic suite: one autouse conftest fixture clears the exported MCP gate floor vars (roadmap #59)
+    - A2 -- Token-bounded grounding for `invoice_number`/`currency`: a wrong value inside a longer token stops being a silent `ok` (roadmap #54 + #96)
+    - A3 -- The quality command prints a real pass count: drop `-q` from `[tool.pytest.ini_options].addopts`
+    - Candidate B1 -- `reflect-mcp --mcp-config` prints a ready-to-paste MCP client config block for *this* install
+    - Candidate B2 -- `--batch` error rows carry their 1-based input `line`, so a malformed row joins back to its input (roadmap #25 remainder)
+    - Candidate B3 -- `extract --help` / `validate --help` state the scripting contract: an exit-code epilog (0/1/2/3, `--batch` = worst row, `| head` keeps the code) and the batch line rules
+    winner: B1
+    ship: REVERTED
   iter-96
     lenses: new-capability, hardening/DX
     - Candidate A1 -- A currency the source writes only as an unambiguous symbol on an amount ("€1,190.00", "£", "₹", "₩") grounds its ISO code, so the correct EUR/GBP answer on a symbol-only invoice stops being escalated (roadmap #56)
@@ -10,7 +30,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- The suite stays green when an operator has the MCP gate floor exported: one autouse conftest fixture clears `REFLECT_FIELD_THRESHOLD`/`REFLECT_OVERALL_THRESHOLD`, replacing 5 per-file copies (roadmap #59)
     - Candidate B3 -- `--batch` accepts a UTF-8 BOM on line 1 and skips whitespace-only lines, as its docstring ("one result per non-blank line") already promises (roadmap #46)
     winner: B3
-    ship: pending (not yet decided)
+    ship: PUSHED bfb8670
   iter-95
     lenses: new-capability
     - Candidate A1 -- Every `REFLECT_*` variable the package reads is listed in `.env.example` and named in the README, pinned two-way to the literals in `src/`
@@ -610,4 +630,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-61 scouted iterations
+63 scouted iterations

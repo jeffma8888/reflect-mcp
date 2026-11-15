@@ -129,8 +129,13 @@ Output (`trace_id` is per-run and shown here as a placeholder):
 
 ## 4. Use it in Claude Desktop
 
-Install and point Claude Desktop at the server. Add this to your `claude_desktop_config.json`
-(macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`):
+Install and point Claude Desktop at the server. Run `reflect-mcp --mcp-config` (or
+`.venv/bin/python -m reflect_mcp --mcp-config`) and paste its output into your `claude_desktop_config.json`
+(macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`). It prints the block below with
+`command` set to this install's absolute interpreter (hosts do not inherit the venv's `PATH`), the key variable
+for your `REFLECT_PROVIDER` (none for `bedrock`, which uses the AWS credential chain), and any `REFLECT_*` model,
+threshold or log-level variable you have set. The key is always a placeholder: replace `<your-api-key>` with your
+own; the command never prints a secret. An unknown `REFLECT_PROVIDER` exits 2.
 
 ```json
 {
@@ -140,9 +145,9 @@ Install and point Claude Desktop at the server. Add this to your `claude_desktop
       "args": ["-m", "reflect_mcp.server"],
       "env": {
         "REFLECT_PROVIDER": "anthropic",
-        "ANTHROPIC_API_KEY": "sk-ant-...",
         "REFLECT_GENERATOR_MODEL": "claude-3-5-sonnet-latest",
-        "REFLECT_CRITIC_MODEL": "claude-3-5-haiku-latest"
+        "REFLECT_CRITIC_MODEL": "claude-3-5-haiku-latest",
+        "ANTHROPIC_API_KEY": "<your-api-key>"
       }
     }
   }

@@ -110,6 +110,26 @@ def _git_show(path: str) -> bytes:
     return r.stdout
 
 
+def _drop_mcp_config(help_text: str) -> str:
+    """Strip iter 97's top-level --mcp-config usage token and option entry.
+
+    Narrowed in iter 97: that flag is the one designed help change; the rest of
+    the top-level help (and both verb helps) must still match the base.
+    """
+    lines = help_text.replace(" [--mcp-config]", "").splitlines(keepends=True)
+    out: list[str] = []
+    skipping = False
+    for line in lines:
+        if line.startswith("  --mcp-config"):
+            skipping = True
+            continue
+        if skipping and line.startswith("    "):
+            continue
+        skipping = False
+        out.append(line)
+    return "".join(out)
+
+
 @pytest.fixture(scope="module")
 def head_tree(tmp_path_factory):
     if not _base_reachable():
@@ -318,8 +338,12 @@ class TestEB10ShippedSurface:
     def test_main_py_byte_identical_to_base(self):
         if not _base_reachable():
             pytest.skip(f"{BASE_SHA} not reachable")
-        wt = (REPO_ROOT / "src" / "reflect_mcp" / "__main__.py").read_bytes()
-        assert wt == _git_show("src/reflect_mcp/__main__.py")
+        # Narrowed in iter 97: --mcp-config is a purely additive change, so every
+        # base line must survive, in order, as a subsequence of the working tree.
+        wt = iter((REPO_ROOT / "src" / "reflect_mcp" / "__main__.py").read_bytes().splitlines())
+        base = _git_show("src/reflect_mcp/__main__.py").splitlines()
+        missing = [line for line in base if not any(line == w for w in wt)]
+        assert missing == []
 
     @pytest.mark.parametrize("argv", [["--help"], ["extract", "--help"], ["validate", "--help"]])
     def test_console_help_byte_identical_to_base(self, head_tree, argv):
@@ -327,7 +351,7 @@ class TestEB10ShippedSurface:
         env = _env(PYTHONPATH=str(head_tree / "src"))
         base = _console(*argv, cwd=head_tree, env=env)
         assert wt[0] == base[0] == 0
-        assert wt[1] == base[1]
+        assert _drop_mcp_config(wt[1]) == base[1]
         assert wt[1].startswith("usage: reflect-mcp")
 
     def test_eval_dir_unchanged(self):

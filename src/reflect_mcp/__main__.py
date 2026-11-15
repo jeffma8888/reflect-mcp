@@ -9,11 +9,23 @@ compatibility.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import typing
 
 from reflect_mcp import __version__
+
+# Provider -> API-key env var a host must set; keys mirror providers._CLIENTS
+# (a test pins that), and bedrock is None because it uses the AWS credential chain.
+_KEY_VARS: dict[str, str | None] = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "bedrock": None}
+# REFLECT_* vars the server reads, echoed in this order when set so the printed
+# block reproduces the operator's current configuration.
+_ECHO_VARS = (
+    "REFLECT_GENERATOR_MODEL", "REFLECT_CRITIC_MODEL",
+    "REFLECT_FIELD_THRESHOLD", "REFLECT_OVERALL_THRESHOLD", "REFLECT_LOG_LEVEL",
+)
+_KEY_PLACEHOLDER = "<your-api-key>"
 
 
 def _build_top_parser() -> argparse.ArgumentParser:
@@ -29,6 +41,13 @@ def _build_top_parser() -> argparse.ArgumentParser:
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
+    )
+    parser.add_argument(
+        "--mcp-config",
+        dest="mcp_config",
+        action="store_true",
+        default=False,
+        help="Print a paste-ready mcpServers JSON block for this install and exit.",
     )
 
     sub = parser.add_subparsers(dest="command")
@@ -123,6 +142,8 @@ def main() -> None:
 
     parser = _build_top_parser()
     args = parser.parse_args()
+    if args.mcp_config:
+        sys.exit(_print_mcp_config())
 
     if args.command == "extract":
         from reflect_mcp.cli import run_extract_from_args  # noqa: PLC0415
@@ -137,6 +158,29 @@ def main() -> None:
     from reflect_mcp.server import main as server_main  # noqa: PLC0415
 
     server_main()
+
+
+def _print_mcp_config() -> int:
+    """Print an MCP client-config block naming this interpreter; return the exit code.
+
+    Hosts such as Claude Desktop do not inherit the venv's PATH, so the block
+    needs the absolute ``sys.executable``, which a user would otherwise hand-type.
+    The API key is always a placeholder: a printed block gets pasted and shared,
+    so a real secret must never reach stdout.
+    """
+    provider = os.getenv("REFLECT_PROVIDER", "anthropic").lower()  # as build_client reads it
+    if provider not in _KEY_VARS:
+        print(f"reflect-mcp: error: unknown REFLECT_PROVIDER={provider!r}; "
+              f"choose one of: {', '.join(_KEY_VARS)}.", file=sys.stderr)
+        return 2
+    env = {"REFLECT_PROVIDER": provider}
+    env.update({name: os.environ[name] for name in _ECHO_VARS if os.environ.get(name)})
+    key_var = _KEY_VARS[provider]
+    if key_var is not None:
+        env[key_var] = _KEY_PLACEHOLDER
+    server = {"command": sys.executable, "args": ["-m", "reflect_mcp.server"], "env": env}
+    print(json.dumps({"mcpServers": {"reflect-mcp": server}}, indent=2))
+    return 0
 
 
 def _exit_with_verb(

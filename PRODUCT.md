@@ -114,6 +114,11 @@ tool surface, small deps, MIT, publication-safe.
 | 94 | README §10 says logs go to stderr and lists all 10 `stage` events, AST-pinned two-way to src (iter-95 A2; 8/10 undocumented) | Med | Low | QUEUED |
 | 95 | Prompt key lists pinned to `EXTRACTION_FIELDS` / `CritiqueResult`+`FieldVerdict`; "versioned" prose made true (iter-95 A3; green on HEAD) | Med | Low | QUEUED |
 | 96 | Literal currency grounding is a case-insensitive substring: `Euro Parts` grounds EUR, `USDollars` grounds USD; word-bound it (iter-95 PM probe) | Med | Low | QUEUED |
+| 97 | `reflect-mcp --mcp-config` prints a paste-ready `mcpServers` block for this install (`sys.executable`, `-m reflect_mcp.server`, key as placeholder, never a secret) (iter-97 B1, preship-reverted: a test needed the `[server]` extra; re-landed iter-98 A1) | High | Low | DONE (iter 98) |
+| 98 | `extract`/`validate --help` epilog states exit codes 0/1/2/3 and the batch line rules, pinned to README §5 (iter-97 B3; not prototyped) | Med | Low | QUEUED |
+| 99 | Quality command prints its pass count: drop `-q` from pytest `addopts` (`uv run pytest -q` runs at `-qq` today) (iter-97 A3) | Low | Low | QUEUED |
+| 100 | `InvoiceData` keeps one `wrap` model validator: envelope unwrap + unknown-key check merged (iter-98 B1; 0 red, schema.py −11, 12k-row differential identical) | Low | Low | QUEUED |
+| 101 | Delete `heuristics._contains_ci`; role checks ground via `_find_text_span` so #54/#96 edit one rule (iter-98 B3; 0 red) | Low | Low | QUEUED |
 
 ## Done ledger
 
@@ -177,3 +182,5 @@ tool surface, small deps, MIT, publication-safe.
 - iter 94 — README §2/§5 name the omitted-total check; docstring-driven pin covers all three check lists
 - iter 95 — Currency written by name (`US Dollars`, `pounds sterling`) grounds its ISO code; golden expected all clean
 - iter 96 — `--batch` ignores a line-1 UTF-8 BOM and skips whitespace-only lines: valid corpus exits 0, not 3
+- iter 97 — REVERTED at PRESHIP: `--mcp-config` test imported the server module, which needs the `[server]` extra
+- iter 98 — `reflect-mcp --mcp-config` prints a paste-ready MCP client config for this install; no secret echoed
