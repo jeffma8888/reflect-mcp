@@ -119,6 +119,9 @@ tool surface, small deps, MIT, publication-safe.
 | 99 | Quality command prints its pass count: drop `-q` from pytest `addopts` (`uv run pytest -q` runs at `-qq` today) (iter-97 A3) | Low | Low | QUEUED |
 | 100 | `InvoiceData` keeps one `wrap` model validator: envelope unwrap + unknown-key check merged (iter-98 B1; 0 red, schema.py −11, 12k-row differential identical) | Low | Low | QUEUED |
 | 101 | Delete `heuristics._contains_ci`; role checks ground via `_find_text_span` so #54/#96 edit one rule (iter-98 B3; 0 red) | Low | Low | QUEUED |
+| 102 | `import reflect_mcp` is lazy (PEP 562 `__getattr__` + `TYPE_CHECKING` imports): `--version`/`--help`/`--mcp-config` skip pydantic, ~84→24 ms (iter-100 A3; 0 red) | Med | Low | DONE (iter 100) |
+| 103 | `REFLECT_*` census pin: `.env.example`, README and `_ECHO_VARS` cover every var src reads; README §5 names `--mcp-config` (iter-100 B1+B2; proto 0 red) | Med | Low | QUEUED |
+| 104 | Heuristics-only rows log 3 records, not 4: `validate.start` folds into `heuristics.done` (stderr −21%/row; 2 iter-65 pins) (iter-100 A1 narrow) | Low | Low | QUEUED |
 
 ## Done ledger
 
@@ -184,3 +187,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 96 — `--batch` ignores a line-1 UTF-8 BOM and skips whitespace-only lines: valid corpus exits 0, not 3
 - iter 97 — REVERTED at PRESHIP: `--mcp-config` test imported the server module, which needs the `[server]` extra
 - iter 98 — `reflect-mcp --mcp-config` prints a paste-ready MCP client config for this install; no secret echoed
+- iter 100 — `import reflect_mcp` is lazy: `--version`/`--help`/`--mcp-config` skip pydantic (~84→24 ms CPU)

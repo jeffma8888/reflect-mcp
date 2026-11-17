@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-100
+    lenses: unknown
+    - Candidate A1 -- Heuristics-only `validate` logs fewer records per row: `validate.start` folds into `heuristics.done` (`input_chars` moves there); the full variant also folds the per-row `critic.skipped(heuristics_only)` into `decide.done`
+    - Candidate A2 -- Grounding compiles each value's pattern once: `_find_text_span`/`_contains_ci` share an `lru_cache`d `re.compile(re.escape(v), re.I)`, and `_find_number_span` uses one module-level number regex
+    - Candidate A3 -- `reflect-mcp --version`, `--help` and `--mcp-config` stop importing pydantic: `reflect_mcp/__init__` re-exports lazily through PEP 562 `__getattr__`
+    - Candidate B1 -- Every `REFLECT_*` var that src reads appears in `.env.example`, in README, and in `--mcp-config`'s `_ECHO_VARS`, pinned to an AST census of `src/`
+    - Candidate B2 -- README's CLI surface is pinned to the real CLI: §5 names every argparse `--flag`, and §4's JSON block is re-run against `--mcp-config`
+    - Candidate B3 -- README §9 gets a short "Writing a test here" note that records the rules behind the iter-87/89/97 preship reverts, each pinned to the helper or guard that enforces it
+    winner: A3
+    ship: pending (not yet decided)
   iter-98
     lenses: integration-and-adoption
     - Candidate A1 -- Re-land `reflect-mcp --mcp-config` (iter-97 B1, which won but was reverted at preship) with a one-line test guard, so it passes on a plain `uv sync`
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- README keeps one list of heuristic checks (§7), and §5 (plus optionally §2) links to it instead of hand-copying it
     - Candidate B3 -- Delete `heuristics._contains_ci`: the role checks call `_find_text_span(value, line)`, so the grounding rule lives in exactly one function before #54 token-bounds it
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED ac81759
   iter-97
     lenses: hardening/DX
     - A1 -- Hermetic suite: one autouse conftest fixture clears the exported MCP gate floor vars (roadmap #59)
@@ -630,4 +640,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-63 scouted iterations
+64 scouted iterations
