@@ -137,6 +137,7 @@ tool surface, small deps, MIT, publication-safe.
 | 117 | `--file -` reads stdin (POSIX convention) for extract/validate/--batch; literal `-` file via `./-`; help text byte-stable (iter-104 A2; proto 0 red) | Med | Low | DONE (iter 104) |
 | 118 | README §6 library on-ramp: offline `build_default_pipeline(generator_enabled=False, critic_enabled=False).validate(...)` snippet, exec'd by a test (iter-104 A1; proto 0 red) | Med | Low | QUEUED |
 | 119 | Amount fields reject non-finite JSON (`NaN`/`Infinity`/`1e400`) at the schema boundary so no output prints non-RFC JSON (iter-103 review follow-up) | Med | Low | QUEUED |
+| 120 | Brace-preamble reply recovery: a stray `{field: value}` before valid JSON parses on call 1 via a top-level segment walk (no nested fragment on truncation); saves 2 paid calls + row (iter-105 B1) | High | Low | DONE (iter 105) |
 
 ## Done ledger
 
@@ -207,3 +208,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 102 — Suite is hermetic to exported `REFLECT_*_THRESHOLD` gate floors: `uv run pytest -q` stays green
 - iter 103 — A JSON boolean amount (`"total": true`) is a validation error, never a silent `ok` at 1.0
 - iter 104 — `--file -` reads stdin like omitting `--file` (extract, validate, --batch); a file named `-` is `./-`
+- iter 105 — Reply with a stray `{field: value}` preamble parses on call 1 (Generator+Critic); truncation still errors

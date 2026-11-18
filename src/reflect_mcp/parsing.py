@@ -2,7 +2,11 @@
 
 Models sometimes wrap JSON in ```json fences or add a stray sentence despite
 instructions. We defensively strip fences and, as a last resort, slice the
-first balanced `{...}` object out of the text.
+first balanced `{...}` object out of the text. If that object is not valid JSON
+(prose such as "I used the {field: value} format"), each later *top-level*
+balanced `{...}` is tried in turn, so a temperature-0 model that repeats the
+same preamble does not burn a paid retry; we never descend into an object, so a
+truncated reply still fails loudly instead of yielding a nested fragment.
 """
 
 from __future__ import annotations
@@ -45,8 +49,9 @@ def _strip_code_fences(text: str) -> str:
     return t
 
 
-def _first_json_object(text: str) -> str | None:
-    start = text.find("{")
+def _first_json_object(text: str, pos: int = 0) -> str | None:
+    """Return the first balanced `{...}` starting at or after *pos*, else None."""
+    start = text.find("{", pos)
     if start == -1:
         return None
     depth = 0
@@ -74,7 +79,11 @@ def _first_json_object(text: str) -> str | None:
 
 
 def parse_json_object(text: str) -> dict[str, Any]:
-    """Best-effort parse of a JSON object from raw model output."""
+    """Best-effort parse of a JSON object from raw model output.
+
+    A malformed first balanced object is skipped in favour of the first later
+    top-level balanced object that decodes; an unbalanced segment ends the walk.
+    """
     cleaned = _strip_code_fences(text)
     try:
         obj = json.loads(cleaned)
@@ -82,10 +91,23 @@ def parse_json_object(text: str) -> dict[str, Any]:
         candidate = _first_json_object(cleaned)
         if candidate is None:
             raise ParseError(f"No JSON object found in model output: {text[:200]!r}")
-        try:
-            obj = json.loads(candidate)
-        except json.JSONDecodeError as exc:
-            raise ParseError(f"Malformed JSON in model output: {exc}") from exc
+        # Walk top-level segments by index: each next candidate starts at the
+        # first "{" after the previous one ends. `cleaned.find(candidate)` would
+        # re-find an earlier copy of a repeated stray segment and loop forever.
+        end = cleaned.find("{") + len(candidate)
+        first_exc: json.JSONDecodeError | None = None
+        while True:
+            try:
+                obj = json.loads(candidate)
+                break
+            except json.JSONDecodeError as exc:
+                first_exc = first_exc or exc
+            nxt = _first_json_object(cleaned, end)
+            if nxt is None:
+                # Report the first failure so the message matches pre-walk output.
+                raise ParseError(f"Malformed JSON in model output: {first_exc}") from first_exc
+            end = cleaned.find("{", end) + len(nxt)
+            candidate = nxt
     if not isinstance(obj, dict):
         raise ParseError(f"Expected a JSON object, got {type(obj).__name__}")
     return obj

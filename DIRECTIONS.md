@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-105
+    lenses: unknown
+    - Candidate A1 -- Delete the unreachable `except ValueError` in `_find_number_span`: every token its own regex matches is a valid float
+    - Candidate A2 -- One provenance rule: every committed field gets `provenance[field] = []` once at the top of the loop, replacing 4 scattered per-branch copies
+    - Candidate A3 -- Delete `ScriptedLLMClient.remaining`: no code has read it in 90 iterations
+    - Candidate B1 -- A model reply with a stray `{...}` in its preamble parses on the first call instead of burning a paid retry, a 0.5 s sleep, and then the whole extraction
+    - Candidate B2 -- Structured log records stop writing every stage name twice: 26% fewer stderr bytes per row, same records, same CPU
+    - Candidate B3 -- A Generator amount written as `"$1,234.00"` is read as 1234.0 on the first call, instead of costing a paid retry, a 0.5 s sleep, and then the whole extraction
+    winner: B1
+    ship: pending (not yet decided)
   iter-104
     lenses: integration-and-adoption, simplification-and-deletion
     - Candidate A1 -- Library users get the shipped verify path: README §6 shows `build_default_pipeline(generator_enabled=False, critic_enabled=False).validate(text, data)` (offline, no key), and a test executes that README snippet
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- One cli.py size rule: retire the 7 exact `cli.py == 306` pins (and the pins that pin those pins) in favour of the existing ceiling
     - Candidate B3 -- `InvoiceData` gets one caller-data model validator instead of a coupled `before` unwrapper plus a `wrap` key check that re-calls it by hand
     winner: A2
-    ship: pending (not yet decided)
+    ship: PUSHED ab5e9f8
   iter-103
     lenses: unknown
     - Candidate A1 -- A JSON boolean is not an amount: `{"total": true}` stops verifying as `ok` 1.0
@@ -680,4 +690,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-68 scouted iterations
+69 scouted iterations
