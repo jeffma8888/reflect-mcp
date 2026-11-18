@@ -47,7 +47,7 @@ tool surface, small deps, MIT, publication-safe.
 | 27 | Locked per-role client memo on the MCP path (20 calls 40 → 0 TCP conns; closes iter-69 unlocked boto3 build race) | High | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
 | 28 | Delete the `heuristics_enabled` knob (Critic-less + heuristics-off returns `ok` on fabricated data) | High | Low | DONE (iter 62) |
 | 29 | README §3 demo is the real inv-004 replay output, pinned by a test that re-runs it | Med | Low | DONE (iter 58) |
-| 30 | Retry carries the parse/schema error to the model instead of a byte-identical re-request | Med | Low | QUEUED |
+| 30 | Retry carries the parse/schema error to the model instead of a byte-identical re-request | Med | Low | DONE (iter 106) |
 | 31 | `make eval` measures the trust contract: catch rate, silent-wrong, false alarms; `--max-silent-wrong` exit | High | Low | DONE (iter 59) |
 | 32 | Amount-role grounding: an amount found in the source but not the number it labels for that role is penalized | High | Low | DONE (iter 60) |
 | 33 | Amount-role labels attributed per line (first label wins, skip `N%` rates): "Total tax"/"Net total" stop vouching for a wrong total | High | Low | QUEUED |
@@ -138,6 +138,7 @@ tool surface, small deps, MIT, publication-safe.
 | 118 | README §6 library on-ramp: offline `build_default_pipeline(generator_enabled=False, critic_enabled=False).validate(...)` snippet, exec'd by a test (iter-104 A1; proto 0 red) | Med | Low | QUEUED |
 | 119 | Amount fields reject non-finite JSON (`NaN`/`Infinity`/`1e400`) at the schema boundary so no output prints non-RFC JSON (iter-103 review follow-up) | Med | Low | QUEUED |
 | 120 | Brace-preamble reply recovery: a stray `{field: value}` before valid JSON parses on call 1 via a top-level segment walk (no nested fragment on truncation); saves 2 paid calls + row (iter-105 B1) | High | Low | DONE (iter 105) |
+| 121 | MCP tool description: `overall_confidence` is a synthetic 1.0 (not a judgement) when no Critic ran; drift test vs payload (iter-106 B1) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -209,3 +210,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 103 — A JSON boolean amount (`"total": true`) is a validation error, never a silent `ok` at 1.0
 - iter 104 — `--file -` reads stdin like omitting `--file` (extract, validate, --batch); a file named `-` is `./-`
 - iter 105 — Reply with a stray `{field: value}` preamble parses on call 1 (Generator+Critic); truncation still errors
+- iter 106 — A retry tells the model why its last reply was rejected (Generator+Critic); attempt 1 unchanged

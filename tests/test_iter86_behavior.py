@@ -150,6 +150,14 @@ def _src_tree(name: str) -> ast.Module:
     return ast.parse((SRC / name).read_text(encoding="utf-8"))
 
 
+def _retry_suffix(reason: str) -> str:
+    return (
+        "\n\nYour previous reply was rejected: "
+        + reason[:300]
+        + "\nReply with only the corrected JSON object."
+    )
+
+
 def _git(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True)
 
@@ -169,9 +177,11 @@ def test_eb1_generator_retry_one_bad_reply(logcap, sleeps):
     out = Generator(client, max_retries=1).generate(SOURCE, trace_id="t1")
     assert out == InvoiceData.model_validate(json.loads(VALID_INV))
     assert len(client.calls) == 2
+    # iter 106 (roadmap #30): the retry carries the previous rejection reason.
     for call in client.calls:
         assert call["system"] == generator_mod.GENERATOR_SYSTEM
-        assert call["user"] == GEN_USER
+    assert client.calls[0]["user"] == GEN_USER
+    assert client.calls[1]["user"] == GEN_USER + _retry_suffix(_parse_error_str(BAD))
     retries = logcap.stage("generate.retry")
     assert len(retries) == 1
     r = retries[0]
@@ -194,9 +204,11 @@ def test_eb2_critic_retry_one_bad_reply(logcap, sleeps):
     assert isinstance(out, CritiqueResult)
     assert out == CritiqueResult.model_validate(json.loads(VALID_CRIT))
     assert len(client.calls) == 2
+    # iter 106 (roadmap #30): the retry carries the previous rejection reason.
     for call in client.calls:
         assert call["system"] == critic_mod.CRITIC_SYSTEM
-        assert call["user"] == _crit_user(SOURCE, ext)
+    assert client.calls[0]["user"] == _crit_user(SOURCE, ext)
+    assert client.calls[1]["user"] == _crit_user(SOURCE, ext) + _retry_suffix(_parse_error_str(BAD))
     retries = logcap.stage("critique.retry")
     assert len(retries) == 1
     r = retries[0]

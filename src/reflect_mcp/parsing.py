@@ -7,6 +7,10 @@ first balanced `{...}` object out of the text. If that object is not valid JSON
 balanced `{...}` is tried in turn, so a temperature-0 model that repeats the
 same preamble does not burn a paid retry; we never descend into an object, so a
 truncated reply still fails loudly instead of yielding a nested fragment.
+
+The shared retry loop (`complete_parsed`) appends the previous attempt's
+rejection reason (at most 300 chars) to the retry's user prompt: a model that
+made a systematic mistake repeats it when re-sent a byte-identical prompt.
 """
 
 from __future__ import annotations
@@ -25,6 +29,9 @@ from reflect_mcp.providers import LLMClient
 T = TypeVar("T")
 
 _RETRY_DELAY_SECONDS = 0.5
+# Cap on the rejection reason fed back to the model: enough to name the failing
+# fields, bounded so a long pydantic error cannot bloat a paid prompt.
+_RETRY_REASON_MAX_CHARS = 300
 
 
 class ParseError(ValueError):
@@ -113,6 +120,12 @@ def parse_json_object(text: str) -> dict[str, Any]:
     return obj
 
 
+def _retry_suffix(exc: ParseError | ValidationError) -> str:
+    """Tell the model why its last reply was rejected (reason cut to 300 chars)."""
+    reason = str(exc)[:_RETRY_REASON_MAX_CHARS]
+    return f"\n\nYour previous reply was rejected: {reason}\nReply with only the corrected JSON object."
+
+
 def complete_parsed(
     client: LLMClient,
     *,
@@ -131,10 +144,16 @@ def complete_parsed(
     `validate`, which keeps the Critic a decorrelated grader. A provider error
     from `complete` propagates unretried. Once retries run out, the last
     `ParseError`/`ValidationError` is re-raised for the stage to wrap.
+
+    Attempt 1 sends `user` unchanged; each retry sends `user` plus only the
+    *immediately preceding* rejection reason (at most 300 chars), so the model
+    learns what failed instead of re-rolling blind. The reason is the stage's
+    own error, so the Critic still sees nothing beyond its attempt-1 inputs.
     """
     last_exc: ParseError | ValidationError | None = None
     for attempt in range(1 + max_retries):
-        raw = client.complete(system=system, user=user)
+        prompt = user if last_exc is None else user + _retry_suffix(last_exc)
+        raw = client.complete(system=system, user=prompt)
         try:
             return validate(parse_json_object(raw))
         except (ParseError, ValidationError) as exc:

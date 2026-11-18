@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-106
+    lenses: unknown
+    - Candidate A1 -- The one paid retry tells the model what failed, instead of re-sending a byte-identical prompt (roadmap #30)
+    - Candidate A2 -- A Generator amount written as `"$1,234.00"`, `"1,234.00"` or `"1234.00 USD"` is read on the first call: 0 retries instead of 2 paid calls, 0.5 s and a lost row
+    - Candidate A3 -- `--batch` defaults to 4 workers when a model is configured (roadmap #88)
+    - Candidate B1 -- The MCP tool description stops calling `overall_confidence` "the critic's overall confidence" when no Critic ran
+    - Candidate B2 -- README §8 says which heuristic checks the golden set actually exercises (9 of 11), recomputed by a test
+    - Candidate B3 -- README §7 states the model-reply recovery and retry contract, and a test executes every documented reply example
+    winner: A1
+    ship: pending (not yet decided)
   iter-105
     lenses: unknown
     - Candidate A1 -- Delete the unreachable `except ValueError` in `_find_number_span`: every token its own regex matches is a valid float
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Structured log records stop writing every stage name twice: 26% fewer stderr bytes per row, same records, same CPU
     - Candidate B3 -- A Generator amount written as `"$1,234.00"` is read as 1234.0 on the first call, instead of costing a paid retry, a 0.5 s sleep, and then the whole extraction
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 7af175c
   iter-104
     lenses: integration-and-adoption, simplification-and-deletion
     - Candidate A1 -- Library users get the shipped verify path: README §6 shows `build_default_pipeline(generator_enabled=False, critic_enabled=False).validate(text, data)` (offline, no key), and a test executes that README snippet
@@ -690,4 +700,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-69 scouted iterations
+70 scouted iterations
