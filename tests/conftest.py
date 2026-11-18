@@ -8,6 +8,7 @@ network. If any code path tried a real call, the scripted client would raise.
 from __future__ import annotations
 
 import json
+import os
 
 import pytest
 
@@ -61,3 +62,19 @@ def make_pipeline():
         return ReflectivePipeline(gen, crit)
 
     return _build
+
+
+@pytest.fixture(autouse=True)
+def _clear_operator_gate_floor(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the suite hermetic against an operator's exported MCP gate floor.
+
+    README tells operators to export `REFLECT_FIELD_THRESHOLD` /
+    `REFLECT_OVERALL_THRESHOLD` for their server; if those leaked into tests,
+    every MCP-path test would see a raised floor and a clean checkout would go
+    red. Every `REFLECT_*_THRESHOLD` name is cleared (prefix/suffix match, so a
+    future floor var is covered too). Tests that want a floor `setenv` it in
+    their own body, which runs after this fixture.
+    """
+    for name in list(os.environ):
+        if name.startswith("REFLECT_") and name.endswith("_THRESHOLD"):
+            monkeypatch.delenv(name, raising=False)

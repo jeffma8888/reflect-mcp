@@ -76,7 +76,7 @@ tool surface, small deps, MIT, publication-safe.
 | 56 | Currency grounded by unambiguous symbol on a labelled amount ("€"→EUR, "£"→GBP; never "$") (iter-72 A2: removes a measured false alarm) | Med | Low | QUEUED |
 | 57 | MCP tools publish a typed outputSchema (`status` enum required) + `structuredContent`; `status:"error"` sets `isError` (iter-73 B1) | High | Low | DONE (iter 73) |
 | 58 | MCP threshold args default to `null`: inputSchema stops advertising 0.7/0.75; an omitted arg never gets a "raised from" note (iter-74 A1) | High | Low | DONE (iter 74) |
-| 59 | One autouse conftest floor reset: suite green with `REFLECT_*_THRESHOLD` exported (HEAD: 5–7 fail; tests only, net −22; iter-74 B3) | Med | Low | QUEUED |
+| 59 | One autouse conftest floor reset: suite green with `REFLECT_*_THRESHOLD` exported (HEAD: 10 fail; tests only; iter-102 B3; proto 2268 passed) | Med | Low | DONE (iter 102) |
 | 60 | `validate --batch` grades rows carrying `expected` (caught/silent-wrong/false alarms) + `--max-silent-wrong` exit; grader moves to `grading.py` (iter-74 A3) | High | Med | QUEUED |
 | 61 | One single-document CLI tail: `run_extract/validate_from_args` share `_run_verb` (−18 cli.py lines, 18-probe byte-identical; iter-75 A1; repays #62's budget) | Med | Low | QUEUED |
 | 62 | Concurrent `--batch` streams via a bounded 2N window (row 1 after 2N pulls, not EOF; 88.9→0.2 MB on 50k lines; iter-75 B1) | High | Low | DONE (iter 75) |
@@ -124,6 +124,10 @@ tool surface, small deps, MIT, publication-safe.
 | 104 | Heuristics-only rows log 3 records, not 4: `validate.start` folds into `heuristics.done` (stderr −21%/row; 2 iter-65 pins) (iter-100 A1 narrow) | Low | Low | QUEUED |
 | 105 | Tax-rate reconciliation: one stated `Tax/VAT/GST N%` must explain the extracted tax (subtotal, total−tax or tax-inclusive base), else tax ×0.3; golden-derived coverage, eval byte-identical (iter-101 B3) | High | Low | DONE (iter 101) |
 | 106 | Contributor on-ramp: README §9 leads with CI's `uv sync`/`uv run pytest`; Makefile header matches recipes (`make install` exits 127 on a uv venv) (iter-101 A1; 0 red) | Med | Low | QUEUED |
+| 107 | Decimal-comma amounts: `1.234,03` grounds 1234.03 and a wrong `1.234` stops being a silent ok; ambiguous `1,234` keeps both readings (iter-102 A1) | High | Med | QUEUED |
+| 108 | Tax-rate bridge hardening: same-line non-tax `%` (`disc 10%`, `5% off`) stops false-alarming; plural `Taxes` caught (iter-102 B1; proto 0 red) | Med | Low | QUEUED |
+| 109 | Currency-role grounding: one ISO code on the labelled total line must match `currency` (iter-102 A3) | Med | Low | QUEUED |
+| 110 | Document-level date order: a numeric date read in the order another date rules out is penalized (iter-102 A2) | Med | Med | QUEUED |
 
 ## Done ledger
 
@@ -191,3 +195,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 98 — `reflect-mcp --mcp-config` prints a paste-ready MCP client config for this install; no secret echoed
 - iter 100 — `import reflect_mcp` is lazy: `--version`/`--help`/`--mcp-config` skip pydantic (~84→24 ms CPU)
 - iter 101 — A single stated tax rate must explain the extracted tax: rate-read-as-tax is needs_review, not ok
+- iter 102 — Suite is hermetic to exported `REFLECT_*_THRESHOLD` gate floors: `uv run pytest -q` stays green

@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-102
+    lenses: unknown
+    - Candidate A1 -- Decimal-comma amounts: "Gesamt: 1.234,03 EUR" grounds 1234.03, and a wrong 1.234 stops being a silent `ok`
+    - Candidate A2 -- Document-level date order: a numeric invoice date read in the order the document itself rules out is penalized
+    - Candidate A3 -- Currency-role grounding: the code written on the labelled total line must agree with the extracted currency
+    - Candidate B1 -- The iter-101 tax-rate check stops false-alarming on a non-tax `%` and stops missing plural "Taxes"
+    - Candidate B2 -- `make install` works on the uv venv that `uv sync` and CI create (roadmap #106)
+    - Candidate B3 -- Hermetic suite: exported gate floor vars cannot turn `uv run pytest -q` red (roadmap #59)
+    winner: B3
+    ship: pending (not yet decided)
   iter-101
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- The contributor on-ramp works: README §9 and the Makefile say how the suite actually runs, because `make install` dies with exit 127 on the venv that CI and `uv sync` create
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B1 -- Caller-declared required fields: `--require invoice_date,total` (CLI) and `GateConfig(required_fields=…)` (library) escalate a null required field to `needs_review`
     - Candidate B2 -- Flagged fields carry machine-readable `checks` (`critic`, `critic_contract`, `heuristic:<check>` such as `not_in_source` / `amount_role` / `arithmetic` / `rate`), so a consumer can route a review without parsing English
     winner: B3
-    ship: pending (not yet decided)
+    ship: PUSHED 2913f13
   iter-100
     lenses: unknown
     - Candidate A1 -- Heuristics-only `validate` logs fewer records per row: `validate.start` folds into `heuristics.done` (`input_chars` moves there); the full variant also folds the per-row `critic.skipped(heuristics_only)` into `decide.done`
@@ -650,4 +660,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-65 scouted iterations
+66 scouted iterations
