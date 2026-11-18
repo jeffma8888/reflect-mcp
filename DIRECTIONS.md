@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-101
+    lenses: narrative-and-docs, new-capability
+    - Candidate A1 -- The contributor on-ramp works: README §9 and the Makefile say how the suite actually runs, because `make install` dies with exit 127 on the venv that CI and `uv sync` create
+    - Candidate A2 -- README §7's import-boundary paragraph is made true and adds the iter-100 boundary, pinned by an AST census of `src/`
+    - Candidate A3 -- The "coverage ≥90%" badge becomes a current, enforced figure, and the stale `omit` of `server.py`/`providers.py` is retired
+    - Candidate B3 -- Tax-rate reconciliation: a stated rate ("Tax 10%", "VAT 20%") must explain the extracted tax, so a tax read off the rate stops being a silent `ok`
+    - Candidate B1 -- Caller-declared required fields: `--require invoice_date,total` (CLI) and `GateConfig(required_fields=…)` (library) escalate a null required field to `needs_review`
+    - Candidate B2 -- Flagged fields carry machine-readable `checks` (`critic`, `critic_contract`, `heuristic:<check>` such as `not_in_source` / `amount_role` / `arithmetic` / `rate`), so a consumer can route a review without parsing English
+    winner: B3
+    ship: pending (not yet decided)
   iter-100
     lenses: unknown
     - Candidate A1 -- Heuristics-only `validate` logs fewer records per row: `validate.start` folds into `heuristics.done` (`input_chars` moves there); the full variant also folds the per-row `critic.skipped(heuristics_only)` into `decide.done`
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- README's CLI surface is pinned to the real CLI: §5 names every argparse `--flag`, and §4's JSON block is re-run against `--mcp-config`
     - Candidate B3 -- README §9 gets a short "Writing a test here" note that records the rules behind the iter-87/89/97 preship reverts, each pinned to the helper or guard that enforces it
     winner: A3
-    ship: pending (not yet decided)
+    ship: PUSHED b6940f3
   iter-98
     lenses: integration-and-adoption
     - Candidate A1 -- Re-land `reflect-mcp --mcp-config` (iter-97 B1, which won but was reverted at preship) with a one-line test guard, so it passes on a plain `uv sync`
@@ -640,4 +650,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-64 scouted iterations
+65 scouted iterations

@@ -122,6 +122,8 @@ tool surface, small deps, MIT, publication-safe.
 | 102 | `import reflect_mcp` is lazy (PEP 562 `__getattr__` + `TYPE_CHECKING` imports): `--version`/`--help`/`--mcp-config` skip pydantic, ~84→24 ms (iter-100 A3; 0 red) | Med | Low | DONE (iter 100) |
 | 103 | `REFLECT_*` census pin: `.env.example`, README and `_ECHO_VARS` cover every var src reads; README §5 names `--mcp-config` (iter-100 B1+B2; proto 0 red) | Med | Low | QUEUED |
 | 104 | Heuristics-only rows log 3 records, not 4: `validate.start` folds into `heuristics.done` (stderr −21%/row; 2 iter-65 pins) (iter-100 A1 narrow) | Low | Low | QUEUED |
+| 105 | Tax-rate reconciliation: one stated `Tax/VAT/GST N%` must explain the extracted tax (subtotal, total−tax or tax-inclusive base), else tax ×0.3; golden-derived coverage, eval byte-identical (iter-101 B3) | High | Low | DONE (iter 101) |
+| 106 | Contributor on-ramp: README §9 leads with CI's `uv sync`/`uv run pytest`; Makefile header matches recipes (`make install` exits 127 on a uv venv) (iter-101 A1; 0 red) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -188,3 +190,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 97 — REVERTED at PRESHIP: `--mcp-config` test imported the server module, which needs the `[server]` extra
 - iter 98 — `reflect-mcp --mcp-config` prints a paste-ready MCP client config for this install; no secret echoed
 - iter 100 — `import reflect_mcp` is lazy: `--version`/`--help`/`--mcp-config` skip pydantic (~84→24 ms CPU)
+- iter 101 — A single stated tax rate must explain the extracted tax: rate-read-as-tax is needs_review, not ok

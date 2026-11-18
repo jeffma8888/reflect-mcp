@@ -26,6 +26,9 @@ combines both. Concretely we check:
                  letters), so "$" or "US Dollars" can't pass on presence alone.
   - omitted total: an explicit null total on a source that labels a total is
                  penalized, so a dropped total can't pass as an abstention.
+  - tax rate:    when the source states exactly one tax rate ("VAT 20%"), it must
+                 explain the extracted tax on subtotal, total - tax, or a tax-inclusive
+                 total, so a rate read as the tax amount can't pass on presence alone.
 
 Each check contributes a per-field factor in [0,1]; the gate multiplies the
 Critic confidence by this factor, so a structurally impossible value can never
@@ -45,6 +48,10 @@ _TEXT_GROUNDED_FIELDS = {"vendor_name", "invoice_number", "currency"}
 _NUMERIC_FIELDS = {"subtotal", "tax", "total"}
 
 _ARITHMETIC_TOLERANCE = 0.02  # currency rounding slack
+
+# A stated rate on a tax line ("VAT 20%", "Tax (8.875%)"): label, a short non-digit
+# gap on the same line, then the number before `%`. "20 % VAT" is out of scope.
+_TAX_RATE_RE = re.compile(r"\b(?:tax|vat|gst)\b[^\d\n]{0,15}?(\d{1,2}(?:\.\d{1,3})?)\s*%", re.IGNORECASE)
 
 # ISO 4217 shape only (no code list): `[A-Z]` is ASCII, used with `fullmatch`.
 _CURRENCY_CODE_RE = re.compile(r"[A-Z]{3}")
@@ -270,6 +277,30 @@ def _check_amount_role(field: str, value: float, text: str, report: HeuristicRep
     report.penalize(field, 0.3, f"source labels {field} as {shown}, extraction says {value}")
 
 
+def _check_tax_rate(data: InvoiceData, text: str, report: HeuristicReport) -> None:
+    """Penalize a tax that the source's single stated tax rate cannot produce.
+
+    The "10" in "Tax 10%" grounds a tax of 10.0, and arithmetic abstains when
+    total is null, so a rate read as the amount would otherwise pass clean.
+    Abstains on zero or several distinct rates: with more than one, the rate that
+    applies to the whole invoice is unknowable, and a wrong guess would over-flag.
+    """
+    tax, subtotal, total = data.tax, data.subtotal, data.total
+    if tax is None or (subtotal is None and total is None):
+        return
+    rates = {float(m.group(1)) for m in _TAX_RATE_RE.finditer(text)}
+    if len(rates) != 1:
+        return
+    (rate,) = rates
+    candidates = []
+    if subtotal is not None:
+        candidates.append(subtotal * rate / 100)
+    if total is not None:
+        candidates += [(total - tax) * rate / 100, total * rate / (100 + rate)]  # net base; tax-inclusive
+    if not any(abs(c - tax) <= _ARITHMETIC_TOLERANCE for c in candidates):
+        report.penalize("tax", 0.3, f"source states a {rate:g}% tax rate; no base it applies to gives tax({tax})")
+
+
 def _date_readings(match: re.Match[str]) -> set[tuple[int, int, int]]:
     """All (year, month, day) readings of one matched date token.
 
@@ -437,4 +468,5 @@ def run_heuristics(text: str, data: InvoiceData) -> HeuristicReport:
             # over-flagging fields that may well be correct.
             report.penalize("total", 0.3, msg)
 
+    _check_tax_rate(data, text, report)
     return report

@@ -64,6 +64,7 @@ EXPECTED_LABELS = {
     "identifier-role grounding",
     "currency-code shape",
     "omitted total",
+    "tax rate",
 }
 
 

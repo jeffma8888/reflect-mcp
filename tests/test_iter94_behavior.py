@@ -8,7 +8,7 @@ Covers the Expected Behaviors from pm.md:
   3. Section 5 says "date grounding" explicitly; the old "date validation and
      grounding" wording is gone.
   4. Section 7 (``- **Deterministic heuristics**`` bullet) still names every check.
-  5. The docstring's ``  - label:`` bullets parse to exactly the 10 known labels.
+  5. The docstring's ``  - label:`` bullets parse to exactly the 11 known labels (10 at iter 94; iter 101 added ``tax rate``).
   6. A {label: README phrase} map whose key set must EQUAL the parsed label set.
   7. Every phrase appears in every one of the three lists (case-insensitive,
      ``-`` folded to a space); each anchor matches exactly one README line.
@@ -46,6 +46,7 @@ EXPECTED_LABELS = {
     "identifier-role grounding",
     "currency-code shape",
     "omitted total",
+    "tax rate",
 }
 
 LABEL_TO_PHRASE: dict[str, str] = {
@@ -59,6 +60,7 @@ LABEL_TO_PHRASE: dict[str, str] = {
     "identifier-role grounding": "identifier-role grounding",
     "currency-code shape": "currency-code shape",
     "omitted total": "omitted total",
+    "tax rate": "tax rate",
 }
 
 # section name -> (anchor, mode); "substring" anchors may sit mid-line,
@@ -144,10 +146,10 @@ def test_eb4_section7_bullet_names_every_phrase():
 
 
 # ---- EB5: docstring parse ------------------------------------------------------
-def test_eb5_docstring_parses_to_exactly_ten_labels():
+def test_eb5_docstring_parses_to_exactly_the_known_labels():
     labels = parse_labels(heuristics.__doc__)
     assert labels == EXPECTED_LABELS
-    assert len(labels) == 10
+    assert len(labels) == 11
 
 
 def test_eb5_parser_takes_text_up_to_first_colon_only():
@@ -187,10 +189,10 @@ def test_eb7_each_anchor_matches_exactly_one_line():
     assert len(set(sections.values())) == 3
 
 
-def test_eb7_all_thirty_pairs_hold():
+def test_eb7_all_pairs_hold():
     sections = locate(readme_text())
     pairs = [(s, p) for s in sections for p in LABEL_TO_PHRASE.values()]
-    assert len(pairs) == 30
+    assert len(pairs) == 33
     assert missing_pairs(readme_text()) == [], (
         f"README check lists miss (section, phrase): {missing_pairs(readme_text())}"
     )
@@ -201,14 +203,14 @@ def test_eb7_matching_is_case_insensitive_and_hyphen_folded():
         "intro **programmatic pass criterion**: Grounding, AMOUNT ROLE grounding, "
         "party role grounding, identifier-role grounding, currency code shape, "
         "Arithmetic Reconciliation, date validity, date-grounding, date role "
-        "grounding and the omitted-total check.\n"
+        "grounding, the tax-rate check and the omitted-total check.\n"
         "**Heuristics-only mode** grounding amount-role grounding party-role "
         "grounding identifier-role grounding currency-code shape arithmetic "
-        "reconciliation date validation date grounding date-role grounding omitted total\n"
+        "reconciliation date validation date grounding date-role grounding omitted total tax rate\n"
         "- **Deterministic heuristics** grounding amount-role grounding party-role "
         "grounding identifier-role grounding currency-code shape arithmetic "
         "reconciliation ISO-date validation date grounding date-role grounding "
-        "the omitted-total check\n"
+        "the omitted-total check, Tax-Rate check\n"
     )
     assert missing_pairs(fixture) == []
 
