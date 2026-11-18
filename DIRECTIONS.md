@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-104
+    lenses: integration-and-adoption, simplification-and-deletion
+    - Candidate A1 -- Library users get the shipped verify path: README §6 shows `build_default_pipeline(generator_enabled=False, critic_enabled=False).validate(text, data)` (offline, no key), and a test executes that README snippet
+    - Candidate A2 -- `--file -` reads stdin, as POSIX CLIs do, so `reflect-mcp` drops into Makefile/xargs/script templates that pass `-`
+    - Candidate A3 -- `extract --help` / `validate --help` state the scripting contract in an epilog: exit codes 0/1/2/3 and `--batch` = worst row (roadmap #98)
+    - Candidate B1 -- Delete the 8 per-file copies of the gate-floor env scrub that iter 102's autouse conftest fixture now owns
+    - Candidate B2 -- One cli.py size rule: retire the 7 exact `cli.py == 306` pins (and the pins that pin those pins) in favour of the existing ceiling
+    - Candidate B3 -- `InvoiceData` gets one caller-data model validator instead of a coupled `before` unwrapper plus a `wrap` key check that re-calls it by hand
+    winner: A2
+    ship: pending (not yet decided)
   iter-103
     lenses: unknown
     - Candidate A1 -- A JSON boolean is not an amount: `{"total": true}` stops verifying as `ok` 1.0
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `reflect-mcp --output-schema` prints the JSON Schema of every result row, so a CLI/CI consumer can validate the rows it scripts against without an MCP client
     - Candidate B3 -- `validate --data @PATH` reads the fields (or a saved result envelope) from a file, so `extract > out.json; validate --data @out.json` re-verifies a stored result without shell-quoting JSON
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED b941104
   iter-102
     lenses: unknown
     - Candidate A1 -- Decimal-comma amounts: "Gesamt: 1.234,03 EUR" grounds 1234.03, and a wrong 1.234 stops being a silent `ok`
@@ -670,4 +680,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-67 scouted iterations
+68 scouted iterations

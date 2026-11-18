@@ -134,6 +134,9 @@ tool surface, small deps, MIT, publication-safe.
 | 114 | `--mcp-config` warns on stderr when `[server]` or the provider SDK is missing in this interpreter (iter-103 B1; 3 stderr pins) | Med | Low | QUEUED |
 | 115 | `reflect-mcp --output-schema` prints the result-row JSON Schema for CLI/CI consumers, aligned to MCP outputSchema (iter-103 B2; 2 help pins) | Med | Low | QUEUED |
 | 116 | Critic reply boundary: `FieldVerdict.confidence: true` must not coerce to 1.0 (same class as #111, grader seam) | Med | Low | QUEUED |
+| 117 | `--file -` reads stdin (POSIX convention) for extract/validate/--batch; literal `-` file via `./-`; help text byte-stable (iter-104 A2; proto 0 red) | Med | Low | DONE (iter 104) |
+| 118 | README §6 library on-ramp: offline `build_default_pipeline(generator_enabled=False, critic_enabled=False).validate(...)` snippet, exec'd by a test (iter-104 A1; proto 0 red) | Med | Low | QUEUED |
+| 119 | Amount fields reject non-finite JSON (`NaN`/`Infinity`/`1e400`) at the schema boundary so no output prints non-RFC JSON (iter-103 review follow-up) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -203,3 +206,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 101 — A single stated tax rate must explain the extracted tax: rate-read-as-tax is needs_review, not ok
 - iter 102 — Suite is hermetic to exported `REFLECT_*_THRESHOLD` gate floors: `uv run pytest -q` stays green
 - iter 103 — A JSON boolean amount (`"total": true`) is a validation error, never a silent `ok` at 1.0
+- iter 104 — `--file -` reads stdin like omitting `--file` (extract, validate, --batch); a file named `-` is `./-`

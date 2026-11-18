@@ -142,6 +142,8 @@ def main() -> None:
 
     parser = _build_top_parser()
     args = parser.parse_args()
+    if getattr(args, "file", None) == "-":  # POSIX convention: "-" names stdin
+        args.file = None
     if args.mcp_config:
         sys.exit(_print_mcp_config())
 
