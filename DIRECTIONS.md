@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-103
+    lenses: unknown
+    - Candidate A1 -- A JSON boolean is not an amount: `{"total": true}` stops verifying as `ok` 1.0
+    - Candidate A2 -- Unreadable `--file` (a directory, no permission, or non-UTF-8) exits 2 with one `Error:` line, not a traceback that exits 1 (= `needs_review`)
+    - Candidate A3 -- A `--batch` row whose `text` is not a string gets a named error, not a Python internals string
+    - Candidate B1 -- `--mcp-config` warns on stderr when this interpreter lacks the `[server]` extra or the chosen provider's SDK, so a pasted block never fails silently inside the host
+    - Candidate B2 -- `reflect-mcp --output-schema` prints the JSON Schema of every result row, so a CLI/CI consumer can validate the rows it scripts against without an MCP client
+    - Candidate B3 -- `validate --data @PATH` reads the fields (or a saved result envelope) from a file, so `extract > out.json; validate --data @out.json` re-verifies a stored result without shell-quoting JSON
+    winner: A1
+    ship: pending (not yet decided)
   iter-102
     lenses: unknown
     - Candidate A1 -- Decimal-comma amounts: "Gesamt: 1.234,03 EUR" grounds 1234.03, and a wrong 1.234 stops being a silent `ok`
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `make install` works on the uv venv that `uv sync` and CI create (roadmap #106)
     - Candidate B3 -- Hermetic suite: exported gate floor vars cannot turn `uv run pytest -q` red (roadmap #59)
     winner: B3
-    ship: pending (not yet decided)
+    ship: PUSHED 714ac77
   iter-101
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- The contributor on-ramp works: README §9 and the Makefile say how the suite actually runs, because `make install` dies with exit 127 on the venv that CI and `uv sync` create
@@ -660,4 +670,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-66 scouted iterations
+67 scouted iterations

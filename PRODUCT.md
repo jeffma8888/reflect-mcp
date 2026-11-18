@@ -128,6 +128,12 @@ tool surface, small deps, MIT, publication-safe.
 | 108 | Tax-rate bridge hardening: same-line non-tax `%` (`disc 10%`, `5% off`) stops false-alarming; plural `Taxes` caught (iter-102 B1; proto 0 red) | Med | Low | QUEUED |
 | 109 | Currency-role grounding: one ISO code on the labelled total line must match `currency` (iter-102 A3) | Med | Low | QUEUED |
 | 110 | Document-level date order: a numeric date read in the order another date rules out is penalized (iter-102 A2) | Med | Med | QUEUED |
+| 111 | A JSON boolean is not an amount: `subtotal`/`tax`/`total` reject `true`/`false` (was silently 1.0/0.0 → `ok` 1.0); golden-derived coverage, eval identical (iter-103 A1; 0 red) | High | Low | DONE (iter 103) |
+| 112 | Unreadable `--file` (dir / no perm / non-UTF-8) exits 2 with one `Error:` line, not a traceback rc 1 (= needs_review); 0-net-line cli.py shape (iter-103 A2; proto 0 red) | Med | Low | QUEUED |
+| 113 | `--batch` row with non-string `text` gets `"text" must be a string`, not a Python `len()` message; fold into existing guard (iter-103 A3) | Low | Low | QUEUED |
+| 114 | `--mcp-config` warns on stderr when `[server]` or the provider SDK is missing in this interpreter (iter-103 B1; 3 stderr pins) | Med | Low | QUEUED |
+| 115 | `reflect-mcp --output-schema` prints the result-row JSON Schema for CLI/CI consumers, aligned to MCP outputSchema (iter-103 B2; 2 help pins) | Med | Low | QUEUED |
+| 116 | Critic reply boundary: `FieldVerdict.confidence: true` must not coerce to 1.0 (same class as #111, grader seam) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -196,3 +202,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 100 — `import reflect_mcp` is lazy: `--version`/`--help`/`--mcp-config` skip pydantic (~84→24 ms CPU)
 - iter 101 — A single stated tax rate must explain the extracted tax: rate-read-as-tax is needs_review, not ok
 - iter 102 — Suite is hermetic to exported `REFLECT_*_THRESHOLD` gate floors: `uv run pytest -q` stays green
+- iter 103 — A JSON boolean amount (`"total": true`) is a validation error, never a silent `ok` at 1.0

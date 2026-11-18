@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field, ValidationInfo, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 
 # Statuses an `ExtractionResult` / error row can carry; a dict tagged with one
 # of these and no InvoiceData field is reflect-mcp's own output fed back in.
@@ -33,6 +33,20 @@ class InvoiceData(BaseModel):
     currency: Optional[str] = Field(default=None, description="ISO 4217 currency code, e.g. USD.")
 
     model_config = {"extra": "ignore"}
+
+    @field_validator("subtotal", "tax", "total", mode="before")
+    @classmethod
+    def _reject_bool_amount(cls, value: Any) -> Any:
+        """Fail a JSON boolean amount instead of coercing it to 1.0 / 0.0.
+
+        Lax `float` parsing turns `true` into `1.0`, so a buggy payload or model
+        reply could verify as `ok` against a source showing `1.00` -- the type
+        error is erased before the heuristics or the Critic can see it. Ints,
+        floats and numeric strings still pass; only `bool` is refused here.
+        """
+        if isinstance(value, bool):
+            raise ValueError("an amount must be a number, not a JSON boolean")
+        return value
 
     @model_validator(mode="wrap")
     @classmethod
