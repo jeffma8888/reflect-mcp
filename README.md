@@ -291,6 +291,8 @@ The public API (`reflect_mcp.__all__`) exposes:
 
 All models are Pydantic `BaseModel` subclasses. Errors (`GeneratorError`, `CriticError`) are raised on parse failures after retries are exhausted.
 
+**Error contract.** Unlike the MCP tools and the CLI (which return or print an error, e.g. CLI exit 2 with `Error: ...` on stderr), the library raises. `pipeline.extract()` / `.validate()` raise `GeneratorError` / `CriticError` once a stage's reply still fails to parse or validate after `max_retries` retries, so each stage makes at most `max_retries + 1` model calls (`build_default_pipeline(max_retries=1)` by default, so at most 2 model calls per stage). A provider or SDK error (network, auth, rate limit) is not retried and propagates unwrapped, as the SDK's own exception type after 1 call, so catch it separately: `except (GeneratorError, CriticError)` alone does not catch it. `.extract()` on a pipeline built without a Generator raises `RuntimeError`.
+
 ## 7. Architecture
 
 Three roles, one shared trace id, clean layering (`resolver`-free by design — the pipeline has no infra dependency):

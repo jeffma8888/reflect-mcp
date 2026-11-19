@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-107
+    lenses: narrative-and-docs, new-capability
+    - Candidate A1 -- README §6 states the library's error contract: what `pipeline.extract()`/`.validate()` raise, after how many calls, and that provider errors come through unwrapped
+    - Candidate A2 -- README §7 states the paid model-call budget per verb (1–4 calls for `extract`, 0–2 for `validate`, plus 0.5 s per retry), recomputed by a test that counts calls
+    - Candidate A3 -- The MCP `validate` tool description tells the host model the `data` contract the server already enforces: the 7 field names, and unknown keys and boolean amounts are errors
+    - Candidate B1 -- A flagged amount carries a deterministic `suggested_value`: the one number the source labels for that role (roadmap #40)
+    - Candidate B2 -- Caller-declared required fields: `--require invoice_date,total` (CLI) and `GateConfig(required_fields=...)` (library) escalate a null required field to `needs_review`
+    - Candidate B3 -- The result carries `critic_ran: bool`, so a consumer can require a Critic-verified `ok` (roadmap #48)
+    winner: A1
+    ship: pending (not yet decided)
   iter-106
     lenses: unknown
     - Candidate A1 -- The one paid retry tells the model what failed, instead of re-sending a byte-identical prompt (roadmap #30)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- README §8 says which heuristic checks the golden set actually exercises (9 of 11), recomputed by a test
     - Candidate B3 -- README §7 states the model-reply recovery and retry contract, and a test executes every documented reply example
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED c152d2d
   iter-105
     lenses: unknown
     - Candidate A1 -- Delete the unreachable `except ValueError` in `_find_number_span`: every token its own regex matches is a valid float
@@ -700,4 +710,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-70 scouted iterations
+71 scouted iterations

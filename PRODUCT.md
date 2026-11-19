@@ -57,7 +57,7 @@ tool surface, small deps, MIT, publication-safe.
 | 37 | `validate --batch`: verify a `{text, data}` JSONL corpus in one process (≈129 ms/doc → <1 ms/doc heuristics-only) | High | Low | DONE (iter 64) |
 | 38 | Heuristics-only `ok` says no Critic ran (notes) and logs `critic.skipped` (reason), not a fabricated `critique.done` | High | Low | DONE (iter 65) |
 | 39 | Omission detection: an explicit `"total": null` the source labels is flagged needs_review (`model_fields_set` guard: omitted key unchanged; 13-pin migration + golden inv-013; iter 89 reverted at PRESHIP by a `git archive HEAD` fixture, re-landed pinned to a fixed base) | High | Med | DONE (iter 90) |
-| 40 | `needs_review` flagged fields carry deterministic `suggestions` (source-labelled value + span) | Med | Low | QUEUED |
+| 40 | `needs_review` flagged fields carry deterministic `suggestions` (source-labelled value + span; iter-107 B1 proto with omit-None serializer: 17 red, golden digest pins + base-heuristics swaps) | Med | Med | QUEUED |
 | 41 | Party-role grounding: a `vendor_name` found only on "Bill to"/"Ship to"/"Sold to"/"Deliver to" lines is penalized (0.3) | High | Low | DONE (iter 66) |
 | 42 | Date-role grounding: an `invoice_date` the source shows only on a "Due"/"Ship date" line is penalized | Med | Low | DONE (iter 71) |
 | 43 | `make eval` adds a heuristics-only (Critic-off) trust readout line: catch / silent-wrong / false alarms | Med | Low | QUEUED |
@@ -139,6 +139,9 @@ tool surface, small deps, MIT, publication-safe.
 | 119 | Amount fields reject non-finite JSON (`NaN`/`Infinity`/`1e400`) at the schema boundary so no output prints non-RFC JSON (iter-103 review follow-up) | Med | Low | QUEUED |
 | 120 | Brace-preamble reply recovery: a stray `{field: value}` before valid JSON parses on call 1 via a top-level segment walk (no nested fragment on truncation); saves 2 paid calls + row (iter-105 B1) | High | Low | DONE (iter 105) |
 | 121 | MCP tool description: `overall_confidence` is a synthetic 1.0 (not a judgement) when no Critic ran; drift test vs payload (iter-106 B1) | Med | Low | QUEUED |
+| 122 | README §6 library error contract: `max_retries` default, GeneratorError/CriticError after N+1 calls, provider errors propagate unwrapped + unretried; executed by a test (iter-107 A1; proto 0 red) | High | Low | DONE (iter 107) |
+| 123 | README §7 model-call budget per verb (extract 2-4, validate 1-2, heuristics-only 1-2/0; 0.5 s per retry), recomputed by a call-counting test (iter-107 A2; proto 0 red) | Med | Low | QUEUED |
+| 124 | MCP `validate` description names the 7 `data` fields + unknown-key/bool-amount rejection; AST drift test (iter-107 A3; 1 sha pin) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -211,3 +214,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 104 — `--file -` reads stdin like omitting `--file` (extract, validate, --batch); a file named `-` is `./-`
 - iter 105 — Reply with a stray `{field: value}` preamble parses on call 1 (Generator+Critic); truncation still errors
 - iter 106 — A retry tells the model why its last reply was rejected (Generator+Critic); attempt 1 unchanged
+- iter 107 — README §6 states the library error contract (raises after N+1 calls; provider errors unwrapped)
