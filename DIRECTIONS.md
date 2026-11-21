@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-109
+    lenses: unknown
+    - Candidate A1 -- A Critic reply of `confidence: true` stops grading a field as a perfect 1.0 `ok` (roadmap #116, grader seam)
+    - Candidate A2 -- An unreadable `--file` (a directory, no permission, or non-UTF-8 bytes) exits 2 with one `Error:` line instead of a traceback (roadmap #112)
+    - Candidate A3 -- Amount fields reject non-finite numbers (`NaN`, `Infinity`, `1e400`, `"NaN"`), so CLI stdout is always strict RFC 8259 JSON (roadmap #119)
+    - Candidate B1 -- `.env.example` tells users to "Copy to .env", but nothing reads `.env`; point the template at the consumers that do read it (shell env, then `--mcp-config`)
+    - Candidate B2 -- `extract`/`validate --compact` prints the single-document result as one JSON line, so `reflect-mcp … >> results.jsonl` appends valid JSONL
+    - Candidate B3 -- The library's `pipeline.validate(text, data)` accepts the same dict the CLI and MCP accept, with the same contract, and README §6 shows the offline route (#118, widened)
+    winner: A1
+    ship: pending (not yet decided)
   iter-107
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- README §6 states the library's error contract: what `pipeline.extract()`/`.validate()` raise, after how many calls, and that provider errors come through unwrapped
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Caller-declared required fields: `--require invoice_date,total` (CLI) and `GateConfig(required_fields=...)` (library) escalate a null required field to `needs_review`
     - Candidate B3 -- The result carries `critic_ran: bool`, so a consumer can require a Critic-verified `ok` (roadmap #48)
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED 24de2c7
   iter-106
     lenses: unknown
     - Candidate A1 -- The one paid retry tells the model what failed, instead of re-sending a byte-identical prompt (roadmap #30)
@@ -710,4 +720,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-71 scouted iterations
+72 scouted iterations

@@ -133,7 +133,7 @@ tool surface, small deps, MIT, publication-safe.
 | 113 | `--batch` row with non-string `text` gets `"text" must be a string`, not a Python `len()` message; fold into existing guard (iter-103 A3) | Low | Low | QUEUED |
 | 114 | `--mcp-config` warns on stderr when `[server]` or the provider SDK is missing in this interpreter (iter-103 B1; 3 stderr pins) | Med | Low | QUEUED |
 | 115 | `reflect-mcp --output-schema` prints the result-row JSON Schema for CLI/CI consumers, aligned to MCP outputSchema (iter-103 B2; 2 help pins) | Med | Low | QUEUED |
-| 116 | Critic reply boundary: `FieldVerdict.confidence: true` must not coerce to 1.0 (same class as #111, grader seam) | Med | Low | QUEUED |
+| 116 | Critic reply boundary: a JSON boolean `confidence`/`overall_confidence` is rejected (was 1.0 → silent `ok`), retried with feedback; numbers/numeric strings unchanged; golden-derived coverage (iter-109 A1; proto 0 red) | High | Low | DONE (iter 109) |
 | 117 | `--file -` reads stdin (POSIX convention) for extract/validate/--batch; literal `-` file via `./-`; help text byte-stable (iter-104 A2; proto 0 red) | Med | Low | DONE (iter 104) |
 | 118 | README §6 library on-ramp: offline `build_default_pipeline(generator_enabled=False, critic_enabled=False).validate(...)` snippet, exec'd by a test (iter-104 A1; proto 0 red) | Med | Low | QUEUED |
 | 119 | Amount fields reject non-finite JSON (`NaN`/`Infinity`/`1e400`) at the schema boundary so no output prints non-RFC JSON (iter-103 review follow-up) | Med | Low | QUEUED |
@@ -215,3 +215,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 105 — Reply with a stray `{field: value}` preamble parses on call 1 (Generator+Critic); truncation still errors
 - iter 106 — A retry tells the model why its last reply was rejected (Generator+Critic); attempt 1 unchanged
 - iter 107 — README §6 states the library error contract (raises after N+1 calls; provider errors unwrapped)
+- iter 109 — A Critic reply grading a field `true`/`false` is rejected and retried, never a silent `ok` at 1.0

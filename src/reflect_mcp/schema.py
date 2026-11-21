@@ -91,6 +91,19 @@ class InvoiceData(BaseModel):
 EXTRACTION_FIELDS: list[str] = list(InvoiceData.model_fields.keys())
 
 
+def _reject_bool_grade(value: Any) -> Any:
+    """Fail a JSON boolean Critic confidence instead of coercing it.
+
+    Lax `float` parsing turns `true` into 1.0, so a Critic that answers "is it
+    correct?" with a yes/no would pose as the maximum grade and verify a field
+    the heuristics cannot check as `ok`. Raising lets the reply-parse retry ask
+    for a numeric re-grade. Ints, floats and numeric strings still pass.
+    """
+    if isinstance(value, bool):
+        raise ValueError("a confidence must be a number in [0, 1], not a JSON boolean")
+    return value
+
+
 class FieldVerdict(BaseModel):
     """The Critic's assessment of one extracted field."""
 
@@ -99,6 +112,12 @@ class FieldVerdict(BaseModel):
     grounded: bool = Field(default=True, description="Whether the value is supported by the source text.")
     rationale: str = Field(default="", description="Short human-readable justification.")
 
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def _reject_bool_confidence(cls, value: Any) -> Any:
+        """Refuse a yes/no grade; see `_reject_bool_grade`."""
+        return _reject_bool_grade(value)
+
 
 class CritiqueResult(BaseModel):
     """Full second-model critique of one extraction."""
@@ -106,6 +125,12 @@ class CritiqueResult(BaseModel):
     field_verdicts: list[FieldVerdict] = Field(default_factory=list)
     overall_confidence: float = Field(ge=0.0, le=1.0)
     summary: str = ""
+
+    @field_validator("overall_confidence", mode="before")
+    @classmethod
+    def _reject_bool_overall(cls, value: Any) -> Any:
+        """Refuse a yes/no overall grade; see `_reject_bool_grade`."""
+        return _reject_bool_grade(value)
 
     def verdict_for(self, field: str) -> Optional[FieldVerdict]:
         """Return the field's verdict; on duplicates, the least confident one.
