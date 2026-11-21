@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-110
+    lenses: unknown
+    - Candidate A1 -- `validate --data -` reads the fields from stdin, so `reflect-mcp extract --file doc.txt | reflect-mcp validate --file doc.txt --data -` re-verifies a result with no temp file and no `$(cat …)` quoting
+    - Candidate A2 -- `--batch --summary PATH` writes one JSON tally `{rows, ok, needs_review, error, exit}`, so a CI gate reads a file instead of re-counting JSONL with `jq -s` (roadmap #47)
+    - Candidate A3 -- `--batch` error rows carry their 1-based input `line`, so a malformed row joins back to its input when it has no `id` (roadmap #25 remainder)
+    - Candidate B1 -- One bool-reject rule in schema.py: a `_not_bool(noun)` BeforeValidator on two `Annotated` types replaces the 4 parts iters 103 and 109 left behind
+    - Candidate B2 -- heuristics.py: delete the unreachable `except ValueError` in `_find_number_span`, and set `provenance[field] = []` once per committed field instead of in 5 branches
+    - Candidate B3 -- pipeline._verify: one "Critic skipped" branch instead of two copies of `_neutral_critique` + `critic_ran = False`
+    winner: A1
+    ship: pending (not yet decided)
   iter-109
     lenses: unknown
     - Candidate A1 -- A Critic reply of `confidence: true` stops grading a field as a perfect 1.0 `ok` (roadmap #116, grader seam)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `extract`/`validate --compact` prints the single-document result as one JSON line, so `reflect-mcp … >> results.jsonl` appends valid JSONL
     - Candidate B3 -- The library's `pipeline.validate(text, data)` accepts the same dict the CLI and MCP accept, with the same contract, and README §6 shows the offline route (#118, widened)
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED dae166f
   iter-107
     lenses: narrative-and-docs, new-capability
     - Candidate A1 -- README §6 states the library's error contract: what `pipeline.extract()`/`.validate()` raise, after how many calls, and that provider errors come through unwrapped
@@ -720,4 +730,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-72 scouted iterations
+73 scouted iterations

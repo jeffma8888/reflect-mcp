@@ -142,6 +142,9 @@ tool surface, small deps, MIT, publication-safe.
 | 122 | README §6 library error contract: `max_retries` default, GeneratorError/CriticError after N+1 calls, provider errors propagate unwrapped + unretried; executed by a test (iter-107 A1; proto 0 red) | High | Low | DONE (iter 107) |
 | 123 | README §7 model-call budget per verb (extract 2-4, validate 1-2, heuristics-only 1-2/0; 0.5 s per retry), recomputed by a call-counting test (iter-107 A2; proto 0 red) | Med | Low | QUEUED |
 | 124 | MCP `validate` description names the 7 `data` fields + unknown-key/bool-amount rejection; AST drift test (iter-107 A3; 1 sha pin) | Med | Low | QUEUED |
+| 125 | `validate --data -` reads the fields/stored envelope from stdin so `extract \| validate --file DOC --data -` pipes; `--batch` never reads it; help byte-stable (iter-110 A1; 0 red) | Med | Low | DONE (iter 110) |
+| 126 | schema.py: one `_not_bool` BeforeValidator on `Annotated` amount/grade aliases replaces 4 bool-reject hooks; shas unchanged (iter-110 B1; net −17, 0 red) | Low | Low | QUEUED |
+| 127 | heuristics.py: drop unreachable `except ValueError`; init `provenance[field] = []` once per committed field (iter-110 B2; net −6, 0 red) | Low | Low | QUEUED |
 
 ## Done ledger
 
@@ -216,3 +219,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 106 — A retry tells the model why its last reply was rejected (Generator+Critic); attempt 1 unchanged
 - iter 107 — README §6 states the library error contract (raises after N+1 calls; provider errors unwrapped)
 - iter 109 — A Critic reply grading a field `true`/`false` is rejected and retried, never a silent `ok` at 1.0
+- iter 110 — `validate --data -` reads the fields from stdin, so `extract | validate --file DOC --data -` pipes

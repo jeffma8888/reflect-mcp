@@ -144,6 +144,15 @@ def main() -> None:
     args = parser.parse_args()
     if getattr(args, "file", None) == "-":  # POSIX convention: "-" names stdin
         args.file = None
+    if getattr(args, "data", None) == "-" and not args.batch:
+        # "-" names stdin so `extract | validate --file DOC --data -` pipes; under
+        # --batch stdin is the JSONL stream, so skip the read and let cli's
+        # exclusivity check exit 2 instead of blocking on an open pipe.
+        if args.file is None:
+            parser.error(
+                "--data - reads the fields from stdin, so pass the source text with --file PATH."
+            )
+        args.data = sys.stdin.read()
     if args.mcp_config:
         sys.exit(_print_mcp_config())
 
