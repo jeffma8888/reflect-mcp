@@ -51,7 +51,8 @@ class ToolResult(_ToolStatus, total=False):
 
     Without it a host reading `tools/list` sees "any object" and learns nothing
     about `status`. Everything but `status` is optional, because an error row
-    carries just `status` + `error_message` while ok/needs_review rows carry the
+    carries `status` + `error_message` (an `extract` Critic-failure row also keeps
+    the Generator's *unverified* `data`) while ok/needs_review rows carry the
     extraction keys. It lives here (not in `server.py`) so the schema is
     testable without the MCP SDK; `typing_extensions.TypedDict` because pydantic
     rejects `typing.TypedDict` on Python < 3.12. Only the envelope is typed: the
@@ -186,7 +187,7 @@ def extract_tool(
     try:
         result = _build_pipeline(gate_config, heuristics_only).extract(text)
     except Exception as exc:  # noqa: BLE001 - the envelope is the contract, not a traceback
-        return _error(str(exc))
+        return {**_error(str(exc)), **pipeline_module.salvage(exc)}
     return _with_raise_note(result.model_dump(), raise_note)
 
 

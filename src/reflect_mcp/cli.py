@@ -92,12 +92,12 @@ def _process_one_line(
     try:  # ``data`` is schema-checked in here, so a bad record is that line's envelope
         if validate:
             from reflect_mcp.schema import InvoiceData  # noqa: PLC0415
-
             result = pipeline.validate(record["text"], InvoiceData.model_validate(record["data"], context={"caller": True}))
         else:
             result = pipeline.extract(record["text"])
-    except Exception as exc:  # noqa: BLE001
-        return _error_json(str(exc), echo), 3
+    except Exception as exc:  # noqa: BLE001 - a Critic failure keeps its unverified ``data``
+        from reflect_mcp.pipeline import salvage  # noqa: PLC0415
+        return _error_json(str(exc), {**echo, **salvage(exc)}), 3
 
     code = 1 if result.status == "needs_review" else 0
     return json.dumps({**echo, **result.model_dump()}), code
@@ -204,14 +204,14 @@ def run_extract_from_args(args: argparse.Namespace) -> int:
         print("Error: input is empty.", file=sys.stderr)
         return 2
 
-    from reflect_mcp.pipeline import build_default_pipeline  # noqa: PLC0415
+    from reflect_mcp.pipeline import build_default_pipeline, salvage  # noqa: PLC0415
 
     try:
         pipeline_kwargs = _build_pipeline_kwargs(args)
         pipeline = build_default_pipeline(**pipeline_kwargs)
         result = pipeline.extract(text)
-    except Exception as exc:  # noqa: BLE001
-        print(_error_json(str(exc)))
+    except Exception as exc:  # noqa: BLE001 - a Critic failure keeps its unverified ``data``
+        print(_error_json(str(exc), salvage(exc)))
         return 3
 
     print(json.dumps(result.model_dump(), indent=2))

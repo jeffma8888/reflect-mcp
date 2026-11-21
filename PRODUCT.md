@@ -145,6 +145,10 @@ tool surface, small deps, MIT, publication-safe.
 | 125 | `validate --data -` reads the fields/stored envelope from stdin so `extract \| validate --file DOC --data -` pipes; `--batch` never reads it; help byte-stable (iter-110 A1; 0 red) | Med | Low | DONE (iter 110) |
 | 126 | schema.py: one `_not_bool` BeforeValidator on `Annotated` amount/grade aliases replaces 4 bool-reject hooks; shas unchanged (iter-110 B1; net −17, 0 red) | Low | Low | QUEUED |
 | 127 | heuristics.py: drop unreachable `except ValueError`; init `provenance[field] = []` once per committed field (iter-110 B2; net −6, 0 red) | Low | Low | QUEUED |
+| 128 | A Critic failure keeps the paid extraction: `CriticError.data` + error-envelope `data` (MCP/CLI/batch), re-verify via `validate --data -` with 0 Generator calls (iter-111 B2; proto 0 red) | High | Low | DONE (iter 111) |
+| 129 | Critic reply `null` for `rationale`/`summary`/`field_verdicts` (+ maybe `grounded`) maps to the conservative default instead of a paid retry + lost row (iter-111 B1; proto 0 red) | Med | Low | QUEUED |
+| 130 | gate.decide composes a flagged `reason` from one ordered tuple of sources; gate.py off its 185-line wall (iter-111 A3; net −6, 0 red) | Low | Low | QUEUED |
+| 131 | Retry reason names every rejected field via `errors(include_url=False)` one-liners under the 300-char cap (iter-111 B3; 3 iter-106 pins re-spec) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -220,3 +224,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 107 — README §6 states the library error contract (raises after N+1 calls; provider errors unwrapped)
 - iter 109 — A Critic reply grading a field `true`/`false` is rejected and retried, never a silent `ok` at 1.0
 - iter 110 — `validate --data -` reads the fields from stdin, so `extract | validate --file DOC --data -` pipes
+- iter 111 — A Critic failure keeps the paid extraction as error-row `data`; re-verify with `validate --data -`

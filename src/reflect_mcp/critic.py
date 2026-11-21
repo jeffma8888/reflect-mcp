@@ -9,6 +9,7 @@ field against the source.
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -20,7 +21,14 @@ CRITIC_SYSTEM = load_prompt("critic.txt")
 
 
 class CriticError(RuntimeError):
-    """Raised when the Critic's output cannot be parsed into CritiqueResult."""
+    """Raised when the Critic's output cannot be parsed into CritiqueResult.
+
+    `data` is the Generator's *unverified* extraction when the failure happened
+    inside `ReflectivePipeline.extract` (None otherwise): that call was already
+    paid for, so a caller can re-verify it with `validate` instead of re-extracting.
+    """
+
+    data: dict[str, Any] | None = None
 
 
 class Critic:

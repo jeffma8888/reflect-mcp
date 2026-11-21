@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-111
+    lenses: performance-and-throughput
+    - Candidate A1 -- One bool-reject rule in schema.py: a `_not_bool(noun)` BeforeValidator on `_Amount`/`_Grade` aliases replaces the 4 hooks iters 103 and 109 left
+    - Candidate A2 -- heuristics.py: delete the unreachable `except ValueError` in `_find_number_span`, and set `provenance[field] = []` once per committed field instead of in 5 branches
+    - Candidate A3 -- gate.decide builds a flagged field's `reason` from one ordered tuple of sources instead of three append-ifs and a temp variable
+    - Candidate B1 -- A Critic reply with `null` where a string, bool or list belongs (`rationale`, `grounded`, `summary`, `field_verdicts`) is read on the first call instead of costing a paid retry, a 0.5 s sleep and then the whole row
+    - Candidate B2 -- A Critic failure keeps the paid Generator extraction: the `extract` error envelope carries `data`, so `extract | validate --data -` re-verifies with 0 Generator calls instead of a full re-extract
+    - Candidate B3 -- The paid retry prompt names every rejected field: one line per pydantic error with no header or docs URL, so a 3-amount mistake is fixed in one retry instead of the reason being cut off before `total`
+    winner: B2
+    ship: pending (not yet decided)
   iter-110
     lenses: unknown
     - Candidate A1 -- `validate --data -` reads the fields from stdin, so `reflect-mcp extract --file doc.txt | reflect-mcp validate --file doc.txt --data -` re-verifies a result with no temp file and no `$(cat …)` quoting
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- heuristics.py: delete the unreachable `except ValueError` in `_find_number_span`, and set `provenance[field] = []` once per committed field instead of in 5 branches
     - Candidate B3 -- pipeline._verify: one "Critic skipped" branch instead of two copies of `_neutral_critique` + `critic_ran = False`
     winner: A1
-    ship: pending (not yet decided)
+    ship: PUSHED a510cf4
   iter-109
     lenses: unknown
     - Candidate A1 -- A Critic reply of `confidence: true` stops grading a field as a perfect 1.0 `ok` (roadmap #116, grader seam)
@@ -730,4 +740,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-73 scouted iterations
+74 scouted iterations

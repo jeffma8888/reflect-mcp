@@ -7,7 +7,9 @@ network / API keys.
 
 from __future__ import annotations
 
-from reflect_mcp.critic import Critic
+from typing import Any
+
+from reflect_mcp.critic import Critic, CriticError
 from reflect_mcp.gate import GateConfig, decide
 from reflect_mcp.generator import Generator
 from reflect_mcp.heuristics import HeuristicReport, run_heuristics
@@ -20,6 +22,18 @@ from reflect_mcp.schema import (
     FieldVerdict,
     InvoiceData,
 )
+
+
+def salvage(exc: BaseException) -> dict[str, Any]:
+    """The extra error-envelope keys for *exc*: ``{"data": ...}`` or ``{}``.
+
+    Only a `CriticError` raised by `extract` carries the (unverified) Generator
+    extraction; `isinstance` keeps any foreign exception that happens to have a
+    ``.data`` attribute out of the envelope.
+    """
+    if isinstance(exc, CriticError) and exc.data is not None:
+        return {"data": exc.data}
+    return {}
 
 
 class ReflectivePipeline:
@@ -47,7 +61,11 @@ class ReflectivePipeline:
             fields={k: v for k, v in data.model_dump().items() if v is not None},
         )
 
-        return self._verify(text, data, trace_id)
+        try:
+            return self._verify(text, data, trace_id)
+        except CriticError as exc:  # keep the paid extraction: re-verify it, don't re-extract
+            exc.data = data.model_dump()
+            raise
 
     def validate(self, text: str, data: InvoiceData) -> ExtractionResult:
         """Run Critic + heuristics + gate on pre-extracted data, skipping the Generator."""
