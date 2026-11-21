@@ -76,7 +76,8 @@ class InvoiceData(BaseModel):
         to an all-null object that verifies as `ok` -- a silent wrong answer
         on the product's own round trip. The test is narrow (known status and
         no field key) so plain data never changes meaning; an envelope with no
-        `data` object (a stored error row) has nothing to verify, so it fails.
+        `data` object (a stored error row from an input, provider or Generator
+        failure) has nothing to verify, so it fails.
         """
         if not isinstance(value, dict) or value.get("status") not in _ENVELOPE_STATUSES:
             return value

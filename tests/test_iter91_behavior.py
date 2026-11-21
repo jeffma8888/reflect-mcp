@@ -64,8 +64,9 @@ EXPECTED_HINTS = {
 }
 # sha256 of json.dumps(sorted([{name, description}], key=name), sort_keys=True)
 # measured with the real SDK on the pre-iter-91 tree (descriptions must not move).
+# re-pinned iter 112: extract description states error `data` is unverified + synthetic 1.0.
 PRE_CHANGE_DESCRIPTIONS_SHA256 = (
-    "f3882b1a5096899e3e79d5d10ce42750d6c28f214609c53eda343c9ba022be01"
+    "50fa343e1b20f184e664c71841dd83631ddf2f15d6ec8f4cb4a2652acfb9c71c"
 )
 MAX_INSTRUCTIONS_CHARS = 600
 

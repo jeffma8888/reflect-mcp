@@ -46,7 +46,8 @@ README = REPO / "README.md"
 # The pyproject digest was re-measured in iter 73, whose spec raised the
 # `server` extra to `mcp>=1.28,<2` (still no new dependency).
 # iter 74: re-pinned after the docstring documented the null threshold defaults.
-HEAD_EXTRACT_DOC_SHA256 = "ffb2abddca88f224e23356908a4f9fe082eebe915dce8ad1d536a3132a509002"
+# re-pinned iter 112: extract doc states error `data` is unverified (pass to validate) + synthetic 1.0.
+HEAD_EXTRACT_DOC_SHA256 = "12ac5713991cd5d202c958b616d16f28c6cc86eb7a353ae8c7605c3ca36dd300"
 HEAD_PYPROJECT_SHA256 = "dd0ed377201577a815f007b212adf2546fd6c074e04610e299eeb3c87545d1a9"
 HEAD_EVAL_STDOUT_SHA256 = "9df9499d6aa3a9b96961beee122f3408e0c6477f485258e54d609030ac18a7f7"
 

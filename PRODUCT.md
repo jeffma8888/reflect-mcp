@@ -138,7 +138,7 @@ tool surface, small deps, MIT, publication-safe.
 | 118 | README §6 library on-ramp: offline `build_default_pipeline(generator_enabled=False, critic_enabled=False).validate(...)` snippet, exec'd by a test (iter-104 A1; proto 0 red) | Med | Low | QUEUED |
 | 119 | Amount fields reject non-finite JSON (`NaN`/`Infinity`/`1e400`) at the schema boundary so no output prints non-RFC JSON (iter-103 review follow-up) | Med | Low | QUEUED |
 | 120 | Brace-preamble reply recovery: a stray `{field: value}` before valid JSON parses on call 1 via a top-level segment walk (no nested fragment on truncation); saves 2 paid calls + row (iter-105 B1) | High | Low | DONE (iter 105) |
-| 121 | MCP tool description: `overall_confidence` is a synthetic 1.0 (not a judgement) when no Critic ran; drift test vs payload (iter-106 B1) | Med | Low | QUEUED |
+| 121 | MCP tool description: `overall_confidence` is a synthetic 1.0 (not a judgement) when no Critic ran; drift test vs payload (iter-106 B1) | Med | Low | DONE (iter 112) |
 | 122 | README §6 library error contract: `max_retries` default, GeneratorError/CriticError after N+1 calls, provider errors propagate unwrapped + unretried; executed by a test (iter-107 A1; proto 0 red) | High | Low | DONE (iter 107) |
 | 123 | README §7 model-call budget per verb (extract 2-4, validate 1-2, heuristics-only 1-2/0; 0.5 s per retry), recomputed by a call-counting test (iter-107 A2; proto 0 red) | Med | Low | QUEUED |
 | 124 | MCP `validate` description names the 7 `data` fields + unknown-key/bool-amount rejection; AST drift test (iter-107 A3; 1 sha pin) | Med | Low | QUEUED |
@@ -149,6 +149,8 @@ tool surface, small deps, MIT, publication-safe.
 | 129 | Critic reply `null` for `rationale`/`summary`/`field_verdicts` (+ maybe `grounded`) maps to the conservative default instead of a paid retry + lost row (iter-111 B1; proto 0 red) | Med | Low | QUEUED |
 | 130 | gate.decide composes a flagged `reason` from one ordered tuple of sources; gate.py off its 185-line wall (iter-111 A3; net −6, 0 red) | Low | Low | QUEUED |
 | 131 | Retry reason names every rejected field via `errors(include_url=False)` one-liners under the 300-char cap (iter-111 B3; 3 iter-106 pins re-spec) | Med | Low | QUEUED |
+| 132 | MCP `instructions` + `extract` description stop saying error = nothing extracted: error `data` is unverified, pass it to `validate`; payload-tied drift test (iter-112 B1; 3 pins) | High | Low | DONE (iter 112) |
+| 133 | README §5 exit-code line: out-of-range `--field-threshold` is exit 3 (built at pipeline build), executed by a test (iter-112 B2; 0 red) | Low | Low | QUEUED |
 
 ## Done ledger
 
@@ -225,3 +227,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 109 — A Critic reply grading a field `true`/`false` is rejected and retried, never a silent `ok` at 1.0
 - iter 110 — `validate --data -` reads the fields from stdin, so `extract | validate --file DOC --data -` pipes
 - iter 111 — A Critic failure keeps the paid extraction as error-row `data`; re-verify with `validate --data -`
+- iter 112 — MCP instructions/extract description: error `data` is unverified, pass it to `validate`

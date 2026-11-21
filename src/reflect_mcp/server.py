@@ -50,9 +50,11 @@ except ImportError as exc:  # pragma: no cover - only hit without the server ext
 _INSTRUCTIONS = (
     "reflect-mcp extracts invoice/receipt data and verifies it with a second-model critic. "
     "Every result has a status: ok, needs_review or error. On needs_review, do not use data "
-    "blindly: a human must confirm the fields in flagged_fields first. On error, nothing was "
-    "extracted; read error_message. validate checks data you already have and does not "
-    "re-extract (it never runs the Generator)."
+    "blindly: a human must confirm the fields in flagged_fields first. On error, read "
+    "error_message; if the error also carries data (a Critic failure), that data is "
+    "unverified: pass the whole result to validate instead of calling extract again. "
+    "validate checks data you already have and does not re-extract (it never runs the "
+    "Generator)."
 )
 # Both tools only read their input; extract calls an external model, hence open-world.
 _HINTS = {
@@ -94,7 +96,7 @@ async def extract(
       - status: "ok" | "needs_review" | "error"
       - data: the typed extraction (nulls for absent fields)
       - field_confidence: per-field combined confidence in [0,1]
-      - overall_confidence: the critic's overall confidence
+      - overall_confidence: the critic's overall confidence; a synthetic 1.0 when no Critic ran
       - flagged_fields: fields below threshold that a human should confirm
       - field_provenance: per-field character-offset spans into the source text
       - critic_summary: the critic's one-line human-readable assessment
@@ -104,8 +106,10 @@ async def extract(
     fields listed in `flagged_fields` first. The tool surfaces uncertainty
     instead of returning a confident guess.
 
-    When status == "error", the object is { status, error_message } and no
-    extraction happened (empty input, bad thresholds, provider/parse failure).
+    When status == "error", the object is { status, error_message } (empty
+    input, bad thresholds, provider or Generator failure). After a Critic
+    failure it also carries the Generator's unverified `data`: pass the whole
+    object to `validate` to re-verify it without another Generator call.
     Set heuristics_only=True to skip the Critic LLM call and verify with
     deterministic heuristics only.
 

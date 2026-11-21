@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-112
+    lenses: unknown
+    - Candidate A1 -- The MCP server reuses one provider client per role instead of building new SDK clients and a new connection pool on every tool call (roadmap #27, memo remainder)
+    - Candidate A2 -- Remove the fixed 0.5 s sleep before a parse/schema retry (roadmap #26)
+    - Candidate A3 -- A Critic `null` in `rationale`/`grounded`/`summary`/`field_verdicts` is read on the first call as the *conservative* value, instead of a paid retry, a 0.5 s sleep and an error row (roadmap #129)
+    - Candidate B1 -- The MCP host is told the truth about iter 111: `instructions` and the `extract` description stop saying "on error, nothing was extracted" when the error row now carries the Generator's `data`
+    - Candidate B2 -- README's exit-code line stops filing an out-of-range threshold under the wrong code: `--field-threshold 2` is exit 3 (envelope), not 2 (usage/input), and the README says why
+    - Candidate B3 -- `--version` and MCP `serverInfo.version` stop reporting the stale `0.1.0` that every build from iter 1 to iter 111 shares
+    winner: B1
+    ship: pending (not yet decided)
   iter-111
     lenses: performance-and-throughput
     - Candidate A1 -- One bool-reject rule in schema.py: a `_not_bool(noun)` BeforeValidator on `_Amount`/`_Grade` aliases replaces the 4 hooks iters 103 and 109 left
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- A Critic failure keeps the paid Generator extraction: the `extract` error envelope carries `data`, so `extract | validate --data -` re-verifies with 0 Generator calls instead of a full re-extract
     - Candidate B3 -- The paid retry prompt names every rejected field: one line per pydantic error with no header or docs URL, so a 3-amount mistake is fixed in one retry instead of the reason being cut off before `total`
     winner: B2
-    ship: pending (not yet decided)
+    ship: PUSHED d758b8f
   iter-110
     lenses: unknown
     - Candidate A1 -- `validate --data -` reads the fields from stdin, so `reflect-mcp extract --file doc.txt | reflect-mcp validate --file doc.txt --data -` re-verifies a result with no temp file and no `$(cat …)` quoting
@@ -740,4 +750,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-74 scouted iterations
+75 scouted iterations
