@@ -113,13 +113,16 @@ _ROLE_LABELS = {
     "total": r"(?<!sub)(?<!sub-)(?<!sub )(?:grand total|amount due|total)",
 }
 # A labelled number sits on the label's line, at most 25 non-digit chars after
-# it, optionally currency-prefixed, written with exactly two decimals. The strict
-# money form keeps IDs and quantities ("Order 12", "Total: 15") from labelling.
+# it, optionally currency-prefixed, written with exactly two decimals in US
+# ("1,234.03") or EU decimal-comma ("1.234,03") form. The strict money form keeps
+# IDs and quantities ("Order 12", "Total: 15") from labelling.
 _LABELLED_AMOUNT_RES = {
     role: re.compile(  # lookahead letters read off the labels, so none can be excluded
         _lookahead(re.sub(r"\(\?<!.*?\)|\(\?:|\)", "", labels).split("|"))
         + rf"(?<![a-z])(?:{labels})(?![a-z])[^\d\n]{{0,25}}?(?:[$€£]\s*)?"
-        r"((?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2})(?!\d)",
+        # each form keeps its own bound: only the EU branch vetoes a trailing ",<digit>"
+        r"((?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2}(?!\d)"
+        r"|(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}(?!\d)(?!,\d))",
         re.IGNORECASE,
     )
     for role, labels in _ROLE_LABELS.items()
@@ -210,9 +213,37 @@ def _contains_ci(value: str, line: str) -> bool:
     return re.search(re.escape(value), line, re.IGNORECASE) is not None
 
 
+# A decimal-comma amount ("1.234,03", "197,03"): dot thousands groups, exactly two
+# decimals after the comma. "1,234" (no 2-decimal tail) keeps its thousands reading.
+# A comma followed by a space or end of text ends the amount ("tax was 43,20, and");
+# only a comma-digit continuation ("1,234,567") vetoes the decimal-comma reading.
+_DECIMAL_COMMA_RE = re.compile(r"(?<![\d.,])(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}(?!\d)(?!,\d)")
+
+
+def _amount_value(raw: str) -> float:
+    """Value of a 2-decimal money token in either US ("1,234.03") or EU ("1.234,03") form.
+
+    The mark three chars from the end is the decimal mark; the other separator only
+    groups thousands, so dropping it and normalising the decimal mark reads both forms.
+    """
+    if raw[-3] == ".":
+        return float(raw.replace(",", ""))
+    return float(raw.replace(".", "").replace(",", "."))
+
+
 def _find_number_span(value: float, text: str) -> ProvenanceSpan | None:
-    """Find the first numeric token in *text* whose value matches."""
+    """Find the first numeric token in *text* whose value matches.
+
+    Decimal-comma tokens are tried first and their dot-fragments are skipped, so
+    "1.234,03" grounds 1234.03 and never the misread 1.234.
+    """
+    comma = list(_DECIMAL_COMMA_RE.finditer(text))
+    for m in comma:
+        if abs(_amount_value(m.group()) - value) < 0.005:
+            return ProvenanceSpan(start=m.start(), end=m.end())
     for m in re.finditer(r"\d[\d,]*\.?\d*", text):
+        if any(c.start() <= m.start() < c.end() for c in comma):
+            continue  # a piece of "1.234,03" is not the number 1.234
         try:
             if abs(float(m.group().replace(",", "")) - value) < 0.005:
                 return ProvenanceSpan(start=m.start(), end=m.end())
@@ -225,7 +256,7 @@ def _labelled_amounts(text: str, role: str) -> list[float]:
     """Distinct numbers the source labels for *role*, in first-occurrence order."""
     values: list[float] = []
     for m in _LABELLED_AMOUNT_RES[role].finditer(text):
-        value = float(m.group(1).replace(",", ""))
+        value = _amount_value(m.group(1))
         if value not in values:
             values.append(value)
     return values

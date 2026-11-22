@@ -124,7 +124,7 @@ tool surface, small deps, MIT, publication-safe.
 | 104 | Heuristics-only rows log 3 records, not 4: `validate.start` folds into `heuristics.done` (stderr −21%/row; 2 iter-65 pins) (iter-100 A1 narrow) | Low | Low | QUEUED |
 | 105 | Tax-rate reconciliation: one stated `Tax/VAT/GST N%` must explain the extracted tax (subtotal, total−tax or tax-inclusive base), else tax ×0.3; golden-derived coverage, eval byte-identical (iter-101 B3) | High | Low | DONE (iter 101) |
 | 106 | Contributor on-ramp: README §9 leads with CI's `uv sync`/`uv run pytest`; Makefile header matches recipes (`make install` exits 127 on a uv venv) (iter-101 A1; 0 red) | Med | Low | QUEUED |
-| 107 | Decimal-comma amounts: `1.234,03` grounds 1234.03 and a wrong `1.234` stops being a silent ok; ambiguous `1,234` keeps both readings (iter-102 A1) | High | Med | QUEUED |
+| 107 | Decimal-comma amounts: `1.234,03` grounds 1234.03 and a wrong `1.234` stops being a silent ok; ambiguous `1,234` keeps both readings (iter-102 A1) | High | Med | DONE (iter 113) |
 | 108 | Tax-rate bridge hardening: same-line non-tax `%` (`disc 10%`, `5% off`) stops false-alarming; plural `Taxes` caught (iter-102 B1; proto 0 red) | Med | Low | QUEUED |
 | 109 | Currency-role grounding: one ISO code on the labelled total line must match `currency` (iter-102 A3) | Med | Low | QUEUED |
 | 110 | Document-level date order: a numeric date read in the order another date rules out is penalized (iter-102 A2) | Med | Med | QUEUED |
@@ -228,3 +228,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 110 — `validate --data -` reads the fields from stdin, so `extract | validate --file DOC --data -` pipes
 - iter 111 — A Critic failure keeps the paid extraction as error-row `data`; re-verify with `validate --data -`
 - iter 112 — MCP instructions/extract description: error `data` is unverified, pass it to `validate`
+- iter 113 — EU decimal-comma amounts (`1.234,03`) ground; the `1.234` fragment misread is no longer a silent ok

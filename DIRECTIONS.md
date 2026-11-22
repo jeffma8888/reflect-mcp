@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-113
+    lenses: new-capability
+    - Candidate A1: MCP host prose and README §5 stop promising salvaged `data` after *any* Critic failure (only an unparseable critique carries it)
+    - Candidate A2: README §5 exit-code line files an out-of-range threshold under the code it actually returns (exit 3, not 2), and says why (roadmap #133)
+    - Candidate A3: README "Repository layout" names `tools.py`, the module that now owns the error-envelope and salvaged-`data` contract, pinned two-way to `src/reflect_mcp/` (roadmap #93)
+    - Candidate B1 -- European number format: heuristics read "1.234,03" as 1234.03, so a correct EU-format invoice can be `ok` and a misread 1.234 total stops being a silent `ok` (roadmap #107)
+    - Candidate B2 -- Currency grounded by an unambiguous symbol beside an amount: "€120.00" grounds EUR, "£" GBP, "₹" INR; "$" and "¥" ground nothing (roadmap #56)
+    - Candidate B3 -- Flagged fields carry machine-readable `checks` codes (`critic`, `critic_contract`, `heuristic:not_in_source|amount_role|arithmetic|tax_rate|party_role|...`), so a consumer can route a review without parsing English
+    winner: B1
+    ship: pending (not yet decided)
   iter-112
     lenses: unknown
     - Candidate A1 -- The MCP server reuses one provider client per role instead of building new SDK clients and a new connection pool on every tool call (roadmap #27, memo remainder)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- README's exit-code line stops filing an out-of-range threshold under the wrong code: `--field-threshold 2` is exit 3 (envelope), not 2 (usage/input), and the README says why
     - Candidate B3 -- `--version` and MCP `serverInfo.version` stop reporting the stale `0.1.0` that every build from iter 1 to iter 111 shares
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 6907f8c
   iter-111
     lenses: performance-and-throughput
     - Candidate A1 -- One bool-reject rule in schema.py: a `_not_bool(noun)` BeforeValidator on `_Amount`/`_Grade` aliases replaces the 4 hooks iters 103 and 109 left
@@ -750,4 +760,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-75 scouted iterations
+76 scouted iterations
