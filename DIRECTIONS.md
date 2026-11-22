@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-114
+    lenses: new-capability, hardening/DX
+    - Candidate A1 -- Currency grounded by an unambiguous symbol on a labelled amount: "Total: €1.190,00" grounds EUR, "£" grounds GBP, "$"/"¥" ground nothing (roadmap #56)
+    - Candidate A2 -- Omission detection for `subtotal`/`tax`: an explicit `null` beside a labelled amount is needs_review (roadmap #78)
+    - Candidate A3 -- Token-boundary grounding for `invoice_number`: "INV-100" or "NV-1001" inside "INV-1001" stops grounding (roadmap #54, narrowed)
+    - Candidate B1 -- Amount fields reject non-finite numbers (`NaN`/`Infinity`/`1e400`), so no result row prints non-RFC JSON (roadmap #119)
+    - Candidate B2 -- An unreadable `--file` (directory or no permission) exits 2 with one `Error:` line, instead of a traceback with exit 1, which means `needs_review` (roadmap #112, OSError half)
+    - Candidate B3 -- The quality command `uv run pytest -q` prints its pass/fail count: drop the `-q` in `addopts`, which doubles to `-qq` (roadmap #99)
+    winner: B1
+    ship: pending (not yet decided)
   iter-113
     lenses: new-capability
     - Candidate A1: MCP host prose and README §5 stop promising salvaged `data` after *any* Critic failure (only an unparseable critique carries it)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- Currency grounded by an unambiguous symbol beside an amount: "€120.00" grounds EUR, "£" GBP, "₹" INR; "$" and "¥" ground nothing (roadmap #56)
     - Candidate B3 -- Flagged fields carry machine-readable `checks` codes (`critic`, `critic_contract`, `heuristic:not_in_source|amount_role|arithmetic|tax_rate|party_role|...`), so a consumer can route a review without parsing English
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 01c35b0
   iter-112
     lenses: unknown
     - Candidate A1 -- The MCP server reuses one provider client per role instead of building new SDK clients and a new connection pool on every tool call (roadmap #27, memo remainder)
@@ -760,4 +770,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-76 scouted iterations
+77 scouted iterations

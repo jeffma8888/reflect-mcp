@@ -27,9 +27,9 @@ class InvoiceData(BaseModel):
     vendor_name: Optional[str] = Field(default=None, description="Legal/trading name of the seller.")
     invoice_number: Optional[str] = Field(default=None, description="Invoice / receipt identifier.")
     invoice_date: Optional[str] = Field(default=None, description="Invoice date, ISO 8601 (YYYY-MM-DD).")
-    subtotal: Optional[float] = Field(default=None, description="Pre-tax amount.")
-    tax: Optional[float] = Field(default=None, description="Tax amount.")
-    total: Optional[float] = Field(default=None, description="Grand total charged.")
+    subtotal: Optional[float] = Field(default=None, allow_inf_nan=False, description="Pre-tax amount.")
+    tax: Optional[float] = Field(default=None, allow_inf_nan=False, description="Tax amount.")
+    total: Optional[float] = Field(default=None, allow_inf_nan=False, description="Grand total charged.")
     currency: Optional[str] = Field(default=None, description="ISO 4217 currency code, e.g. USD.")
 
     model_config = {"extra": "ignore"}

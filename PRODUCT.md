@@ -136,7 +136,7 @@ tool surface, small deps, MIT, publication-safe.
 | 116 | Critic reply boundary: a JSON boolean `confidence`/`overall_confidence` is rejected (was 1.0 → silent `ok`), retried with feedback; numbers/numeric strings unchanged; golden-derived coverage (iter-109 A1; proto 0 red) | High | Low | DONE (iter 109) |
 | 117 | `--file -` reads stdin (POSIX convention) for extract/validate/--batch; literal `-` file via `./-`; help text byte-stable (iter-104 A2; proto 0 red) | Med | Low | DONE (iter 104) |
 | 118 | README §6 library on-ramp: offline `build_default_pipeline(generator_enabled=False, critic_enabled=False).validate(...)` snippet, exec'd by a test (iter-104 A1; proto 0 red) | Med | Low | QUEUED |
-| 119 | Amount fields reject non-finite JSON (`NaN`/`Infinity`/`1e400`) at the schema boundary so no output prints non-RFC JSON (iter-103 review follow-up) | Med | Low | QUEUED |
+| 119 | Amount fields reject non-finite JSON (`NaN`/`Infinity`/`1e400`) at the schema boundary so no output prints non-RFC JSON (iter-103 review follow-up) | Med | Low | DONE (iter 114) |
 | 120 | Brace-preamble reply recovery: a stray `{field: value}` before valid JSON parses on call 1 via a top-level segment walk (no nested fragment on truncation); saves 2 paid calls + row (iter-105 B1) | High | Low | DONE (iter 105) |
 | 121 | MCP tool description: `overall_confidence` is a synthetic 1.0 (not a judgement) when no Critic ran; drift test vs payload (iter-106 B1) | Med | Low | DONE (iter 112) |
 | 122 | README §6 library error contract: `max_retries` default, GeneratorError/CriticError after N+1 calls, provider errors propagate unwrapped + unretried; executed by a test (iter-107 A1; proto 0 red) | High | Low | DONE (iter 107) |
@@ -229,3 +229,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 111 — A Critic failure keeps the paid extraction as error-row `data`; re-verify with `validate --data -`
 - iter 112 — MCP instructions/extract description: error `data` is unverified, pass it to `validate`
 - iter 113 — EU decimal-comma amounts (`1.234,03`) ground; the `1.234` fragment misread is no longer a silent ok
+- iter 114 — Amounts reject `NaN`/`Infinity`/`1e400` at the schema, so every CLI/MCP/batch row is strict JSON
