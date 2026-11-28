@@ -52,7 +52,8 @@ README = REPO / "README.md"
 
 # sha256 of json.dumps([{name, inputSchema, outputSchema} sorted by name],
 # sort_keys=True) measured on HEAD 9decb18 with the real mcp 1.28.1 SDK.
-HEAD_TOOLS_LIST_SHA256 = "41fb3cc9bfe6c3877bfef150175769600a444c6e7ce0e9d45a3d7124582b195d"
+# Re-hashed iter 115 #81: validate.data publishes the InvoiceData field properties.
+HEAD_TOOLS_LIST_SHA256 = "1f31384814fc8b96136d559da368dee63c236e2305585ea175c05e44f9842a5a"
 # [project] dependencies and the `server` extra as of HEAD 9decb18.
 HEAD_BASE_DEPENDENCIES = ["pydantic>=2.6"]
 HEAD_SERVER_EXTRA = ["mcp>=1.28,<2"]

@@ -33,8 +33,11 @@ import asyncio
 import json
 from typing import Annotated, Any
 
+from pydantic import Field
+
 from reflect_mcp import __version__, tools
 from reflect_mcp.logging_config import get_logger
+from reflect_mcp.schema import InvoiceData
 from reflect_mcp.tools import ToolResult
 
 try:
@@ -55,6 +58,12 @@ _INSTRUCTIONS = (
     "unverified: pass the whole result to validate instead of calling extract again. "
     "validate checks data you already have and does not re-extract (it never runs the "
     "Generator)."
+)
+# A host model learns `validate`'s keys only from tools/list, so publish InvoiceData's
+# (flat, $ref-free) field schema on `data`. Schema-only: validation stays a plain dict so
+# a stored envelope still passes and an unknown key still gets the iter-79 error envelope.
+_DATA_FIELDS = Field(
+    json_schema_extra={"properties": InvoiceData.model_json_schema()["properties"]}
 )
 # Both tools only read their input; extract calls an external model, hence open-world.
 _HINTS = {
@@ -129,7 +138,7 @@ async def extract(
 @mcp.tool(title="Verify pre-extracted invoice data", annotations=_HINTS)
 async def validate(
     text: str,
-    data: dict[str, Any],
+    data: Annotated[dict[str, Any], _DATA_FIELDS],
     field_threshold: float | None = None,
     overall_threshold: float | None = None,
     heuristics_only: bool = False,

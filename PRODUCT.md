@@ -98,7 +98,7 @@ tool surface, small deps, MIT, publication-safe.
 | 78 | Omission detection for `subtotal`/`tax`: an explicit null the source labels is flagged (#39 follow-up; measured 29 red for all amounts vs 13 total-only) | Med | Med | QUEUED |
 | 79 | Suite-wide AST guard: no test passes `HEAD`/`@` as a git archive/diff/show rev or runs a single-rev `git diff` (iter-90 B2: red on both iter-87/89 bombs, 0 hits on 65 modules; iter 90 shipped it over a frozen 12-module list -- remainder: glob `tests/test_*.py`, iter-91 A3 red on both bombs) | Med | Low | QUEUED |
 | 80 | One provider-SDK import guard: `_require(module, provider, extra)` replaces 3 copied try-import blocks; `build_client` dispatches via a `_CLIENTS` dict keyed like `_DEFAULTS` (iter-92 B3; 0 red, providers.py 140→131) | Med | Low | DONE (iter 92) |
-| 81 | MCP `validate.data` inputSchema names the 7 InvoiceData fields (+ stored-envelope branch) instead of `additionalProperties: true` (iter-92 A1; 1 iter-85 digest re-hash) | High | Low | QUEUED |
+| 81 | MCP `validate.data` inputSchema names the 7 InvoiceData fields (stored-envelope `oneOf` branch left out of scope) instead of `additionalProperties: true` (iter-92 A1; 1 iter-85 digest re-hash) | High | Low | DONE (iter 115) |
 | 82 | MCP tool arguments publish `description`s; thresholds advertise `minimum 0`/`maximum 1` via `json_schema_extra` (not `ge`/`le`) (iter-92 A3; pairs with #81) | Med | Low | QUEUED |
 | 83 | One single-document CLI tail: `extract`/`validate` share `_run_verb` (cli.py 306→279; 2 pin literals: iter68 `HEAD_CLI_LINES`, iter79 `== N`) (iter-92 B1) | Med | Med | QUEUED |
 | 84 | One "Critic didn't speak" branch in `_verify`: one `_neutral_critique` site, `skip_reason` picked once (iter-92 B2; 0 red) | Low | Low | QUEUED |
@@ -151,6 +151,8 @@ tool surface, small deps, MIT, publication-safe.
 | 131 | Retry reason names every rejected field via `errors(include_url=False)` one-liners under the 300-char cap (iter-111 B3; 3 iter-106 pins re-spec) | Med | Low | QUEUED |
 | 132 | MCP `instructions` + `extract` description stop saying error = nothing extracted: error `data` is unverified, pass it to `validate`; payload-tied drift test (iter-112 B1; 3 pins) | High | Low | DONE (iter 112) |
 | 133 | README §5 exit-code line: out-of-range `--field-threshold` is exit 3 (built at pipeline build), executed by a test (iter-112 B2; 0 red) | Low | Low | QUEUED |
+| 134 | A >4300-digit JSON int is `invalid JSON` (exit 2 / error row / paid retry), not a bare ValueError killing `--batch` with exit 1: `except ValueError` ×4 (iter-115 A1; 0 red) | Med | Low | QUEUED |
+| 135 | Undecodable input bytes no longer lose a whole `--batch` or depend on locale: UTF-8 `errors="replace"` on `--file` + stdin (iter-115 A2; policy: replace vs error-row) | Med | Low | QUEUED |
 
 ## Done ledger
 
@@ -230,3 +232,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 112 — MCP instructions/extract description: error `data` is unverified, pass it to `validate`
 - iter 113 — EU decimal-comma amounts (`1.234,03`) ground; the `1.234` fragment misread is no longer a silent ok
 - iter 114 — Amounts reject `NaN`/`Infinity`/`1e400` at the schema, so every CLI/MCP/batch row is strict JSON
+- iter 115 — MCP `validate.data` inputSchema publishes the 7 InvoiceData fields; host stops guessing keys

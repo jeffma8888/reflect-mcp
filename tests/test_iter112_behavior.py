@@ -54,7 +54,8 @@ STORED_ROW = "stored error row from an input, provider or Generator failure"
 # sha256 digests measured on an export of the pre-change tree (d758b8f).
 # They pin behaviour that iter 112 must NOT move (EB6).
 PRE_VALIDATE_DESCRIPTION_SHA256 = "4378c5c06f3db2dc1ede3c347de07a5143149ad2b60082667635dad125810556"
-PRE_TOOL_SCHEMAS_SHA256 = "dbb801c6c71f61c9953790b546a5cb6b49f1cdb9f8b5feea477b8a8a50a36df0"
+# Re-hashed iter 115 #81: validate.data publishes the InvoiceData field properties.
+PRE_TOOL_SCHEMAS_SHA256 = "fd7534ae2dcffe26480dbb22a9f055f613148fd887cafb14e7cd66ddafcb4aae"
 PRE_MODEL_JSON_SCHEMA_SHA256 = "e25030a2013c33f5d110fc25f638957abfa3ff8de56abb9e3d73eaae9eb12d3e"
 PRE_PAYLOADS_SHA256 = "404b3c2c32b6afbc45a4aba600d7cbfc04c935951d0dfd088f94428fe01e4b96"
 

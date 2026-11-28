@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-115
+    lenses: unknown
+    - Candidate A1 -- A JSON integer longer than 4300 digits becomes "invalid JSON" instead of an uncaught ValueError that wipes out a `--batch` run and skips the Generator's paid retry
+    - Candidate A2 -- One undecodable byte stops losing the whole batch, and input decoding no longer depends on the caller's locale
+    - Candidate A3 -- A `--batch` row whose `text` is not a string gets a named error instead of a Python internals message (roadmap #113)
+    - Candidate B1 -- MCP `validate.data` inputSchema names the 7 InvoiceData fields instead of a bare `additionalProperties: true` (roadmap #81)
+    - Candidate B2 -- `--help` advertises the shipped stdin on-ramps: `--file -` (iter 104), `--data -` (iter 110) and the stored-envelope input (iter 68)
+    - Candidate B3 -- `--batch` error rows carry their 1-based input `line`, so an id-less failure joins back to its input (roadmap #25 remainder)
+    winner: B1
+    ship: pending (not yet decided)
   iter-114
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Currency grounded by an unambiguous symbol on a labelled amount: "Total: €1.190,00" grounds EUR, "£" grounds GBP, "$"/"¥" ground nothing (roadmap #56)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- An unreadable `--file` (directory or no permission) exits 2 with one `Error:` line, instead of a traceback with exit 1, which means `needs_review` (roadmap #112, OSError half)
     - Candidate B3 -- The quality command `uv run pytest -q` prints its pass/fail count: drop the `-q` in `addopts`, which doubles to `-qq` (roadmap #99)
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 484eec4
   iter-113
     lenses: new-capability
     - Candidate A1: MCP host prose and README §5 stop promising salvaged `data` after *any* Critic failure (only an unparseable critique carries it)
@@ -770,4 +780,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-77 scouted iterations
+78 scouted iterations
