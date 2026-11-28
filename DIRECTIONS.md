@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-117
+    lenses: unknown
+    - Candidate A1 -- Retire the machine-path guard's only exemption: spell iter80's fragments by concatenation, delete the hard-coded owner token, and drop `EXEMPT`
+    - Candidate A2 -- Delete the fixed-SHA git-history counterfactual tests (70 tests in 13 files) and CI's `fetch-depth: 0`, so every test runs on any checkout
+    - Candidate A3 -- One publication-safety guard: the repo-wide guard also scans `.github/workflows/*.yml`, and iter80's own ci.yml fragment checks are deleted
+    - Candidate B1 -- The quality command stops paying 27.5 s of real retry sleeps: one autouse conftest fixture zeroes `_RETRY_DELAY_SECONDS` for in-process tests (110 s → 74 s, 0 red)
+    - Candidate B2 -- MCP tools/list stops shipping 40 auto-generated schema `title` keys: the host model pays for every tool-schema byte in every session (7454 → 6486 B, −13%)
+    - Candidate B3 -- MCP tool results' text block uses compact JSON separators: every call's host-visible result shrinks ~8% (912 → 835 B on a 7-field `ok` row), 0 red
+    winner: B1
+    ship: pending (not yet decided)
   iter-116
     lenses: unknown
     - Candidate A1 -- MCP tool arguments publish `description`s, and both thresholds advertise `minimum 0`/`maximum 1` in tools/list (roadmap #82, the sibling of shipped #81)
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `__main__.main`: delete the unreachable trailing `server_main()` and collapse the two verb-dispatch blocks into one table
     - Candidate B3 -- Collapse the 6 hard-coded subprocess blocks in test_iter37/41 to the plain `sys.executable -m reflect_mcp` call every other CLI test uses, removing the machine paths
     winner: B3
-    ship: pending (not yet decided)
+    ship: PUSHED eefee29
   iter-115
     lenses: unknown
     - Candidate A1 -- A JSON integer longer than 4300 digits becomes "invalid JSON" instead of an uncaught ValueError that wipes out a `--batch` run and skips the Generator's paid retry
@@ -790,4 +800,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-79 scouted iterations
+80 scouted iterations

@@ -154,6 +154,10 @@ tool surface, small deps, MIT, publication-safe.
 | 134 | A >4300-digit JSON int is `invalid JSON` (exit 2 / error row / paid retry), not a bare ValueError killing `--batch` with exit 1: `except ValueError` ×4 (iter-115 A1; 0 red) | Med | Low | QUEUED |
 | 135 | Undecodable input bytes no longer lose a whole `--batch` or depend on locale: UTF-8 `errors="replace"` on `--file` + stdin (iter-115 A2; policy: replace vs error-row) | Med | Low | QUEUED |
 | 136 | Test suite carries no machine paths: iter-37/41 CLI subprocess tests drop the hard-coded `cwd`/`env`; a guard scans every `src`/`tests` `.py` (iter-116 B3; 0 red, no src diff) | High | Low | DONE (iter 116) |
+| 137 | Quality command stops paying real retry back-off: an autouse conftest fixture zeroes `parsing._RETRY_DELAY_SECONDS` in-process, opting out for `sleeps` recorders / `real_retry_delay` (iter-117 B1; 0 red, ~110→75 s, src untouched; product 0.5 s stays, unlike #26) | Med | Low | DONE (iter 117) |
+| 138 | Delete the fixed-SHA "red at base" history tests (70 tests, 13 files, ~20 s/run) and CI `fetch-depth: 0`; convert preservation checks (iter79) to golden pins first (iter-117 A2) | Med | Med | QUEUED |
+| 139 | Retire the machine-path guard's `EXEMPT`: concatenate test_iter80's fragments, drop its hard-coded owner token (remote-derived check generalises it) (iter-117 A1; 2 exemption pins) | Med | Low | QUEUED |
+| 140 | tools/list drops 40 auto pydantic schema `title`s (7454→6486 B per session; property named `title` survives) (iter-117 B2; 6 digest pins) | Low | Low | QUEUED |
 
 ## Done ledger
 
@@ -235,3 +239,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 114 — Amounts reject `NaN`/`Infinity`/`1e400` at the schema, so every CLI/MCP/batch row is strict JSON
 - iter 115 — MCP `validate.data` inputSchema publishes the 7 InvoiceData fields; host stops guessing keys
 - iter 116 — Tests drop hard-coded checkout `cwd`/`env`, so the suite passes on any clone/CI; a guard keeps paths out
+- iter 117 — Suite no longer sleeps the real 0.5 s retry back-off in-process (~110→75 s); product delay unchanged

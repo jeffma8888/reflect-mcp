@@ -12,6 +12,7 @@ import os
 
 import pytest
 
+from reflect_mcp import parsing
 from reflect_mcp.critic import Critic
 from reflect_mcp.generator import Generator
 from reflect_mcp.pipeline import ReflectivePipeline
@@ -78,3 +79,27 @@ def _clear_operator_gate_floor(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in list(os.environ):
         if name.startswith("REFLECT_") and name.endswith("_THRESHOLD"):
             monkeypatch.delenv(name, raising=False)
+
+
+# Tests that observe the real retry back-off keep it: a `sleeps` recorder
+# fixture pins `[0.5]`, and iter86 EB5a reads the constant itself.
+_REAL_DELAY_FIXTURES = frozenset({"sleeps"})
+_REAL_DELAY_TESTS = frozenset({"test_eb5a_complete_parsed_exists_and_owns_delay"})
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers", "real_retry_delay: keep parsing's real retry back-off sleep for this test"
+    )
+
+
+@pytest.fixture(autouse=True)
+def _zero_retry_delay(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Skip the 0.5 s retry back-off in-process; it proves nothing but wall-clock."""
+    if (
+        request.node.get_closest_marker("real_retry_delay") is not None
+        or _REAL_DELAY_FIXTURES.intersection(request.fixturenames)
+        or getattr(request.node, "originalname", request.node.name) in _REAL_DELAY_TESTS
+    ):
+        return
+    monkeypatch.setattr(parsing, "_RETRY_DELAY_SECONDS", 0.0)
