@@ -153,6 +153,7 @@ tool surface, small deps, MIT, publication-safe.
 | 133 | README §5 exit-code line: out-of-range `--field-threshold` is exit 3 (built at pipeline build), executed by a test (iter-112 B2; 0 red) | Low | Low | QUEUED |
 | 134 | A >4300-digit JSON int is `invalid JSON` (exit 2 / error row / paid retry), not a bare ValueError killing `--batch` with exit 1: `except ValueError` ×4 (iter-115 A1; 0 red) | Med | Low | QUEUED |
 | 135 | Undecodable input bytes no longer lose a whole `--batch` or depend on locale: UTF-8 `errors="replace"` on `--file` + stdin (iter-115 A2; policy: replace vs error-row) | Med | Low | QUEUED |
+| 136 | Test suite carries no machine paths: iter-37/41 CLI subprocess tests drop the hard-coded `cwd`/`env`; a guard scans every `src`/`tests` `.py` (iter-116 B3; 0 red, no src diff) | High | Low | DONE (iter 116) |
 
 ## Done ledger
 
@@ -233,3 +234,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 113 — EU decimal-comma amounts (`1.234,03`) ground; the `1.234` fragment misread is no longer a silent ok
 - iter 114 — Amounts reject `NaN`/`Infinity`/`1e400` at the schema, so every CLI/MCP/batch row is strict JSON
 - iter 115 — MCP `validate.data` inputSchema publishes the 7 InvoiceData fields; host stops guessing keys
+- iter 116 — Tests drop hard-coded checkout `cwd`/`env`, so the suite passes on any clone/CI; a guard keeps paths out

@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-116
+    lenses: unknown
+    - Candidate A1 -- MCP tool arguments publish `description`s, and both thresholds advertise `minimum 0`/`maximum 1` in tools/list (roadmap #82, the sibling of shipped #81)
+    - Candidate A2 -- `--mcp-config` warns on stderr when the printed interpreter cannot import `mcp` or the selected provider's SDK (roadmap #114)
+    - Candidate A3 -- `--batch --summary PATH` writes one JSON tally `{rows, ok, needs_review, error, exit}`, so a CI gate reads a file instead of re-counting JSONL (roadmap #47)
+    - Candidate B1 -- Delete `parsing._strip_code_fences`: the balanced-object walk already recovers fenced replies, and a one-line fence stops costing a paid retry
+    - Candidate B2 -- `__main__.main`: delete the unreachable trailing `server_main()` and collapse the two verb-dispatch blocks into one table
+    - Candidate B3 -- Collapse the 6 hard-coded subprocess blocks in test_iter37/41 to the plain `sys.executable -m reflect_mcp` call every other CLI test uses, removing the machine paths
+    winner: B3
+    ship: pending (not yet decided)
   iter-115
     lenses: unknown
     - Candidate A1 -- A JSON integer longer than 4300 digits becomes "invalid JSON" instead of an uncaught ValueError that wipes out a `--batch` run and skips the Generator's paid retry
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- `--help` advertises the shipped stdin on-ramps: `--file -` (iter 104), `--data -` (iter 110) and the stored-envelope input (iter 68)
     - Candidate B3 -- `--batch` error rows carry their 1-based input `line`, so an id-less failure joins back to its input (roadmap #25 remainder)
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED c669177
   iter-114
     lenses: new-capability, hardening/DX
     - Candidate A1 -- Currency grounded by an unambiguous symbol on a labelled amount: "Total: €1.190,00" grounds EUR, "£" grounds GBP, "$"/"¥" ground nothing (roadmap #56)
@@ -780,4 +790,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-78 scouted iterations
+79 scouted iterations

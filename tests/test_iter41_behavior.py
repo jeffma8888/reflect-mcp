@@ -346,7 +346,6 @@ class TestEB7HelpOutput:
         r = subprocess.run(
             [sys.executable, "-m", "reflect_mcp", "extract", "--help"],
             capture_output=True, text=True, timeout=10,
-            cwd="/Users/jincm/projects/reflect-mcp",
         )
         assert r.returncode == 0
         assert "--heuristics-only" in r.stdout
@@ -357,7 +356,6 @@ class TestEB7HelpOutput:
         r = subprocess.run(
             [sys.executable, "-m", "reflect_mcp", "validate", "--help"],
             capture_output=True, text=True, timeout=10,
-            cwd="/Users/jincm/projects/reflect-mcp",
         )
         assert r.returncode == 0
         assert "--heuristics-only" in r.stdout
@@ -368,7 +366,6 @@ class TestEB7HelpOutput:
         r = subprocess.run(
             [sys.executable, "-m", "reflect_mcp", "extract", "--help"],
             capture_output=True, text=True, timeout=10,
-            cwd="/Users/jincm/projects/reflect-mcp",
         )
         lower = r.stdout.lower()
         assert "critic" in lower or "heuristic" in lower, (
@@ -381,7 +378,6 @@ class TestEB7HelpOutput:
         r = subprocess.run(
             [sys.executable, "-m", "reflect_mcp", "validate", "--help"],
             capture_output=True, text=True, timeout=10,
-            cwd="/Users/jincm/projects/reflect-mcp",
         )
         lower = r.stdout.lower()
         assert "critic" in lower or "heuristic" in lower

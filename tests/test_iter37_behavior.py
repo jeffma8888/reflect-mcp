@@ -40,10 +40,6 @@ def _run_cli(extra_args: list[str], timeout: float = 10) -> subprocess.Completed
         capture_output=True,
         text=True,
         timeout=timeout,
-        cwd="/Users/jincm/projects/reflect-mcp",
-        env={"PATH": "/Users/jincm/projects/reflect-mcp/.venv/bin:" + "/usr/bin:/bin",
-             "HOME": "/Users/jincm",
-             "VIRTUAL_ENV": "/Users/jincm/projects/reflect-mcp/.venv"},
     )
     return result
 
@@ -148,10 +144,6 @@ class TestEB3BareInvocationStartsServer:
                 capture_output=True,
                 text=True,
                 timeout=2,
-                cwd="/Users/jincm/projects/reflect-mcp",
-                env={"PATH": "/Users/jincm/projects/reflect-mcp/.venv/bin:" + "/usr/bin:/bin",
-                     "HOME": "/Users/jincm",
-                     "VIRTUAL_ENV": "/Users/jincm/projects/reflect-mcp/.venv"},
             )
             assert "usage:" not in r.stdout.lower(), \
                 "Bare invocation should not print usage/help"
