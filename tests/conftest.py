@@ -3,6 +3,8 @@
 Everything here keeps tests OFFLINE: the LLM boundary is a `ScriptedLLMClient`
 that returns canned JSON, so `pytest` needs no API keys and never touches the
 network. If any code path tried a real call, the scripted client would raise.
+The MCP tools' process-lifetime provider-client memo is cleared before each test,
+so no test sees a client (or fake SDK) memoised by an earlier one.
 """
 
 from __future__ import annotations
@@ -12,7 +14,7 @@ import os
 
 import pytest
 
-from reflect_mcp import parsing
+from reflect_mcp import parsing, tools
 from reflect_mcp.critic import Critic
 from reflect_mcp.generator import Generator
 from reflect_mcp.pipeline import ReflectivePipeline
@@ -79,6 +81,12 @@ def _clear_operator_gate_floor(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in list(os.environ):
         if name.startswith("REFLECT_") and name.endswith("_THRESHOLD"):
             monkeypatch.delenv(name, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _clear_client_memo() -> None:
+    """Start each test with an empty MCP client memo; tests swap SDKs and factories."""
+    tools._CLIENT_MEMO.clear()
 
 
 # Tests that observe the real retry back-off keep it: a `sleeps` recorder

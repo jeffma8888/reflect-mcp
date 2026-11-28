@@ -1,6 +1,16 @@
 # Foundry directions
 
 foundry directions -- reflect-mcp
+  iter-118
+    lenses: performance-and-throughput, narrative-and-docs
+    - Candidate A1 -- The MCP server builds one provider client per role for its lifetime, not new SDK clients and a new connection pool on every tool call (roadmap #27, memo remainder)
+    - Candidate A2 -- A parse/schema retry stops sleeping a fixed 0.5 s before its paid re-call (roadmap #26)
+    - Candidate A3 -- MCP tools/list stops shipping 42 auto-generated schema `title` keys: the host model pays for every tool-schema byte in every session (7454 → 6486 B, −13.0%)
+    - Candidate B1 -- README §9 Testing names the suite-wide autouse fixtures and the `real_retry_delay` opt-out, pinned to conftest.py by AST
+    - Candidate B2 -- README "Repository layout" lists the files that actually exist in `src/reflect_mcp/`, pinned two-way (roadmap #93, third pitch)
+    - Candidate B3 -- README §5 exit-code line says an out-of-range threshold is exit 3 (envelope), not 2, checked by running the CLI (roadmap #133)
+    winner: A1
+    ship: pending (not yet decided)
   iter-117
     lenses: unknown
     - Candidate A1 -- Retire the machine-path guard's only exemption: spell iter80's fragments by concatenation, delete the hard-coded owner token, and drop `EXEMPT`
@@ -10,7 +20,7 @@ foundry directions -- reflect-mcp
     - Candidate B2 -- MCP tools/list stops shipping 40 auto-generated schema `title` keys: the host model pays for every tool-schema byte in every session (7454 → 6486 B, −13%)
     - Candidate B3 -- MCP tool results' text block uses compact JSON separators: every call's host-visible result shrinks ~8% (912 → 835 B on a 7-field `ok` row), 0 red
     winner: B1
-    ship: pending (not yet decided)
+    ship: PUSHED 6ea85e4
   iter-116
     lenses: unknown
     - Candidate A1 -- MCP tool arguments publish `description`s, and both thresholds advertise `minimum 0`/`maximum 1` in tools/list (roadmap #82, the sibling of shipped #81)
@@ -800,4 +810,4 @@ foundry directions -- reflect-mcp
     - Candidate B3 -- Eval as a console-script verb: `reflect-mcp eval`
     winner: B1
     ship: PUSHED 78ab8ff
-80 scouted iterations
+81 scouted iterations

@@ -21,14 +21,18 @@ higher", and writes no note: the agent asked for nothing, so nothing was raised.
 from __future__ import annotations
 
 import os
+import threading
+from collections.abc import Callable
 from typing import Any, Literal
 
 from pydantic import ValidationError
 from typing_extensions import TypedDict
 
 from reflect_mcp import pipeline as pipeline_module
+from reflect_mcp import providers
 from reflect_mcp.gate import GateConfig
 from reflect_mcp.pipeline import ReflectivePipeline
+from reflect_mcp.providers import LLMClient
 from reflect_mcp.schema import InvoiceData
 
 EMPTY_INPUT_MESSAGE = "input is empty"
@@ -155,6 +159,46 @@ def _with_raise_note(result: dict[str, Any], suffix: str) -> dict[str, Any]:
     return result
 
 
+# Process-lifetime client memo for the MCP path: a host calls the server many times,
+# and a fresh SDK client per call costs a new HTTP pool and handshake. The lock also
+# serialises builds, since boto3 client creation is not thread-safe and tool bodies
+# run on `asyncio.to_thread` workers. Tests clear it via an autouse conftest fixture.
+_CLIENT_MEMO: dict[tuple[Any, ...], LLMClient] = {}
+_CLIENT_MEMO_LOCK = threading.Lock()
+
+
+def _client_key(role: str, build: Callable[[str], LLMClient]) -> tuple[Any, ...]:
+    """Key on everything `build_client` reads to choose a client, but never a secret.
+
+    The factory itself is in the key so a monkeypatched `build_client` never gets a
+    client memoised from the previous factory. API keys stay out on purpose: rotating
+    credentials means restarting the server (README section 4).
+    """
+    return (
+        role,
+        build,
+        os.getenv("REFLECT_PROVIDER", "anthropic").lower(),
+        os.getenv(f"REFLECT_{role.upper()}_MODEL"),
+        os.getenv("AWS_REGION"),
+    )
+
+
+def _memo_client(role: str) -> LLMClient:
+    """Return the memoised client for `role`, building it under the lock on first use.
+
+    A build that raises (SDK missing, unknown provider) stores nothing, so the next
+    call retries instead of replaying a cached failure.
+    """
+    build = providers.build_client
+    key = _client_key(role, build)
+    with _CLIENT_MEMO_LOCK:
+        client = _CLIENT_MEMO.get(key)
+        if client is None:
+            client = build(role)
+            _CLIENT_MEMO[key] = client
+        return client
+
+
 def _build_pipeline(
     gate_config: GateConfig, heuristics_only: bool, *, validate_only: bool = False
 ) -> ReflectivePipeline:
@@ -163,7 +207,7 @@ def _build_pipeline(
     Omitting the kwarg in the default case mirrors the CLI's `_build_pipeline_kwargs`.
     `validate_only` drops the Generator client, which `validate` never calls.
     """
-    kwargs: dict[str, Any] = {"gate_config": gate_config}
+    kwargs: dict[str, Any] = {"gate_config": gate_config, "client_factory": _memo_client}
     if heuristics_only:
         kwargs["critic_enabled"] = False
     if validate_only:

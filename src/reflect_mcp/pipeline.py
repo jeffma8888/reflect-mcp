@@ -7,6 +7,7 @@ network / API keys.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from reflect_mcp.critic import Critic, CriticError
@@ -119,6 +120,7 @@ def build_default_pipeline(
     max_retries: int = 1,
     critic_enabled: bool = True,
     generator_enabled: bool = True,
+    client_factory: Callable[[str], LLMClient] | None = None,
 ) -> ReflectivePipeline:
     """Wire up a pipeline against real providers (env-configured).
 
@@ -126,8 +128,13 @@ def build_default_pipeline(
     is for validate-only callers: building an unused Generator client costs a
     connection pool per call, and with the Critic also off it would make a
     zero-model heuristics-only check fail when no provider SDK is installed.
+    ``client_factory`` lets the MCP tools reuse memoised clients across calls; the
+    default builds fresh ones, which suits the one-shot CLI process.
     """
     from reflect_mcp.providers import build_client
+
+    if client_factory is not None:
+        build_client = client_factory
 
     generator: Generator | None = None
     if generator_enabled:

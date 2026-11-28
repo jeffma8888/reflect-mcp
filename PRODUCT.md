@@ -44,7 +44,7 @@ tool surface, small deps, MIT, publication-safe.
 | 24 | `validate` rejects unknown / empty `data` keys instead of verifying nothing and returning `ok` (iter-74 A2: `{"totl":999}` → `ok`, all-null; MCP `data` schema names no fields) | High | Low | DONE (iter 68: own envelope unwrapped; iter 79: unknown keys rejected, naming them; `{}` still QUEUED) |
 | 25 | Batch output joinable: echo caller `id` + 1-based `line`; per-line empty-text pre-check | Med | Low | PARTIAL (iter 67: id echo; 1-based line QUEUED) |
 | 26 | Drop the fixed 0.5s sleep before a parse/schema retry (pure latency; transport retries live in SDKs) | Med | Low | QUEUED |
-| 27 | Locked per-role client memo on the MCP path (20 calls 40 → 0 TCP conns; closes iter-69 unlocked boto3 build race) | High | Low | PARTIAL (iter 63: validate builds no Generator client; memo QUEUED) |
+| 27 | Locked per-role client memo on the MCP path (20 extracts 40 → 2 builds; closes iter-69 unlocked boto3 build race) | High | Low | DONE (iter 118) |
 | 28 | Delete the `heuristics_enabled` knob (Critic-less + heuristics-off returns `ok` on fabricated data) | High | Low | DONE (iter 62) |
 | 29 | README §3 demo is the real inv-004 replay output, pinned by a test that re-runs it | Med | Low | DONE (iter 58) |
 | 30 | Retry carries the parse/schema error to the model instead of a byte-identical re-request | Med | Low | DONE (iter 106) |
@@ -158,6 +158,7 @@ tool surface, small deps, MIT, publication-safe.
 | 138 | Delete the fixed-SHA "red at base" history tests (70 tests, 13 files, ~20 s/run) and CI `fetch-depth: 0`; convert preservation checks (iter79) to golden pins first (iter-117 A2) | Med | Med | QUEUED |
 | 139 | Retire the machine-path guard's `EXEMPT`: concatenate test_iter80's fragments, drop its hard-coded owner token (remote-derived check generalises it) (iter-117 A1; 2 exemption pins) | Med | Low | QUEUED |
 | 140 | tools/list drops 40 auto pydantic schema `title`s (7454→6486 B per session; property named `title` survives) (iter-117 B2; 6 digest pins) | Low | Low | QUEUED |
+| 141 | README §9 names the suite-wide autouse conftest fixtures + `real_retry_delay` opt-out, AST-pinned to conftest (iter-118 B1; 0 red) | Low | Low | QUEUED |
 
 ## Done ledger
 
@@ -240,3 +241,4 @@ tool surface, small deps, MIT, publication-safe.
 - iter 115 — MCP `validate.data` inputSchema publishes the 7 InvoiceData fields; host stops guessing keys
 - iter 116 — Tests drop hard-coded checkout `cwd`/`env`, so the suite passes on any clone/CI; a guard keeps paths out
 - iter 117 — Suite no longer sleeps the real 0.5 s retry back-off in-process (~110→75 s); product delay unchanged
+- iter 118 — MCP tools reuse one locked provider client per role (20 extracts: 40 → 2 builds); no build race

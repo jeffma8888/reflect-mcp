@@ -192,8 +192,9 @@ def test_eb4_extract_without_any_client_raises(no_sdk):
 # ---------------------------------------------------------------------------
 
 def test_eb5_validate_tool_builds_one_client_per_call(fake_sdk):
+    # iter 118: the MCP path memoises the Critic client, so 10 calls build 1 (was 10).
     statuses = [tools.validate_tool(TEXT, DATA)["status"] for _ in range(10)]
-    assert fake_sdk.built == 10
+    assert fake_sdk.built == 1
     assert len(fake_sdk.calls) == 10
     assert set(fake_sdk.calls) == {CRIT_MODEL}
     assert len(set(statuses)) == 1
@@ -249,7 +250,8 @@ def test_eb8_validate_bogus_provider_errors(no_sdk):
 def test_eb9_extract_tool_still_builds_two_per_call(fake_sdk):
     for _ in range(10):
         tools.extract_tool(TEXT)
-    assert fake_sdk.built == 20
+    # iter 118: Generator + Critic clients are memoised, so 10 calls build 2 (was 20).
+    assert fake_sdk.built == 2
 
 
 # ---------------------------------------------------------------------------
